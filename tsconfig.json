@@ -24,7 +24,7 @@
   "include": [
     "codegen.schema.ts",
     "codegen.ts",
-    "dangerfile.ts",
+    "dangerfile.mts",
     "e2e/**/*.ts",
     "playwright.config.ts",
     "src/**/*.ts",
