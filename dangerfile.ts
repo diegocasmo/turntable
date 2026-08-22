@@ -32,40 +32,25 @@ function readGeneratedPaths(paths: string[]) {
 }
 
 export default async function checkPullRequestSize() {
-  const changedPaths = [
-    ...new Set([
-      ...danger.git.created_files,
-      ...danger.git.deleted_files,
-      ...danger.git.modified_files,
-    ]),
-  ]
+  const { number: pull_number, owner, repo } = danger.github.thisPR
+  const files = await danger.github.api.paginate(danger.github.api.rest.pulls.listFiles, {
+    owner,
+    per_page: 100,
+    pull_number,
+    repo,
+  })
+  const changedPaths = files.map((file) => file.filename)
   const generatedPaths = readGeneratedPaths(changedPaths)
-  const changes = await Promise.all(
-    changedPaths.map(async (path) => {
-      const diff = await danger.git.structuredDiffForFile(path)
-      const addedLines =
-        diff?.chunks.reduce((count, chunk) => {
-          return count + chunk.changes.filter((change) => change.type === 'add').length
-        }, 0) ?? 0
 
-      return { addedLines, path }
-    }),
-  )
-  const parsedAddedLines = changes.reduce((total, change) => total + change.addedLines, 0)
-
-  if (
-    danger.github &&
-    (changedPaths.length !== danger.github.pr.changed_files ||
-      parsedAddedLines !== danger.github.pr.additions)
-  ) {
+  if (changedPaths.length !== danger.github.pr.changed_files) {
     fail(
-      `Cannot verify pull request size. GitHub reports ${danger.github.pr.changed_files} changed files and ${danger.github.pr.additions} additions. Danger read ${changedPaths.length} changed files and ${parsedAddedLines} additions.`,
+      `Cannot verify pull request size. GitHub reports ${danger.github.pr.changed_files} changed files. Danger read ${changedPaths.length} changed files.`,
     )
     return
   }
 
-  const addedLines = changes.reduce((total, change) => {
-    return generatedPaths.has(change.path) ? total : total + change.addedLines
+  const addedLines = files.reduce((total, file) => {
+    return generatedPaths.has(file.filename) ? total : total + file.additions
   }, 0)
   const report = `Added lines: ${addedLines}. Limit: ${maximumPullRequestAddedLines}.`
 
