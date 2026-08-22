@@ -1,12 +1,28 @@
 import { execFileSync } from 'node:child_process'
-import conventionalConfig from '@commitlint/config-conventional'
 import lint from '@commitlint/lint'
+import load from '@commitlint/load'
 import { danger, fail } from 'danger'
+import { z } from 'zod'
 
 const maximumPullRequestAddedLines = 500
+const conventionalConfig = load({ extends: ['@commitlint/config-conventional'] })
+const parserOptionsSchema = z.object({
+  breakingHeaderPattern: z.instanceof(RegExp),
+  headerCorrespondence: z.array(z.string()),
+  headerPattern: z.instanceof(RegExp),
+  issuePrefixes: z.array(z.string()),
+  noteKeywords: z.array(z.string()),
+  revertCorrespondence: z.array(z.string()),
+  revertPattern: z.instanceof(RegExp),
+})
 
 export async function readPullRequestTitleError(title: string) {
-  const report = await lint(title, conventionalConfig.rules, { defaultIgnores: false })
+  const config = await conventionalConfig
+  const parserOpts = parserOptionsSchema.parse(config.parserPreset?.parserOpts)
+  const report = await lint(title, config.rules, {
+    defaultIgnores: false,
+    parserOpts,
+  })
 
   if (report.valid) {
     return null

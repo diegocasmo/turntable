@@ -10,6 +10,12 @@ describe('pull request title validation', () => {
     expect(error).toBeNull()
   })
 
+  it('accepts a breaking-change title', async () => {
+    const error = await readPullRequestTitleError('feat!: change the session format')
+
+    expect(error).toBeNull()
+  })
+
   it('reports why a plain title is invalid', async () => {
     const error = await readPullRequestTitleError('Enforce conventional pull request titles')
 
