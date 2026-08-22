@@ -212,3 +212,7 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+
+### TanStack Start ###
+.output/
+.tanstack/
