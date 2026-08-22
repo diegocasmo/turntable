@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { danger, fail } from 'danger'
+import { readPullRequestTitleError } from './src/ci/pull-request-title'
 
 const maximumPullRequestAddedLines = 500
 
@@ -31,7 +32,13 @@ function readGeneratedPaths(paths: string[]) {
   return generatedPaths
 }
 
-export default async function checkPullRequestSize() {
+export default async function checkPullRequest() {
+  const titleError = await readPullRequestTitleError(danger.github.pr.title)
+
+  if (titleError !== null) {
+    fail(titleError)
+  }
+
   const { number: pull_number, owner, repo } = danger.github.thisPR
   const files = await danger.github.api.paginate(danger.github.api.rest.pulls.listFiles, {
     owner,
