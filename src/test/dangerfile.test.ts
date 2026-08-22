@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest'
-import { readPullRequestTitleError } from './pull-request-title'
+import { describe, expect, it, vi } from 'vitest'
+import { readPullRequestTitleError } from '../../dangerfile.mts'
+
+vi.mock('danger', () => ({ danger: {}, fail: vi.fn() }))
 
 describe('pull request title validation', () => {
   it('accepts a conventional title', async () => {
