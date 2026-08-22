@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { danger, fail, message } from 'danger'
+import { danger, fail } from 'danger'
 
 const maximumPullRequestAddedLines = 500
 
@@ -68,6 +68,4 @@ export default async function checkPullRequestSize() {
     fail(report)
     return
   }
-
-  message(report)
 }
