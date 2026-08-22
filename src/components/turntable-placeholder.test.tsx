@@ -1,13 +1,13 @@
-import { renderToStaticMarkup } from 'react-dom/server'
+import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { TurntablePlaceholder } from './turntable-placeholder'
 
 describe('Turntable placeholder', () => {
-  it('renders the application name and scaffold state', () => {
-    const markup = renderToStaticMarkup(<TurntablePlaceholder />)
+  it('renders the main application heading', () => {
+    render(<TurntablePlaceholder />)
 
-    expect(markup).toContain('<main')
-    expect(markup).toContain('Turntable')
-    expect(markup).toContain('Scaffold ready')
+    const main = screen.getByRole('main')
+
+    expect(within(main).getByRole('heading', { level: 1, name: 'Turntable' })).toBeVisible()
   })
 })

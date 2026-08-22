@@ -21,5 +21,15 @@
     "target": "ES2022",
     "types": ["vite/client"]
   },
-  "include": ["dangerfile.ts", "src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "vitest.config.ts"]
+  "include": [
+    "codegen.schema.ts",
+    "codegen.ts",
+    "dangerfile.ts",
+    "e2e/**/*.ts",
+    "playwright.config.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "vite.config.ts",
+    "vitest.config.ts"
+  ]
 }

@@ -1,4 +1,4 @@
-import { renderToStaticMarkup } from 'react-dom/server'
+import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { Route as RootRoute } from '../routes/__root'
 import { NotFoundPage } from './not-found-page'
@@ -9,10 +9,14 @@ describe('Not found page', () => {
   })
 
   it('renders a way back to Turntable', () => {
-    const markup = renderToStaticMarkup(<NotFoundPage />)
+    render(<NotFoundPage />)
 
-    expect(markup).toContain('<main')
-    expect(markup).toContain('Page not found')
-    expect(markup).toContain('href="/"')
+    const main = screen.getByRole('main')
+
+    expect(within(main).getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible()
+    expect(within(main).getByRole('link', { name: 'Return to Turntable' })).toHaveAttribute(
+      'href',
+      '/',
+    )
   })
 })
