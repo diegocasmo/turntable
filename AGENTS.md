@@ -21,7 +21,7 @@ These rules apply to all work in this repository. This file is the only source f
 11. Make the user interface accessible. Use semantic HTML. Use an `aria-live` region for the live status.
 12. Validate every response from the Railway API at the boundary with zod. The body is not always GraphQL. Map an unknown status to the unknown badge. Do not crash.
 13. Never log a request body. Redact `Authorization`, `Cookie`, and `Set-Cookie` in every log line and every error path.
-14. Write commit messages in the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format.
+14. Write commit messages and pull request titles in the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format.
 15. CI must be green before you merge.
 16. A pull request description states what the pull request does and how to verify it.
 17. Write a comment only to give a reason that the code cannot show: an invariant, a trade-off, or a surprise. Do not write a comment that repeats what the code does. Do not write a comment about a past version of the code. When a better name can replace a comment, use the name. When you change code, update or delete the comments near it.
