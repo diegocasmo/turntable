@@ -13,12 +13,17 @@ function readGeneratedPaths(paths: string[]) {
     input: `${paths.join('\0')}\0`,
   })
   const fields = output.split('\0')
+  const fieldsPerGitAttributeResult = 3
   const generatedPaths = new Set<string>()
 
-  for (let index = 0; index + 2 < fields.length; index += 3) {
-    const path = fields[index]
+  for (
+    let resultStart = 0;
+    resultStart + fieldsPerGitAttributeResult <= fields.length;
+    resultStart += fieldsPerGitAttributeResult
+  ) {
+    const path = fields[resultStart]
 
-    if (path !== undefined && fields[index + 2] === 'true') {
+    if (path !== undefined && fields[resultStart + 2] === 'true') {
       generatedPaths.add(path)
     }
   }
