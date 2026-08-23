@@ -18,6 +18,15 @@ The application reads `SESSION_SECRET`, `APP_ORIGIN`, `RAILWAY_API_URL`, `RAILWA
 
 [The configuration module](./src/config.server.ts) defines the validation rules, production addresses, and local port default.
 
+Create the local configuration:
+
+```sh
+cp .env.example .env
+node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
+```
+
+Paste the generated value after `SESSION_SECRET=` in `.env`.
+
 ```sh
 pnpm dev
 ```
