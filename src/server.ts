@@ -36,10 +36,7 @@ function startProductionServer() {
       nodeResponse.statusCode = response.status
       nodeResponse.setHeaders(withSecurityHeaders(response.headers))
 
-      if (response.body === null) {
-        nodeResponse.end()
-        return
-      }
+      if (response.body === null) return nodeResponse.end()
 
       await writeResponseBody(response.body, nodeResponse)
     } catch {

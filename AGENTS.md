@@ -23,10 +23,9 @@ These rules apply to all work in this repository. This file is the only source f
 13. Never log a request body. Redact `Authorization`, `Cookie`, and `Set-Cookie` in every log line and every error path.
 14. Write commit messages and pull request titles in the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format.
 15. CI must be green before you merge.
-16. A pull request description states what the pull request does and how to verify it.
-17. Write a comment only to give a reason that the code cannot show: an invariant, a trade-off, or a surprise. Do not write a comment that repeats what the code does. Do not write a comment about a past version of the code. When a better name can replace a comment, use the name. When you change code, update or delete the comments near it.
-18. Each pull request is one testable unit.
-19. In component tests, query the rendered user interface by semantic role and accessible name. Do not assert serialized HTML with substring matches.
+16. Write a comment only to give a reason that the code cannot show: an invariant, a trade-off, or a surprise. Do not write a comment that repeats what the code does. Do not write a comment about a past version of the code. When a better name can replace a comment, use the name. When you change code, update or delete the comments near it.
+17. Each pull request is one testable unit.
+18. In component tests, query the rendered user interface by semantic role and accessible name. Do not assert serialized HTML with substring matches.
 
 ## Commands
 
