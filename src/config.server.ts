@@ -8,34 +8,25 @@ export const railwayWebSocketUrl = 'wss://backboard.railway.com/graphql/v2'
 type Environment = Readonly<Record<string, string | undefined>>
 type ErrorWriter = (line: string) => void
 
-const sessionSecretSchema = z.string().refine((value) => {
-  const secret = Buffer.from(value, 'base64')
-  return secret.byteLength === 32 && secret.toString('base64') === value
-}, 'must be 32 bytes in canonical base64')
+const sessionSecretSchema = z
+  .base64()
+  .refine((value) => Buffer.from(value, 'base64').byteLength === 32, 'must be 32 bytes in base64')
 
-const httpUrlSchema = z.url().refine((value) => {
-  const url = new URL(value)
-  return (
-    (url.protocol === 'http:' || url.protocol === 'https:') &&
-    url.username === '' &&
-    url.password === ''
-  )
-}, 'must use http or https without credentials')
+const httpUrlSchema = z.url({ protocol: /^https?$/ })
 
-const webSocketUrlSchema = z.url().refine((value) => {
-  const url = new URL(value)
-  return (
-    (url.protocol === 'ws:' || url.protocol === 'wss:') &&
-    url.username === '' &&
-    url.password === ''
-  )
-}, 'must use ws or wss without credentials')
+const webSocketUrlSchema = z.url({ protocol: /^wss?$/ })
 
 const appOriginSchema = httpUrlSchema
   .refine((value) => {
     const url = new URL(value)
-    return url.pathname === '/' && url.search === '' && url.hash === ''
-  }, 'must be an origin without a path, query, or fragment')
+    return (
+      url.username === '' &&
+      url.password === '' &&
+      url.pathname === '/' &&
+      url.search === '' &&
+      url.hash === ''
+    )
+  }, 'must contain only an http or https origin')
   .transform((value) => new URL(value).origin)
 
 const environmentSchema = z.object({

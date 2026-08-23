@@ -28,6 +28,15 @@ describe('configuration', () => {
     },
   )
 
+  it.each([
+    ['APP_ORIGIN', 'https://example.com/path'],
+    ['RAILWAY_API_URL', 'ws://example.com/graphql'],
+    ['RAILWAY_WEBSOCKET_URL', 'https://example.com/graphql'],
+    ['SESSION_SECRET', 'not-base64'],
+  ])('rejects an invalid %s', (name, value) => {
+    expect(() => readConfig({ ...validEnvironment, [name]: value })).toThrow(name)
+  })
+
   it('rejects a session secret with the wrong size', () => {
     expect(() =>
       readConfig({ ...validEnvironment, SESSION_SECRET: Buffer.alloc(31, 1).toString('base64') }),
