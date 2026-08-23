@@ -3,26 +3,17 @@ import { expect, test } from '@playwright/test'
 
 test('the placeholder route is accessible', async ({ page }) => {
   const policyErrors: string[] = []
-  let rawHtml = ''
+  const recordPolicyError = (message: string) => {
+    if (message.toLowerCase().includes('content security policy')) {
+      policyErrors.push(message)
+    }
+  }
 
-  page.on('console', (message) => {
-    if (message.text().toLowerCase().includes('content security policy')) {
-      policyErrors.push(message.text())
-    }
-  })
-  page.on('pageerror', (error) => {
-    if (error.message.toLowerCase().includes('content security policy')) {
-      policyErrors.push(error.message)
-    }
-  })
-  await page.route('/', async (route) => {
-    const response = await route.fetch()
-    rawHtml = await response.text()
-    await route.fulfill({ response, body: rawHtml })
-  })
+  page.on('console', (message) => recordPolicyError(message.text()))
+  page.on('pageerror', (error) => recordPolicyError(error.message))
 
   const response = await page.goto('/')
-  await page.unrouteAll({ behavior: 'ignoreErrors' })
+  const rawHtml = (await response?.body())?.toString() ?? ''
 
   await expect(page.getByRole('heading', { level: 1, name: 'Turntable' })).toBeVisible()
   await expect(page.getByText('Scaffold ready')).toBeVisible()
@@ -60,6 +51,7 @@ test('the health check returns only ok', async ({ request }) => {
 
   expect(response.status()).toBe(200)
   expect(await response.text()).toBe('ok')
+  expect(response.headers()['content-security-policy']).toContain("frame-ancestors 'none'")
 })
 
 test('an unknown route is accessible and returns 404', async ({ page }) => {

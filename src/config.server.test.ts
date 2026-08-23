@@ -1,12 +1,6 @@
 import { Buffer } from 'node:buffer'
 import { describe, expect, it, vi } from 'vitest'
-import {
-  ConfigurationError,
-  loadConfig,
-  railwayHostname,
-  readConfig,
-  readPort,
-} from './config.server'
+import { loadConfig, railwayHostname, readConfig, readPort } from './config.server'
 
 const validEnvironment = {
   APP_ORIGIN: 'http://127.0.0.1:3000',
@@ -72,7 +66,7 @@ describe('configuration', () => {
   it('logs a clear error before it stops', () => {
     const writeError = vi.fn()
 
-    expect(() => loadConfig({}, writeError)).toThrow(ConfigurationError)
+    expect(() => loadConfig({}, writeError)).toThrow()
     expect(writeError).toHaveBeenCalledWith(expect.stringContaining('Turntable cannot start.'))
   })
 

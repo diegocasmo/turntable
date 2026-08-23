@@ -60,10 +60,6 @@ const environmentSchema = z
     ]),
   )
 
-export class ConfigurationError extends Error {
-  override name = 'ConfigurationError'
-}
-
 export function readConfig(environment: Environment) {
   const result = environmentSchema.safeParse(environment)
 
@@ -71,7 +67,7 @@ export function readConfig(environment: Environment) {
     const details = result.error.issues
       .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
       .join('; ')
-    throw new ConfigurationError(`Invalid configuration. ${details}`)
+    throw new Error(`Invalid configuration. ${details}`)
   }
 
   return {
