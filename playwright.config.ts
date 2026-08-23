@@ -2,13 +2,6 @@ import { defineConfig, devices } from '@playwright/test'
 
 const testScheme = 'http'
 const testOrigin = `${testScheme}://127.0.0.1:3000`
-const testEnvironment = {
-  APP_ORIGIN: testOrigin,
-  NODE_ENV: 'test',
-  RAILWAY_API_URL: 'http://127.0.0.1:4000/graphql/v2',
-  RAILWAY_WEBSOCKET_URL: 'ws://127.0.0.1:4000/graphql/v2',
-  SESSION_SECRET: Buffer.alloc(32, 1).toString('base64'),
-}
 
 export default defineConfig({
   testDir: './e2e',
@@ -34,8 +27,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm dev',
-    env: testEnvironment,
+    command: 'pnpm dev --mode e2e',
     reuseExistingServer: !process.env.CI,
     url: testOrigin,
   },

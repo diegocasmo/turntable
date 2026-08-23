@@ -1,15 +1,17 @@
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import { loadConfig, productionEnvironment, readPort } from './src/config.server.ts'
 
 const host = '0.0.0.0'
-const port = readPort(process.env.PORT)
 
-export default defineConfig(({ command, isPreview }) => {
+export default defineConfig(({ command, isPreview, mode }) => {
+  const environment = loadEnv(mode, process.cwd(), '')
+  const port = readPort(environment.PORT)
+
   if (command === 'serve') {
-    loadConfig(isPreview ? productionEnvironment(process.env) : process.env)
+    loadConfig(isPreview ? productionEnvironment(environment) : environment)
   }
 
   return {
