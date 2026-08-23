@@ -35,7 +35,7 @@ test('the placeholder route is accessible', async ({ page }) => {
     .toBe('Controls respond')
 
   const policy = response?.headers()['content-security-policy'] ?? ''
-  const nonce = policy.match(/script-src 'nonce-([^']+)'/)?.[1]
+  const nonce = readNonce(policy)
 
   expect(nonce).toBeTruthy()
   expect(rawHtml).toContain(`nonce="${nonce}"`)
@@ -44,7 +44,10 @@ test('the placeholder route is accessible', async ({ page }) => {
   expect(response?.headers()['x-content-type-options']).toBe('nosniff')
 
   const nextPolicy = (await page.request.get('/')).headers()['content-security-policy'] ?? ''
-  expect(nextPolicy).not.toContain(`nonce-${nonce}`)
+  const nextNonce = readNonce(nextPolicy)
+
+  expect(nextNonce).toBeTruthy()
+  expect(nextNonce).not.toBe(nonce)
 
   const results = await new AxeBuilder({ page }).analyze()
 
@@ -70,3 +73,7 @@ test('an unknown route is accessible and returns 404', async ({ page }) => {
 
   expect(results.violations).toEqual([])
 })
+
+function readNonce(policy: string) {
+  return policy.match(/script-src 'nonce-([^']+)'/)?.[1]
+}

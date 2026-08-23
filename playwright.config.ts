@@ -5,6 +5,7 @@ const testOrigin = `${testScheme}://127.0.0.1:3000`
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: 'production-smoke.spec.ts',
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   ...(process.env.CI ? { workers: 1 } : {}),
