@@ -3,8 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   ConfigurationError,
   loadConfig,
-  railwayApiUrl,
-  railwayWebSocketUrl,
+  railwayHostname,
   readConfig,
   readPort,
 } from './config.server'
@@ -15,6 +14,14 @@ const validEnvironment = {
   RAILWAY_API_URL: 'http://127.0.0.1:4000/graphql/v2',
   RAILWAY_WEBSOCKET_URL: 'ws://127.0.0.1:4000/graphql/v2',
   SESSION_SECRET: Buffer.alloc(32, 1).toString('base64'),
+}
+
+const validProductionEnvironment = {
+  ...validEnvironment,
+  APP_ORIGIN: 'https://turntable.test',
+  NODE_ENV: 'production',
+  RAILWAY_API_URL: `https://${railwayHostname}/custom-api-path`,
+  RAILWAY_WEBSOCKET_URL: `wss://${railwayHostname}/custom-websocket-path`,
 }
 
 describe('configuration', () => {
@@ -43,21 +50,23 @@ describe('configuration', () => {
     ).toThrow(/SESSION_SECRET: must be 32 bytes/)
   })
 
-  it('rejects upstream overrides in production', () => {
-    expect(() => readConfig({ ...validEnvironment, NODE_ENV: 'production' })).toThrow(
-      'Production must use the Railway API and WebSocket addresses.',
-    )
+  it('rejects an http app origin in production', () => {
+    expect(() =>
+      readConfig({ ...validProductionEnvironment, APP_ORIGIN: validEnvironment.APP_ORIGIN }),
+    ).toThrow('APP_ORIGIN: must use https in production')
+  })
+
+  it.each([
+    ['RAILWAY_API_URL', 'https://example.com/graphql'],
+    ['RAILWAY_WEBSOCKET_URL', 'wss://example.com/graphql'],
+  ])('rejects a non-Railway %s hostname in production', (name, value) => {
+    expect(() => readConfig({ ...validProductionEnvironment, [name]: value })).toThrow(name)
   })
 
   it('accepts the Railway upstream addresses in production', () => {
-    const config = readConfig({
-      ...validEnvironment,
-      NODE_ENV: 'production',
-      RAILWAY_API_URL: railwayApiUrl,
-      RAILWAY_WEBSOCKET_URL: railwayWebSocketUrl,
-    })
+    const config = readConfig(validProductionEnvironment)
 
-    expect(config.railwayApiUrl).toBe(railwayApiUrl)
+    expect(config.railwayApiUrl).toBe(validProductionEnvironment.RAILWAY_API_URL)
   })
 
   it('logs a clear error before it stops', () => {
@@ -65,6 +74,12 @@ describe('configuration', () => {
 
     expect(() => loadConfig({}, writeError)).toThrow(ConfigurationError)
     expect(writeError).toHaveBeenCalledWith(expect.stringContaining('Turntable cannot start.'))
+  })
+
+  it('defaults to development', () => {
+    const config = readConfig({ ...validEnvironment, NODE_ENV: undefined })
+
+    expect(config.nodeEnvironment).toBe('development')
   })
 
   it('reads the server port', () => {

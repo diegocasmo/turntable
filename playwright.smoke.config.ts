@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test'
 import { loadEnv } from 'vite'
-import { railwayApiUrl, railwayWebSocketUrl } from './src/config.server'
+import { railwayHostname } from './src/config.server'
 
 const testOrigin = 'http://127.0.0.1:3100'
 const testEnvironment = loadEnv('e2e', process.cwd(), '')
@@ -16,10 +16,10 @@ export default defineConfig({
     command: 'pnpm start',
     env: {
       ...testEnvironment,
-      APP_ORIGIN: testOrigin,
+      APP_ORIGIN: 'https://turntable.test',
       PORT: '3100',
-      RAILWAY_API_URL: railwayApiUrl,
-      RAILWAY_WEBSOCKET_URL: railwayWebSocketUrl,
+      RAILWAY_API_URL: `https://${railwayHostname}`,
+      RAILWAY_WEBSOCKET_URL: `wss://${railwayHostname}`,
     },
     reuseExistingServer: false,
     url: testOrigin,

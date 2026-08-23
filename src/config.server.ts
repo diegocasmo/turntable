@@ -2,8 +2,7 @@ import { Buffer } from 'node:buffer'
 import { z } from 'zod'
 import { formatLog } from './logging.ts'
 
-export const railwayApiUrl = 'https://backboard.railway.com/graphql/v2'
-export const railwayWebSocketUrl = 'wss://backboard.railway.com/graphql/v2'
+export const railwayHostname = 'backboard.railway.com'
 
 type Environment = Readonly<Record<string, string | undefined>>
 type ErrorWriter = (line: string) => void
@@ -15,27 +14,51 @@ const sessionSecretSchema = z
 const httpUrlSchema = z.url({ protocol: /^https?$/ })
 
 const webSocketUrlSchema = z.url({ protocol: /^wss?$/ })
+const railwayHostnamePattern = new RegExp(`^${railwayHostname.replaceAll('.', '[.]')}$`)
 
-const appOriginSchema = httpUrlSchema
-  .refine((value) => {
-    const url = new URL(value)
-    return (
-      url.username === '' &&
-      url.password === '' &&
-      url.pathname === '/' &&
-      url.search === '' &&
-      url.hash === ''
-    )
-  }, 'must contain only an http or https origin')
-  .transform((value) => new URL(value).origin)
+function createAppOriginSchema(protocol: RegExp, protocolError: string) {
+  return z
+    .url({ protocol, error: protocolError })
+    .refine((value) => {
+      const url = new URL(value)
+      return url.href === `${url.origin}/`
+    }, 'must contain only an origin')
+    .transform((value) => new URL(value).origin)
+}
 
-const environmentSchema = z.object({
-  APP_ORIGIN: appOriginSchema,
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  RAILWAY_API_URL: httpUrlSchema,
-  RAILWAY_WEBSOCKET_URL: webSocketUrlSchema,
-  SESSION_SECRET: sessionSecretSchema,
-})
+const appOriginSchema = createAppOriginSchema(/^https?$/, 'must use http or https')
+const productionAppOriginSchema = createAppOriginSchema(/^https$/, 'must use https in production')
+const sharedEnvironmentShape = { SESSION_SECRET: sessionSecretSchema }
+
+const environmentSchema = z
+  .object({ NODE_ENV: z.enum(['development', 'production', 'test']).default('development') })
+  .passthrough()
+  .pipe(
+    z.discriminatedUnion('NODE_ENV', [
+      z.object({
+        ...sharedEnvironmentShape,
+        APP_ORIGIN: productionAppOriginSchema,
+        NODE_ENV: z.literal('production'),
+        RAILWAY_API_URL: z.url({
+          hostname: railwayHostnamePattern,
+          protocol: /^https$/,
+          error: `must use https and ${railwayHostname} in production`,
+        }),
+        RAILWAY_WEBSOCKET_URL: z.url({
+          hostname: railwayHostnamePattern,
+          protocol: /^wss$/,
+          error: `must use wss and ${railwayHostname} in production`,
+        }),
+      }),
+      z.object({
+        ...sharedEnvironmentShape,
+        APP_ORIGIN: appOriginSchema,
+        NODE_ENV: z.enum(['development', 'test']),
+        RAILWAY_API_URL: httpUrlSchema,
+        RAILWAY_WEBSOCKET_URL: webSocketUrlSchema,
+      }),
+    ]),
+  )
 
 export class ConfigurationError extends Error {
   override name = 'ConfigurationError'
@@ -49,14 +72,6 @@ export function readConfig(environment: Environment) {
       .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
       .join('; ')
     throw new ConfigurationError(`Invalid configuration. ${details}`)
-  }
-
-  if (
-    result.data.NODE_ENV === 'production' &&
-    (result.data.RAILWAY_API_URL !== railwayApiUrl ||
-      result.data.RAILWAY_WEBSOCKET_URL !== railwayWebSocketUrl)
-  ) {
-    throw new ConfigurationError('Production must use the Railway API and WebSocket addresses.')
   }
 
   return {
