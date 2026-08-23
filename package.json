@@ -15,8 +15,10 @@
     "format": "biome format . --write",
     "lint": "biome check .",
     "preview": "vite preview",
+    "start": "node .output/server/index.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:smoke": "pnpm build && playwright test --config playwright.smoke.config.ts",
     "typecheck": "pnpm codegen && tsc --noEmit"
   },
   "dependencies": {
@@ -25,6 +27,7 @@
     "@tanstack/react-start": "1.168.48",
     "graphql": "16.14.2",
     "graphql-ws": "6.2.1",
+    "nitro": "3.0.260610-beta",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "4.4.3"

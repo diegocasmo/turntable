@@ -27,6 +27,7 @@
     "dangerfile.mts",
     "e2e/**/*.ts",
     "playwright.config.ts",
+    "playwright.smoke.config.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
     "vite.config.ts",

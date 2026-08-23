@@ -46,8 +46,8 @@ jobs:
       - name: Run unit tests
         run: pnpm test
 
-      - name: Build
-        run: pnpm build
+      - name: Test production server
+        run: pnpm test:smoke
 
   browser:
     name: Browser
