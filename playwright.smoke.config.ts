@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test'
 import { loadEnv } from 'vite'
-import { railwayHostname } from './src/config.server'
+import { railwayHostname } from './src/railway/url-schema'
 
 const testOrigin = 'http://127.0.0.1:3100'
 const testEnvironment = loadEnv('e2e', process.cwd(), '')

@@ -1,8 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { z } from 'zod'
 import { formatLog } from './logging.ts'
-
-export const railwayHostname = 'backboard.railway.com'
+import { railwayHttpsUrlSchema, railwayWebSocketUrlSchema } from './railway/url-schema.ts'
 
 type Environment = Readonly<Record<string, string | undefined>>
 type ErrorWriter = (line: string) => void
@@ -14,7 +13,6 @@ const sessionSecretSchema = z
 const httpUrlSchema = z.url({ protocol: /^https?$/ })
 
 const webSocketUrlSchema = z.url({ protocol: /^wss?$/ })
-const railwayHostnamePattern = new RegExp(`^${railwayHostname.replaceAll('.', '[.]')}$`)
 
 function createAppOriginSchema(protocol: RegExp, protocolError: string) {
   return z
@@ -39,16 +37,8 @@ const environmentSchema = z
         ...sharedEnvironmentShape,
         APP_ORIGIN: productionAppOriginSchema,
         NODE_ENV: z.literal('production'),
-        RAILWAY_API_URL: z.url({
-          hostname: railwayHostnamePattern,
-          protocol: /^https$/,
-          error: `must use https and ${railwayHostname} in production`,
-        }),
-        RAILWAY_WEBSOCKET_URL: z.url({
-          hostname: railwayHostnamePattern,
-          protocol: /^wss$/,
-          error: `must use wss and ${railwayHostname} in production`,
-        }),
+        RAILWAY_API_URL: railwayHttpsUrlSchema,
+        RAILWAY_WEBSOCKET_URL: railwayWebSocketUrlSchema,
       }),
       z.object({
         ...sharedEnvironmentShape,

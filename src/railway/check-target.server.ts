@@ -1,9 +1,7 @@
 import { z } from 'zod'
-import { railwayHostname } from '../config.server.ts'
 import { railwaySmokeQuery } from '../gql/operations/railway-smoke.ts'
 import { createRailwayClient } from './client.server.ts'
-
-const railwayHostnamePattern = new RegExp(`^${railwayHostname.replaceAll('.', '[.]')}$`)
+import { railwayHttpsUrlSchema } from './url-schema.ts'
 
 const smokeResponseSchema = z.object({
   environment: z.object({
@@ -20,11 +18,7 @@ const smokeResponseSchema = z.object({
 })
 
 const smokeEnvironmentSchema = z.object({
-  RAILWAY_API_URL: z.url({
-    hostname: railwayHostnamePattern,
-    protocol: /^https$/,
-    error: `must use https and ${railwayHostname}`,
-  }),
+  RAILWAY_API_URL: railwayHttpsUrlSchema,
   RAILWAY_TEST_ENVIRONMENT_ID: z.string().min(1),
   RAILWAY_TEST_PROJECT_ID: z.string().min(1),
   RAILWAY_TEST_SERVICE_ID: z.string().min(1),
