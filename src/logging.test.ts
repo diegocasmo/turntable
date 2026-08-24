@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatRequestLog } from './logging'
+import { formatRequestLog } from '@/logging'
 
 describe('request log redaction', () => {
   it('does not log private headers or a request body', () => {

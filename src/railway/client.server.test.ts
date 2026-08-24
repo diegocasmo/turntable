@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
-import { createRailwayClient } from './client.server.ts'
+import { createRailwayClient } from '@/railway/client.server'
 import {
   RailwayGraphQLError,
   RailwayHttpError,
   RailwayRateLimitError,
   RailwayResponseError,
-} from './errors.ts'
+} from '@/railway/errors'
 
 const apiUrl = 'https://backboard.railway.test/graphql/v2'
 const query = 'query Project($id: String!) { project(id: $id) { id } }'

@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { Route as RootRoute } from '../routes/__root'
-import { NotFoundPage } from './not-found-page'
+import { NotFoundPage } from '@/components/not-found-page'
+import { Route as RootRoute } from '@/routes/__root'
 
 describe('Not found page', () => {
   it('is the root not-found component', () => {

@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { describe, expect, it, vi } from 'vitest'
-import { loadConfig, readConfig, readPort } from './config.server'
-import { railwayHostname } from './railway/url-schema'
+import { loadConfig, readConfig, readPort } from '@/config.server'
+import { railwayHostname } from '@/railway/url-schema'
 
 const validEnvironment = {
   APP_ORIGIN: 'http://127.0.0.1:3000',

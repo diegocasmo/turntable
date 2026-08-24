@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
 import { createIsomorphicFn } from '@tanstack/react-start'
-import { routeTree } from './routeTree.gen'
-import { createNonce } from './security-headers'
+import { routeTree } from '@/routeTree.gen'
+import { createNonce } from '@/security-headers'
 
 const getSsrOptions = createIsomorphicFn().server(() => ({ nonce: createNonce() }))
 

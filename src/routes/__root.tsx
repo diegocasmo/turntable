@@ -1,8 +1,8 @@
 import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
-import { NotFoundPage } from '../components/not-found-page'
-import { createSecurityHeaders } from '../security-headers'
-import appCss from '../styles.css?url'
+import { NotFoundPage } from '@/components/not-found-page'
+import { createSecurityHeaders } from '@/security-headers'
+import appCss from '@/styles.css?url'
 
 export const Route = createRootRoute({
   headers: ({ ssr }) => (ssr?.nonce ? createSecurityHeaders(ssr.nonce) : undefined),

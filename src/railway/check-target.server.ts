@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { railwaySmokeQuery } from '../gql/operations/railway-smoke.ts'
-import { createRailwayClient } from './client.server.ts'
-import { railwayHttpsUrlSchema } from './url-schema.ts'
+import { railwaySmokeQuery } from '@/gql/operations/railway-smoke'
+import { createRailwayClient } from '@/railway/client.server'
+import { railwayHttpsUrlSchema } from '@/railway/url-schema'
 
 const smokeResponseSchema = z.object({
   environment: z.object({

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { loadRailwaySmokeConfig } from './check-target.server.ts'
+import { loadRailwaySmokeConfig } from '@/railway/check-target.server'
 
 const validEnvironment = {
   RAILWAY_API_URL: 'https://backboard.railway.com/graphql/v2',

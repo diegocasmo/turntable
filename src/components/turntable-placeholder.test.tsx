@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { TurntablePlaceholder } from './turntable-placeholder'
+import { TurntablePlaceholder } from '@/components/turntable-placeholder'
 
 describe('Turntable placeholder', () => {
   it('renders the main application heading', () => {

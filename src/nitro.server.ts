@@ -1,6 +1,6 @@
 import { definePlugin } from 'nitro'
-import { loadConfig, productionEnvironment } from './config.server'
-import { createNonce, createSecurityHeaders } from './security-headers'
+import { loadConfig, productionEnvironment } from '@/config.server'
+import { createNonce, createSecurityHeaders } from '@/security-headers'
 
 export default definePlugin((nitroApp) => {
   if (import.meta.env.PROD) {
