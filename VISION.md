@@ -189,7 +189,7 @@ The session cookie alone is not a full defense. The application also does this:
 1. Every state-changing route compares the `Origin` header to `APP_ORIGIN`. A different origin, a missing origin, or a malformed origin gets status 403. `APP_ORIGIN` is configuration, and the server validates it at startup. The check never reads the `Host` header, because a client controls that header.
 2. Every response carries a Content-Security-Policy with a random nonce for that request. The policy allows scripts with that nonce only, and it includes `frame-ancestors 'none'`. The nonce goes through the framework's server-side render option, so the page still hydrates. TanStack keeps [CSP tests](https://github.com/TanStack/router/blob/main/e2e/react-start/csp/tests/csp.spec.ts) for this path.
 3. Responses also carry `Referrer-Policy` and `X-Content-Type-Options`. Authenticated responses carry `Cache-Control: no-store`.
-4. The upstream API address is configuration. Production and real integration tests accept Railway's own address only. Reason: a wrong value sends every user's token to another host, and the screen shows no symptom.
+4. The upstream API address is configuration. Production and tests that call Railway accept Railway's own address only. Reason: a wrong value sends every user's token to another host, and the screen shows no symptom.
 5. An expired or invalid session gets status 401 on a normal route. The client then shows the token form. The event stream answers differently, and "Browser transport" explains why.
 
 ### Browser transport: Server-Sent Events
@@ -325,17 +325,17 @@ There is no job that watches the live schema. Railway owns the schema, and this 
 
 Alternative considered: gql.tada infers the same types without a generate step. It is a strong tool. Codegen wins here because of its mature schema tooling and its match with the committed-schema pattern above.
 
-### Tests: injected data, plus real Railway checks
+### Tests: injected states, one real end-to-end path
 
-Decision: unit, component, and controlled browser tests inject HTTP responses and WebSocket events at the client boundary. They can produce errors and status sequences on demand. They do not need a token or a fake Railway server. Vitest covers units. [@axe-core/playwright](https://github.com/dequelabs/axe-core-npm) scans rendered states.
+Decision: unit, component, client, and route tests inject HTTP responses and WebSocket events at the client boundary. They can produce errors and status sequences on demand. They do not need a token or a fake Railway server. Vitest covers these tests.
 
-A read-only smoke test calls Railway with a workspace token. It checks that the configured project, environment, and service are visible. A developer can run it against the `local` environment. CI runs it against the `ci` environment for branches in this repository, `main`, and manual requests. Fork pull requests do not get the token.
+`pnpm test:e2e` is the only end-to-end command. Playwright drives Turntable against the configured real Railway project, environment, and service. A local run uses the `local` target. Trusted CI uses the `ci` target. Fork pull requests do not get the token and skip this test.
 
-After the spin-up feature exists, the real CI suite runs one serial life cycle against the same `ci` target. It restores the target in a `finally` block. It also compares the live status list with the committed schema. A local run uses the `local` target.
+The end-to-end test pastes the token, selects the target, reads the live status, spins the container down, and spins it up again. It checks the live stream and the user interface. It restores the target in a `finally` block. CI serializes the test because each run changes the same service. The test also compares the live status list with the committed schema. [@axe-core/playwright](https://github.com/dequelabs/axe-core-npm) scans the rendered application.
 
-A short manual list drives the deployed application in a browser through the full cycle. Only this check exercises the cookie, the origin check, the security policy, the stream, and the buttons together. It is a required step.
+A short manual list drives the deployed application through the same cycle. This check covers the public deployment configuration, which a server started from the test branch cannot cover. It is a required step.
 
-The split is deliberate. Injected data makes failures exact and repeatable. The real checks find wrong assumptions about Railway. Serial use and fixed targets bound cost and state conflicts.
+The boundary is deliberate. Injected tests make failure states exact and repeatable. The one real end-to-end path finds faults between the browser, Turntable, and Railway. Fixed targets and serial use bound cost and state conflicts.
 
 ### User interface
 
