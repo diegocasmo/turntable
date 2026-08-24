@@ -1,13 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
+import { createRailwayClient } from './client.server.ts'
 import {
-  createRailwayClient,
-  deploymentStatusSchema,
   RailwayGraphQLError,
   RailwayHttpError,
   RailwayRateLimitError,
   RailwayResponseError,
-} from './railway-client.server.ts'
+} from './errors.ts'
 
 const apiUrl = 'https://backboard.railway.test/graphql/v2'
 const query = 'query Project($id: String!) { project(id: $id) { id } }'
@@ -129,16 +128,5 @@ describe('Railway HTTP client', () => {
     expect(line).not.toContain(body)
     expect(line).not.toContain('body')
     expect(response.bodyUsed).toBe(true)
-  })
-
-  it('maps an unknown deployment status to unknown at the zod boundary', async () => {
-    const dataSchema = z.object({ deployment: z.object({ status: deploymentStatusSchema }) })
-    const { client } = setup(
-      jsonResponse({ data: { deployment: { status: 'A_NEW_RAILWAY_STATUS' } } }),
-    )
-
-    await expect(client.request({ dataSchema, query, token })).resolves.toEqual({
-      deployment: { status: 'unknown' },
-    })
   })
 })

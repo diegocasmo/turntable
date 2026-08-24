@@ -1,5 +1,11 @@
 import { z } from 'zod'
-import { formatRequestLog } from './logging.ts'
+import { formatRequestLog } from '../logging.ts'
+import {
+  RailwayGraphQLError,
+  RailwayHttpError,
+  RailwayRateLimitError,
+  RailwayResponseError,
+} from './errors.ts'
 
 const graphQLErrorSchema = z.object({ message: z.string() })
 const graphQLEnvelopeSchema = z
@@ -21,28 +27,6 @@ const railwayResponseBodySchema = z.union([
   z.json().transform((body) => ({ body, kind: otherBodyKind })),
 ])
 
-const knownDeploymentStatusSchema = z.enum([
-  'BUILDING',
-  'CRASHED',
-  'DEPLOYING',
-  'FAILED',
-  'INITIALIZING',
-  'NEEDS_APPROVAL',
-  'QUEUED',
-  'REMOVED',
-  'REMOVING',
-  'SKIPPED',
-  'SLEEPING',
-  'SUCCESS',
-  'WAITING',
-])
-const unknownDeploymentStatus: 'unknown' = 'unknown'
-
-export const deploymentStatusSchema = z.string().transform((value) => {
-  const result = knownDeploymentStatusSchema.safeParse(value)
-  return result.success ? result.data : unknownDeploymentStatus
-})
-
 type ErrorWriter = (line: string) => void
 type Fetch = (request: Request) => Promise<Response>
 type Variables = Readonly<Record<string, unknown>>
@@ -59,44 +43,6 @@ type RailwayRequest<Data> = Readonly<{
   token: string
   variables?: Variables
 }>
-
-export class RailwayGraphQLError extends Error {
-  override readonly name = 'RailwayGraphQLError'
-  readonly isUnauthorized: boolean
-  readonly messages: readonly string[]
-
-  constructor(messages: readonly string[]) {
-    super(messages.join('\n'))
-    this.messages = [...messages]
-    this.isUnauthorized = messages.some((message) =>
-      message.toLowerCase().includes('not authorized'),
-    )
-  }
-}
-
-export class RailwayRateLimitError extends Error {
-  override readonly name = 'RailwayRateLimitError'
-
-  constructor(readonly retryAfterSeconds: number | undefined) {
-    super('Railway rate limit exceeded.')
-  }
-}
-
-export class RailwayHttpError extends Error {
-  override readonly name = 'RailwayHttpError'
-
-  constructor(readonly status: number) {
-    super(`Railway request failed with HTTP status ${status}.`)
-  }
-}
-
-export class RailwayResponseError extends Error {
-  override readonly name = 'RailwayResponseError'
-
-  constructor() {
-    super('Railway returned an invalid response.')
-  }
-}
 
 function readRetryAfterSeconds(value: string | null) {
   if (value === null || !/^\d+$/.test(value)) {
