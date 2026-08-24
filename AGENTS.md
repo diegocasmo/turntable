@@ -27,6 +27,7 @@ These rules apply to all work in this repository. This file is the only source f
 17. Each pull request is one testable unit.
 18. In component tests, query the rendered user interface by semantic role and accessible name. Do not assert serialized HTML with substring matches.
 19. Use the `@/` alias for each hand-maintained import that points to a file in `src`. Keep imports in the `vite.config.ts` dependency graph relative because [Vite cannot resolve a project alias while it loads the config](https://github.com/vitejs/vite/issues/16718). Keep relative imports that point outside `src`.
+20. Before you write infrastructure that a selected framework or dependency can provide, inspect its pinned public API and official documentation. Use that API when it meets the requirements. If it does not, record the exact missing behavior and evidence before you write a custom replacement.
 
 ## Commands
 

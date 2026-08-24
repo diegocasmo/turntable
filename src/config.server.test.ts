@@ -62,7 +62,7 @@ describe('configuration', () => {
     const config = readConfig(validProductionEnvironment)
 
     expect(config.railwayApiUrl).toBe(validProductionEnvironment.RAILWAY_API_URL)
-    expect(config.sessionSecret).toEqual(Uint8Array.from(Buffer.alloc(32, 1)))
+    expect(config.sessionSecret).toBe(validProductionEnvironment.SESSION_SECRET)
   })
 
   it('logs a clear error before it stops', () => {
