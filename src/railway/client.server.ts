@@ -1,11 +1,11 @@
 import { z } from 'zod'
-import { formatRequestLog } from '../logging.ts'
+import { formatRequestLog } from '@/logging'
 import {
   RailwayGraphQLError,
   RailwayHttpError,
   RailwayRateLimitError,
   RailwayResponseError,
-} from './errors.ts'
+} from '@/railway/errors'
 
 const graphQLErrorSchema = z.object({ message: z.string() })
 const graphQLEnvelopeSchema = z

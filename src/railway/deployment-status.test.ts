@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deploymentStatusSchema } from './deployment-status.ts'
+import { deploymentStatusSchema } from '@/railway/deployment-status'
 
 describe('deployment status', () => {
   it('keeps a known Railway status', () => {

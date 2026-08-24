@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkRailwayTarget, loadRailwaySmokeConfig } from '../src/railway/check-target.server.ts'
+import { checkRailwayTarget, loadRailwaySmokeConfig } from '@/railway/check-target.server'
 
 describe('real Railway target', () => {
   it('can read the configured project, environment, and service', async () => {
