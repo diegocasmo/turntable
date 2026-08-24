@@ -30,8 +30,7 @@ const productionAppOriginSchema = createAppOriginSchema(/^https$/, 'must use htt
 const sharedEnvironmentShape = { SESSION_SECRET: sessionSecretSchema }
 
 const environmentSchema = z
-  .object({ NODE_ENV: z.enum(['development', 'production', 'test']).default('development') })
-  .passthrough()
+  .looseObject({ NODE_ENV: z.enum(['development', 'production', 'test']).default('development') })
   .pipe(
     z.discriminatedUnion('NODE_ENV', [
       z.object({
