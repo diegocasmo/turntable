@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Badge } from './ui/badge'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { NativeSelect, NativeSelectOption } from './ui/native-select'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 
 export function TurntablePlaceholder() {
   const [controlsRespond, setControlsRespond] = useState(false)
