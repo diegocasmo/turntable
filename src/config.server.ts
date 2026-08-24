@@ -9,6 +9,7 @@ type ErrorWriter = (line: string) => void
 const sessionSecretSchema = z
   .base64()
   .refine((value) => Buffer.from(value, 'base64').byteLength === 32, 'must be 32 bytes in base64')
+  .transform((value) => Uint8Array.from(Buffer.from(value, 'base64')))
 
 const httpUrlSchema = z.url({ protocol: /^https?$/ })
 
