@@ -6,4 +6,9 @@ test('Nitro serves the placeholder from the production build', async ({ request 
   expect(response).toBeOK()
   expect(response.headers()['content-type']).toContain('text/html')
   expect(await response.text()).toContain('Scaffold ready')
+
+  const healthResponse = await request.get('/healthz')
+
+  expect(healthResponse).toBeOK()
+  expect(await healthResponse.text()).toBe('ok')
 })

@@ -1,4 +1,8 @@
+import { useState } from 'react'
+
 export function TurntablePlaceholder() {
+  const [controlsRespond, setControlsRespond] = useState(false)
+
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#141613] px-6 py-16 text-[#f4f0e6]">
       <div
@@ -22,9 +26,18 @@ export function TurntablePlaceholder() {
               One service. Live state. Clear controls.
             </p>
 
-            <div className="mt-10 inline-flex items-center gap-3 border border-[#706d60] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]">
-              <span aria-hidden="true" className="size-2 rounded-full bg-[#d59c55]" />
-              Scaffold ready
+            <div className="mt-10 flex flex-wrap gap-3">
+              <div className="inline-flex items-center gap-3 border border-[#706d60] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]">
+                <span aria-hidden="true" className="size-2 rounded-full bg-[#d59c55]" />
+                Scaffold ready
+              </div>
+              <button
+                type="button"
+                className="border border-[#d59c55] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em] hover:bg-[#d59c55] hover:text-[#141613] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
+                onClick={() => setControlsRespond(true)}
+              >
+                {controlsRespond ? 'Controls respond' : 'Verify controls'}
+              </button>
             </div>
           </div>
 

@@ -15,7 +15,7 @@
     "format": "biome format . --write",
     "lint": "biome check .",
     "preview": "vite preview",
-    "start": "node .output/server/index.mjs",
+    "start": "HOST=0.0.0.0 node .output/server/index.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:smoke": "pnpm build && playwright test --config playwright.smoke.config.ts",
