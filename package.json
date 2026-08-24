@@ -18,6 +18,7 @@
     "start": "HOST=0.0.0.0 node .output/server/index.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:railway": "vitest run --config vitest.railway.config.ts",
     "test:smoke": "pnpm build && playwright test --config playwright.smoke.config.ts",
     "typecheck": "pnpm codegen && tsc --noEmit"
   },

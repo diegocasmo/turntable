@@ -40,3 +40,15 @@ pnpm typecheck
 pnpm lint
 pnpm test
 ```
+
+The normal test suite does not use Railway or a token.
+
+To run the read-only Railway check, add a workspace token and the test target IDs to `.env`. The
+names are in `.env.example`.
+
+```sh
+pnpm test:railway
+```
+
+CI runs this check against the `ci` environment. It runs for branches in this repository, `main`,
+and manual requests. It does not give the token to fork pull requests.
