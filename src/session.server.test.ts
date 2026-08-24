@@ -131,6 +131,13 @@ describe('framework session', () => {
     expect(response.headers.getSetCookie()).toEqual([])
   })
 
+  it('rejects an empty token', async () => {
+    const { response, result } = await runRequest(() => writeSession('', sessionSecret))
+
+    expect(result).toEqual({ error: expect.any(RangeError), ok: false })
+    expect(response.headers.getSetCookie()).toEqual([])
+  })
+
   it('rejects a changed cookie', async () => {
     const created = await runRequest(() => writeSession(token, sessionSecret))
     const setCookie = created.response.headers.getSetCookie()[0]
