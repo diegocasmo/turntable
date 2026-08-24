@@ -1,4 +1,9 @@
 import { useState } from 'react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 
 export function TurntablePlaceholder() {
   const [controlsRespond, setControlsRespond] = useState(false)
@@ -26,18 +31,61 @@ export function TurntablePlaceholder() {
               One service. Live state. Clear controls.
             </p>
 
-            <div className="mt-10 flex flex-wrap gap-3">
-              <div className="inline-flex items-center gap-3 border border-[#706d60] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]">
-                <span aria-hidden="true" className="size-2 rounded-full bg-[#d59c55]" />
-                Scaffold ready
+            <div className="mt-10 grid max-w-xl gap-5 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label
+                  htmlFor="token-preview"
+                  className="uppercase tracking-[0.12em] text-[#c9c5b9]"
+                >
+                  Token preview
+                </Label>
+                <Input
+                  id="token-preview"
+                  type="password"
+                  value="workspace-token"
+                  readOnly
+                  className="border-[#706d60] bg-[#141613] text-[#f4f0e6]"
+                />
               </div>
-              <button
+
+              <div className="grid gap-2">
+                <Label
+                  htmlFor="service-preview"
+                  className="uppercase tracking-[0.12em] text-[#c9c5b9]"
+                >
+                  Service preview
+                </Label>
+                <NativeSelect
+                  id="service-preview"
+                  defaultValue="worker"
+                  className="w-full [&_select]:border-[#706d60] [&_select]:bg-[#141613] [&_select]:text-[#f4f0e6]"
+                >
+                  <NativeSelectOption value="worker">Worker</NativeSelectOption>
+                  <NativeSelectOption value="web">Web</NativeSelectOption>
+                </NativeSelect>
+              </div>
+            </div>
+
+            <div className="mt-10 flex flex-wrap gap-3">
+              <Badge
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                variant="outline"
+                className="h-auto gap-3 border-[#706d60] px-4 py-3 uppercase tracking-[0.16em] text-[#f4f0e6]"
+              >
+                <span aria-hidden="true" className="size-2 rounded-full bg-[#d59c55]" />
+                {controlsRespond ? 'Controls respond' : 'Scaffold ready'}
+              </Badge>
+
+              <Button
                 type="button"
-                className="border border-[#d59c55] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em] hover:bg-[#d59c55] hover:text-[#141613] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
+                variant="outline"
+                className="h-auto border-[#d59c55] bg-transparent px-4 py-3 uppercase tracking-[0.16em] text-[#f4f0e6] hover:bg-[#d59c55] hover:text-[#141613] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
                 onClick={() => setControlsRespond(true)}
               >
                 {controlsRespond ? 'Controls respond' : 'Verify controls'}
-              </button>
+              </Button>
             </div>
           </div>
 

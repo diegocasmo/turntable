@@ -15,7 +15,7 @@ These rules apply to all work in this repository. This file is the only source f
 5. Use GraphQL subscriptions for live data. Do not poll. There is no exception.
 6. Keep the Railway API token readable only on the server. Browser JavaScript must never read the token. The client stores only ciphertext.
 7. Keep each pull request at or below the added-line limit that [the Dangerfile](./dangerfile.mts) defines and enforces. The check counts tests like other files. Split the work instead.
-8. `.gitattributes` marks each generated and vendored file with `linguist-generated=true`. The size check in CI does not count these files, and GitHub hides them in the diff. Add the path there when you add a generated or vendored file.
+8. `.gitattributes` marks each file that a tool owns and replaces with `linguist-generated=true`. The size check in CI does not count these files, and GitHub hides them in the diff. Do not mark source code that the project owns and maintains.
 9. A feature's dependencies land in a pull request before its feature code. A dependency pull request can add the minimum configuration, generated output, and tests that prove the dependencies work. The scaffold pull request can add the dependencies of the scaffold.
 10. Put tests in the same pull request as the code that they test.
 11. Make the user interface accessible. Use semantic HTML. Use an `aria-live` region for the live status.

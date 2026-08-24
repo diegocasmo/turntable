@@ -2,26 +2,39 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
 test('the placeholder route is accessible', async ({ page }) => {
-  const policyErrors: string[] = []
-  const recordPolicyError = (message: string) => {
-    if (message.toLowerCase().includes('content security policy')) {
-      policyErrors.push(message)
+  const browserErrors: string[] = []
+  const recordBrowserError = (message: string) => {
+    const normalizedMessage = message.toLowerCase()
+
+    if (
+      normalizedMessage.includes('content security policy') ||
+      normalizedMessage.includes('hydrated but some attributes')
+    ) {
+      browserErrors.push(message)
     }
   }
 
-  page.on('console', (message) => recordPolicyError(message.text()))
-  page.on('pageerror', (error) => recordPolicyError(error.message))
+  page.on('console', (message) => recordBrowserError(message.text()))
+  page.on('pageerror', (error) => recordBrowserError(error.message))
 
   const response = await page.goto('/')
   const rawHtml = (await response?.body())?.toString() ?? ''
 
   await expect(page.getByRole('heading', { level: 1, name: 'Turntable' })).toBeVisible()
-  await expect(page.getByText('Scaffold ready')).toBeVisible()
+  await expect(page.getByLabel('Token preview')).toBeVisible()
+  const servicePreview = page.getByRole('combobox', { name: 'Service preview' })
+
+  await expect(servicePreview).toContainText('Worker')
+  await servicePreview.selectOption('web')
+  await expect(servicePreview).toHaveValue('web')
+  await expect(page.getByRole('status')).toHaveText('Scaffold ready')
+
   const controls = page.getByRole('button', { name: /Verify controls|Controls respond/ })
+
   await expect
     .poll(async () => {
       await controls.click()
-      return controls.textContent()
+      return page.getByRole('status').textContent()
     })
     .toBe('Controls respond')
 
@@ -43,7 +56,7 @@ test('the placeholder route is accessible', async ({ page }) => {
   const results = await new AxeBuilder({ page }).analyze()
 
   expect(results.violations).toEqual([])
-  expect(policyErrors).toEqual([])
+  expect(browserErrors).toEqual([])
 })
 
 test('the health check returns only ok', async ({ request }) => {
