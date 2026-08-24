@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -75,3 +76,47 @@ jobs:
 
       - name: Run browser tests
         run: pnpm test:e2e
+
+  railway:
+    name: Railway
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: railway-ci-target
+      cancel-in-progress: false
+    env:
+      RUN_RAILWAY_TEST: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+
+    steps:
+      - name: Skip untrusted pull request
+        if: env.RUN_RAILWAY_TEST != 'true'
+        run: echo "The Railway check does not run for fork pull requests."
+
+      - name: Check out the repository
+        if: env.RUN_RAILWAY_TEST == 'true'
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        if: env.RUN_RAILWAY_TEST == 'true'
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        if: env.RUN_RAILWAY_TEST == 'true'
+        uses: actions/setup-node@v6
+        with:
+          cache: pnpm
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        if: env.RUN_RAILWAY_TEST == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Check the Railway target
+        if: env.RUN_RAILWAY_TEST == 'true'
+        run: pnpm test:railway
+        env:
+          RAILWAY_API_URL: ${{ vars.RAILWAY_API_URL }}
+          RAILWAY_TEST_ENVIRONMENT_ID: ${{ vars.RAILWAY_TEST_ENVIRONMENT_ID }}
+          RAILWAY_TEST_PROJECT_ID: ${{ vars.RAILWAY_TEST_PROJECT_ID }}
+          RAILWAY_TEST_SERVICE_ID: ${{ vars.RAILWAY_TEST_SERVICE_ID }}
+          RAILWAY_TEST_TOKEN: ${{ secrets.RAILWAY_TEST_TOKEN }}
