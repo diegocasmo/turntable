@@ -153,15 +153,15 @@ The CLI matches message text in the same way, and `errors.rs` says in a comment 
 
 Decision: the user pastes a token once. The server verifies it against Railway. Then the server puts the token and an expiry time in an authenticated encrypted envelope. It sends that envelope as one cookie value.
 
-The envelope uses AES-256-GCM, with a fresh 96-bit random nonce for every write and a 128-bit authentication tag. The wire format is one version byte, then the nonce, then the ciphertext. The server encodes the result as base64url, with no padding. [Node's Web Crypto documentation](https://nodejs.org/api/webcrypto.html) gives the nonce rule.
+The envelope is a compact JSON Web Encryption (JWE) value. It uses direct key management and AES-256-GCM. Its protected header also holds a fixed type for a Turntable session. The reader accepts only these algorithms and this type. The protected header is authenticated, so a change makes the envelope invalid. [RFC 7516](https://www.rfc-editor.org/rfc/rfc7516.html) defines the format.
 
-The plaintext holds the token and the expiry. The expiry is 8 bytes, big-endian, in seconds. The additional authenticated data holds the version byte and a fixed purpose string, and nothing else. The expiry stays out of that data on purpose: a reader cannot know the expiry until the decryption succeeds, so an expiry inside the authenticated data can never be supplied.
+The encrypted payload is a JSON Web Token (JWT). It holds the Railway token and an absolute expiry. Turntable uses [`jose`](https://github.com/panva/jose) to write the JWE and validate it. The application does not own a cryptographic wire format.
 
 `SESSION_SECRET` holds 32 random bytes in base64. The server rejects a secret of the wrong size at startup.
 
 The cookie is `__Host-turntable`, with `Secure`, `HttpOnly`, `SameSite=Strict`, `Path=/`, and no `Domain`. The `__Host-` prefix requires `Secure`, `Path=/`, and no `Domain` ([Set-Cookie reference](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie)). Turntable also sets `HttpOnly` and `SameSite=Strict`, which the prefix does not require.
 
-The server rejects a token above 512 bytes in UTF-8. The envelope then holds at most 549 bytes, which is 732 characters in base64url. With the cookie name, the value stays far below the 4 KB browser limit ([cookie guide](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Cookies)).
+The server rejects a token above 512 bytes in UTF-8. It encodes the token bytes as base64url inside the encrypted payload. This step bounds JSON escaping. A route test checks the full cookie against the 4 KB browser limit ([cookie guide](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Cookies)).
 
 The lifetime is one absolute hour, in the envelope and in `Max-Age`. There is no renewal. The server checks the expiry on every request. Every stream also closes at the earlier of the session expiry and its own 14-minute limit. A cookie expiry cannot close an open response by itself, so the stream owns that timer.
 
@@ -176,6 +176,8 @@ Two honest limits:
 
 Alternatives considered:
 
+- H3 sessions: Nitro already includes H3. Its session API takes an HTTP event and uses its own envelope format ([H3 session guide](https://h3.dev/examples/handle-session)). The envelope module must stay independent of a web framework. Rejected.
+- A private Web Crypto envelope: it can use the same AES-GCM primitive. Turntable would then own the format and its parser. Compact JWE already supplies both. Rejected.
 - Token in `localStorage`: readable by any injected script. Rejected.
 - Raw token in the cookie: simpler, but a copy of the cookie store gives the token itself. Rejected.
 - Token in a server-side session store: it gives true logout revocation. An in-memory store loses every session on each restart. A persistent store adds infrastructure that this project does not need. Rejected.
