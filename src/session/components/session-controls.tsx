@@ -1,7 +1,8 @@
+import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { useDisconnectSession } from '@/session/hooks/use-disconnect-session'
 
-export function SessionControls() {
+export function SessionControls({ children }: Readonly<{ children?: ReactNode }>) {
   const disconnect = useDisconnectSession()
 
   return (
@@ -10,9 +11,11 @@ export function SessionControls() {
       <h2 id="connected-title" className="mt-4 text-3xl leading-tight sm:text-4xl">
         Connected to Railway
       </h2>
-      <p role="status" className="mt-4 leading-7 text-[#c9c5b9]">
+      <p aria-label="Session status" role="status" className="mt-4 leading-7 text-[#c9c5b9]">
         Railway accepted your workspace token.
       </p>
+
+      {children}
 
       {disconnect.error ? (
         <p
