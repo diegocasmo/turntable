@@ -20,7 +20,7 @@ test('the token route is accessible', async ({ page }) => {
   const response = await page.goto('/')
   const rawHtml = (await response?.body())?.toString() ?? ''
 
-  await expect(page.getByLabel('Workspace token')).toBeVisible()
+  await expect(page.getByLabel('Railway API token')).toBeVisible()
 
   const policy = response?.headers()['content-security-policy'] ?? ''
   const nonce = readNonce(policy)
