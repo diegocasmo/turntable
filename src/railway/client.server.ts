@@ -53,6 +53,10 @@ function readRetryAfterSeconds(value: string | null) {
   return Number.isSafeInteger(seconds) ? seconds : undefined
 }
 
+function redactRailwayToken(message: string, token: string) {
+  return message.replaceAll(token, '[REDACTED]')
+}
+
 function createRequest(
   apiUrl: string,
   document: DocumentNode,
@@ -113,7 +117,9 @@ export function createRailwayClient({
       }
 
       if (body.value.errors !== undefined && body.value.errors.length > 0) {
-        throw new RailwayGraphQLError(body.value.errors.map((error) => error.message))
+        throw new RailwayGraphQLError(
+          body.value.errors.map((error) => redactRailwayToken(error.message, input.token)),
+        )
       }
 
       if (body.value.data === undefined || body.value.data === null) {

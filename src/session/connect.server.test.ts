@@ -40,16 +40,16 @@ describe('connect Railway session', () => {
     })
   })
 
-  it('redacts the token from a Railway error', async () => {
+  it('returns a Railway authorization error', async () => {
     const fetchRequest = vi.fn(async () =>
-      createJsonResponse({ errors: [{ message: `Not Authorized: ${testRailwayToken}` }] }),
+      createJsonResponse({ errors: [{ message: 'Not Authorized' }] }),
     )
     const { result } = await runServerRequest(() =>
       connectRailwaySession(testRailwayToken, sessionConfig, fetchRequest),
     )
 
     expect(result).toEqual({
-      error: new SessionConnectionError('Not Authorized: [REDACTED]'),
+      error: new SessionConnectionError('Not Authorized'),
       ok: false,
     })
   })

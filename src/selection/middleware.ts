@@ -1,16 +1,15 @@
 import { createMiddleware } from '@tanstack/react-start'
 import { RailwayGraphQLError, RailwayRateLimitError } from '@/railway/errors'
-import { redactRailwayToken } from '@/railway/redact-token.server'
 import { loadConfigMiddleware } from '@/server-functions/middleware'
 import { InvalidSessionError, readSession } from '@/session/cookie.server'
 
-function createSelectionReadError(error: unknown, token?: string) {
+function createSelectionReadError(error: unknown) {
   if (error instanceof InvalidSessionError) {
     return new Error('Your session expired. Enter your workspace token again.')
   }
 
-  if (error instanceof RailwayGraphQLError && token !== undefined) {
-    return new Error(redactRailwayToken(error.message, token))
+  if (error instanceof RailwayGraphQLError) {
+    return new Error(error.message)
   }
 
   if (error instanceof RailwayRateLimitError) {
@@ -23,13 +22,10 @@ function createSelectionReadError(error: unknown, token?: string) {
 export const requireRailwaySessionMiddleware = createMiddleware({ type: 'function' })
   .middleware([loadConfigMiddleware])
   .server(async ({ context, next }) => {
-    let token: string | undefined
-
     try {
       const session = await readSession(context.config.sessionSecret)
-      token = session.token
-      return await next({ context: { railwayToken: token } })
+      return await next({ context: { railwayToken: session.token } })
     } catch (error) {
-      throw createSelectionReadError(error, token)
+      throw createSelectionReadError(error)
     }
   })

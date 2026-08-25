@@ -67,7 +67,7 @@ describe('Railway HTTP client', () => {
   })
 
   it('stops on GraphQL errors and identifies the pinned authorization message', async () => {
-    const notAuthorizedMessage = 'Not Authorized'
+    const notAuthorizedMessage = `Not Authorized: ${testRailwayToken}`
     const response = createJsonResponse({
       data: { project: { id: 'partial-project' } },
       errors: [{ message: notAuthorizedMessage }, { message: 'A second Railway error' }],
@@ -76,7 +76,7 @@ describe('Railway HTTP client', () => {
 
     await expect(sendRequest(client)).rejects.toMatchObject({
       isUnauthorized: true,
-      messages: [notAuthorizedMessage, 'A second Railway error'],
+      messages: ['Not Authorized: [REDACTED]', 'A second Railway error'],
       name: RailwayGraphQLError.name,
     })
   })

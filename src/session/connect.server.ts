@@ -1,7 +1,6 @@
 import { projectsQuery } from '@/gql/operations/projects'
 import { createRailwayClient } from '@/railway/client.server'
 import { RailwayGraphQLError, RailwayRateLimitError } from '@/railway/errors'
-import { redactRailwayToken } from '@/railway/redact-token.server'
 import { writeSession } from '@/session/cookie.server'
 
 export class SessionConnectionError extends Error {
@@ -15,9 +14,9 @@ type SessionConnectionConfig = Readonly<{
   sessionSecret: string
 }>
 
-function createTokenVerificationError(error: unknown, token: string) {
+function createTokenVerificationError(error: unknown) {
   if (error instanceof RailwayGraphQLError) {
-    return new SessionConnectionError(redactRailwayToken(error.message, token))
+    return new SessionConnectionError(error.message)
   }
 
   if (error instanceof RailwayRateLimitError) {
@@ -37,7 +36,7 @@ export async function connectRailwaySession(
   try {
     await railwayClient.request({ document: projectsQuery, token, variables: { first: 1 } })
   } catch (error) {
-    throw createTokenVerificationError(error, token)
+    throw createTokenVerificationError(error)
   }
 
   await writeSession(token, config.sessionSecret)
