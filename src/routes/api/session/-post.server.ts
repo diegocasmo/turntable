@@ -6,7 +6,8 @@ import {
   createSessionErrorResponse,
   type SessionRouteConfig,
 } from '@/routes/api/session/-request.server'
-import { railwayTokenSchema, writeSession } from '@/session.server'
+import { writeSession } from '@/session.server'
+import { railwayTokenSchema } from '@/session-schema'
 
 const sessionRequestSchema = z.object({
   token: railwayTokenSchema,

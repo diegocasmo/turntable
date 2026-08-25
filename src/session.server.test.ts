@@ -2,12 +2,12 @@ import { requestHandler } from '@tanstack/react-start/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   InvalidSessionError,
-  maximumSessionTokenByteLength,
   readSession,
   sessionCookieName,
   sessionLifetimeSeconds,
   writeSession,
 } from '@/session.server'
+import { maximumSessionTokenByteLength } from '@/session-schema'
 import { testAppOrigin, testRailwayToken, testSessionSecret } from '@/test/fixtures'
 
 const currentDate = new Date('2027-01-15T08:00:00.000Z')

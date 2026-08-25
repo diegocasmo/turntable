@@ -303,7 +303,7 @@ The framework wins on three points. It has the strongest end-to-end types of the
 
 [Nitro](https://nitro.build) is the production adapter for Railway. The [TanStack Start hosting guide](https://tanstack.com/start/latest/docs/framework/react/guide/hosting) tells Railway applications to use Nitro and gives the Vite plugin setup. `package.json` is the source for the pinned version and the production start command.
 
-Trade-off: the guide marks the `nitro/vite` plugin as under active development. The exact version keeps builds stable. The production smoke test starts the generated server and requests the placeholder page before a change can merge.
+Trade-off: the guide marks the `nitro/vite` plugin as under active development. The exact version keeps builds stable. The production smoke test starts the generated server and requests the application page before a change can merge.
 
 The pinned version needs Node 22.12 or later. The repository pins that Node version in `engines`, in `.nvmrc`, and in CI.
 

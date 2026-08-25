@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
-test('the placeholder route is accessible', async ({ page }) => {
+test('the token route is accessible', async ({ page }) => {
   const browserErrors: string[] = []
   const recordBrowserError = (message: string) => {
     const normalizedMessage = message.toLowerCase()
@@ -21,22 +21,13 @@ test('the placeholder route is accessible', async ({ page }) => {
   const rawHtml = (await response?.body())?.toString() ?? ''
 
   await expect(page.getByRole('heading', { level: 1, name: 'Turntable' })).toBeVisible()
-  await expect(page.getByLabel('Token preview')).toBeVisible()
-  const servicePreview = page.getByRole('combobox', { name: 'Service preview' })
-
-  await expect(servicePreview).toContainText('Worker')
-  await servicePreview.selectOption('web')
-  await expect(servicePreview).toHaveValue('web')
-  await expect(page.getByRole('status')).toHaveText('Scaffold ready')
-
-  const controls = page.getByRole('button', { name: /Verify controls|Controls respond/ })
-
-  await expect
-    .poll(async () => {
-      await controls.click()
-      return page.getByRole('status').textContent()
-    })
-    .toBe('Controls respond')
+  await expect(page.getByLabel('Workspace token')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Connect to Railway' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'workspace token from Railway' })).toHaveAttribute(
+    'href',
+    'https://railway.com/account/tokens',
+  )
+  await expect(page.getByRole('contentinfo')).toHaveText('Unofficial. Not a Railway product.')
 
   const policy = response?.headers()['content-security-policy'] ?? ''
   const nonce = readNonce(policy)

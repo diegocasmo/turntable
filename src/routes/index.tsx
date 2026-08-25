@@ -1,4 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { TurntablePlaceholder } from '@/components/turntable-placeholder'
+import { TokenForm } from '@/components/token-form'
 
-export const Route = createFileRoute('/')({ component: TurntablePlaceholder })
+export const Route = createFileRoute('/')({ component: TokenForm })
