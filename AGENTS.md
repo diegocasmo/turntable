@@ -30,6 +30,9 @@ These rules apply to all work in this repository. This file is the only source f
 20. Before you write infrastructure that a selected framework or dependency can provide, inspect its pinned public API and official documentation. Use that API when it meets the requirements. If it does not, record the exact missing behavior and evidence before you write a custom replacement.
 21. Start each hand-maintained, non-component function name with an action verb. Keep framework-required names and third-party API names.
 22. Define each GraphQL operation once with gql.tada's `graphql()` function. Infer its result and variables from that document.
+23. Use TanStack Start server functions for internal reads and commands. Use a raw server route only when the HTTP protocol needs a `Response`, such as SSE and health checks.
+24. Group a capability that spans the user interface and server under `src/<domain>`. Keep application composition outside the domain.
+25. Put each independent server action in a verb-named `.server.ts` file. Keep shared protocol or storage policy in one explicit module. Use direct imports. Do not add barrel files.
 
 ## Commands
 
