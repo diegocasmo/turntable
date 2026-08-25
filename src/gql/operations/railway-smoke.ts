@@ -1,7 +1,6 @@
-import { z } from 'zod'
-import type { RailwaySmokeQuery } from '@/gql/generated/operations'
+import { graphql } from 'gql.tada'
 
-export const railwaySmokeQuery = /* GraphQL */ `
+export const railwaySmokeQuery = graphql(`
   query RailwaySmoke($projectId: String!, $environmentId: String!) {
     project(id: $projectId) {
       id
@@ -21,18 +20,4 @@ export const railwaySmokeQuery = /* GraphQL */ `
       }
     }
   }
-`
-
-export const railwaySmokeQuerySchema: z.ZodType<RailwaySmokeQuery> = z.object({
-  environment: z.object({
-    id: z.string(),
-    name: z.string(),
-    projectId: z.string(),
-    serviceInstances: z.object({
-      edges: z.array(
-        z.object({ node: z.object({ serviceId: z.string(), serviceName: z.string() }) }),
-      ),
-    }),
-  }),
-  project: z.object({ id: z.string(), name: z.string() }),
-})
+`)

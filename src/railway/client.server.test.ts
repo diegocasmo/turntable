@@ -1,5 +1,6 @@
+import { print } from 'graphql'
 import { describe, expect, it, vi } from 'vitest'
-import { z } from 'zod'
+import { railwaySmokeQuery } from '@/gql/operations/railway-smoke'
 import { createRailwayClient } from '@/railway/client.server'
 import {
   RailwayGraphQLError,
@@ -9,9 +10,18 @@ import {
 } from '@/railway/errors'
 
 const apiUrl = 'https://backboard.railway.test/graphql/v2'
-const query = 'query Project($id: String!) { project(id: $id) { id } }'
+const query = print(railwaySmokeQuery)
 const token = 'railway-token-that-must-not-leak'
-const projectSchema = z.object({ project: z.object({ id: z.string() }) })
+const variables = { environmentId: 'environment-1', projectId: 'project-1' }
+const validData = {
+  environment: {
+    id: 'environment-1',
+    name: 'Production',
+    projectId: 'project-1',
+    serviceInstances: { edges: [] },
+  },
+  project: { id: 'project-1', name: 'Turntable' },
+}
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -28,18 +38,15 @@ function setup(response: Response) {
   return { client, fetchRequest, writeError }
 }
 
+function sendRequest(client: ReturnType<typeof createRailwayClient>) {
+  return client.request({ document: railwaySmokeQuery, token, variables })
+}
+
 describe('Railway HTTP client', () => {
   it('sends an authorized GraphQL request and returns valid data', async () => {
-    const { client, fetchRequest } = setup(jsonResponse({ data: { project: { id: 'project-1' } } }))
+    const { client, fetchRequest } = setup(jsonResponse({ data: validData }))
 
-    await expect(
-      client.request({
-        dataSchema: projectSchema,
-        query,
-        token,
-        variables: { id: 'project-1' },
-      }),
-    ).resolves.toEqual({ project: { id: 'project-1' } })
+    await expect(sendRequest(client)).resolves.toEqual(validData)
 
     const request = fetchRequest.mock.calls[0]?.[0]
 
@@ -50,7 +57,7 @@ describe('Railway HTTP client', () => {
     expect(request?.headers.get('content-type')).toBe('application/json')
     await expect(request?.json()).resolves.toEqual({
       query,
-      variables: { id: 'project-1' },
+      variables,
     })
   })
 
@@ -62,33 +69,36 @@ describe('Railway HTTP client', () => {
     })
     const { client } = setup(response)
 
-    await expect(client.request({ dataSchema: projectSchema, query, token })).rejects.toMatchObject(
-      {
-        isUnauthorized: true,
-        messages: [notAuthorizedMessage, 'A second Railway error'],
-        name: RailwayGraphQLError.name,
-      },
-    )
+    await expect(sendRequest(client)).rejects.toMatchObject({
+      isUnauthorized: true,
+      messages: [notAuthorizedMessage, 'A second Railway error'],
+      name: RailwayGraphQLError.name,
+    })
   })
 
-  it('rejects a 200 body that is not a GraphQL envelope', async () => {
+  it('rejects a 200 body that is not a GraphQL response', async () => {
     const { client } = setup(jsonResponse({ message: 'Problem processing request' }))
 
-    await expect(
-      client.request({ dataSchema: projectSchema, query, token }),
-    ).rejects.toBeInstanceOf(RailwayResponseError)
+    await expect(sendRequest(client)).rejects.toBeInstanceOf(RailwayResponseError)
+  })
+
+  it.each([
+    ['missing', {}],
+    ['null', { data: null }],
+  ])('rejects a GraphQL response with %s data', async (_name, body) => {
+    const { client } = setup(jsonResponse(body))
+
+    await expect(sendRequest(client)).rejects.toBeInstanceOf(RailwayResponseError)
   })
 
   it('reads whole Retry-After seconds from a 429 response', async () => {
     const response = new Response(null, { headers: { 'retry-after': '12' }, status: 429 })
     const { client } = setup(response)
 
-    await expect(client.request({ dataSchema: projectSchema, query, token })).rejects.toMatchObject(
-      {
-        name: RailwayRateLimitError.name,
-        retryAfterSeconds: 12,
-      },
-    )
+    await expect(sendRequest(client)).rejects.toMatchObject({
+      name: RailwayRateLimitError.name,
+      retryAfterSeconds: 12,
+    })
   })
 
   it.each([undefined, '1.5', 'after lunch', '999999999999999999999'])(
@@ -100,9 +110,7 @@ describe('Railway HTTP client', () => {
           : new Response(null, { headers: { 'retry-after': retryAfter }, status: 429 })
       const { client } = setup(response)
 
-      await expect(
-        client.request({ dataSchema: projectSchema, query, token }),
-      ).rejects.toMatchObject({ retryAfterSeconds: undefined })
+      await expect(sendRequest(client)).rejects.toMatchObject({ retryAfterSeconds: undefined })
     },
   )
 
@@ -113,12 +121,10 @@ describe('Railway HTTP client', () => {
     const response = new Response(body, { status })
     const { client, writeError } = setup(response)
 
-    await expect(client.request({ dataSchema: projectSchema, query, token })).rejects.toMatchObject(
-      {
-        name: RailwayHttpError.name,
-        status,
-      },
-    )
+    await expect(sendRequest(client)).rejects.toMatchObject({
+      name: RailwayHttpError.name,
+      status,
+    })
 
     expect(writeError).toHaveBeenCalledOnce()
     const line = writeError.mock.calls[0]?.[0]

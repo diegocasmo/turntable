@@ -143,7 +143,7 @@ Layer 1 reads the transport:
 
 Layer 2 reads the body:
 
-1. A zod parse accepts the envelope. The parse must also accept a body that is not GraphQL, because the 400 case has no `errors` array.
+1. Zod parses the response body. It must also accept a body that is not GraphQL, because the 400 case has no `errors` array.
 2. A non-empty `errors` array stops the work. The screen shows Railway's own message.
 3. A message that contains "not authorized" also tells the client to offer the token form. This is a hint only. Measured, an auth failure can also read "Deployment not found", so the text is never the only test of a live session.
 
@@ -175,7 +175,7 @@ Two honest limits:
 Alternatives considered:
 
 - Compact JWE through `jose`: it gives Turntable direct control of a standard encrypted format. No current consumer needs a framework-independent format. It duplicates the session support in the selected framework. Rejected.
-- A private Web Crypto envelope: Turntable would own the format and its parser. The selected framework already provides an authenticated encrypted session. Rejected.
+- A private Web Crypto format: Turntable would own the format and its parser. The selected framework already provides an authenticated encrypted session. Rejected.
 - Token in `localStorage`: readable by any injected script. Rejected.
 - Raw token in the cookie: simpler, but a copy of the cookie store gives the token itself. Rejected.
 - Token in a server-side session store: it gives true logout revocation. An in-memory store loses every session on each restart. A persistent store adds infrastructure that this project does not need. Rejected.
@@ -281,7 +281,7 @@ The 13 statuses still have a job. One function maps a status to a badge colour a
 Two rules bound the policy:
 
 1. Every command route resolves the current state again on the server, checks the gate, and compares the expected deployment ID. A stale screen cannot act. One command per service runs at a time, and the gate holds until the command returns.
-2. The server parses the full GraphQL response envelope, including the `errors` array ([GraphQL specification](https://spec.graphql.org/September2025/#sec-Response)). It never retries a mutation by itself after an unclear answer, because a repeat of a destructive call can act twice.
+2. The server parses the full GraphQL response, including the `errors` array ([GraphQL specification](https://spec.graphql.org/September2025/#sec-Response)). It never retries a mutation by itself after an unclear answer, because a repeat of a destructive call can act twice.
 
 ### State: TanStack Query only
 
@@ -312,18 +312,18 @@ Alternatives considered:
 - Next.js: stable and the largest ecosystem. But its extra machinery buys nothing here.
 - React Router v7: stable and capable, but its end-to-end typing is weaker.
 
-### Types: generated from the schema, guarded in two layers
+### Types: one schema snapshot and one operation
 
-Decision: [GraphQL Code Generator](https://the-guild.dev/graphql/codegen) with a committed introspection of the Railway schema. This is the pattern that the CLI itself uses: a vendored `schema.json` plus generated operation types, in [`src/gql`](https://github.com/railwayapp/cli/tree/3efce83e618a158b16de8eed3a9e1f4f2e585d80/src/gql).
+Decision: [gql.tada](https://gql-tada.0no.co/) with a committed SDL snapshot of the Railway schema. Its [`generate-schema`](https://gql-tada.0no.co/reference/gql-tada-cli#generate-schema) command syncs the snapshot. Its TypeScript plug-in checks each `graphql()` document and infers its result and variables from that document. [Buffer Publish](https://github.com/bufferapp/buffer-mono/pull/23907) uses the same operation model and removed its old GraphQL Code Generator operation imports.
 
 The guards, one per layer:
 
-1. Compile time: codegen validates every operation against the committed schema. A removed field is a build error. This check needs no network.
-2. Run time: types cannot see a new enum value or a changed payload. Every payload passes a zod parse at the boundary.
+1. Compile time: `gql-tada check` validates every operation against the committed schema. A removed field is a build error. This check needs no network.
+2. Run time: zod validates the response body, including bodies that are not GraphQL. After the client rejects GraphQL errors and missing or null data, it trusts Railway to return the successful field shape that the checked operation requests. The client keeps that one type assertion at this boundary.
 
 There is no job that watches the live schema. Railway owns the schema, and this project cannot fix a change in it. A generated test cannot fail on a status that Railway added, because the generated enum comes from the committed file. So the conformance script below compares the live status list with the committed one, and a person runs it when the answer is useful.
 
-Alternative considered: gql.tada infers the same types without a generate step. It is a strong tool. Codegen wins here because of its mature schema tooling and its match with the committed-schema pattern above.
+Alternative considered: GraphQL Code Generator can create the same schema snapshot and operation types. gql.tada already creates the snapshot and checks the operations. Keeping Codegen would add three direct dependencies and two configuration files without a separate job.
 
 ### Tests: injected states, one real end-to-end path
 

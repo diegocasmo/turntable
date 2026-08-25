@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { railwaySmokeQuery, railwaySmokeQuerySchema } from '@/gql/operations/railway-smoke'
+import { railwaySmokeQuery } from '@/gql/operations/railway-smoke'
 import { createRailwayClient } from '@/railway/client.server'
 import { railwayHttpsUrlSchema } from '@/railway/url-schema'
 
@@ -35,8 +35,7 @@ type RailwaySmokeConfig = ReturnType<typeof loadRailwaySmokeConfig>
 export async function checkRailwayTarget(config: RailwaySmokeConfig) {
   const client = createRailwayClient({ apiUrl: config.apiUrl })
   const data = await client.request({
-    dataSchema: railwaySmokeQuerySchema,
-    query: railwaySmokeQuery,
+    document: railwaySmokeQuery,
     token: config.token,
     variables: { environmentId: config.environmentId, projectId: config.projectId },
   })

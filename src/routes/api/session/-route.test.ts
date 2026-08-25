@@ -135,6 +135,7 @@ describe('session route', () => {
     expect(railwayRequest?.headers.get('authorization')).toBe(`Bearer ${token}`)
     await expect(railwayRequest?.json()).resolves.toEqual({
       query: expect.stringContaining('query Projects'),
+      variables: {},
     })
   })
 

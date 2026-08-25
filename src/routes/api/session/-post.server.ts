@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { projectsQuery, projectsQuerySchema } from '@/gql/operations/projects'
+import { projectsQuery } from '@/gql/operations/projects'
 import { createRailwayClient } from '@/railway/client.server'
 import { RailwayGraphQLError, RailwayRateLimitError } from '@/railway/errors'
 import {
@@ -52,9 +52,9 @@ export async function handleSessionPost(
 
   try {
     await railwayClient.request({
-      dataSchema: projectsQuerySchema,
-      query: projectsQuery,
+      document: projectsQuery,
       token: parsedBody.data.token,
+      variables: {},
     })
   } catch (error) {
     return createRailwayErrorResponse(error, parsedBody.data.token)

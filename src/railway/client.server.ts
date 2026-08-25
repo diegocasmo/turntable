@@ -1,3 +1,5 @@
+import type { TadaDocumentNode } from 'gql.tada'
+import { type DocumentNode, print } from 'graphql'
 import { z } from 'zod'
 import { formatRequestLog } from '@/logging'
 import {
@@ -8,9 +10,9 @@ import {
 } from '@/railway/errors'
 
 const graphQLErrorSchema = z.object({ message: z.string() })
-const graphQLEnvelopeSchema = z
+const graphQLResponseSchema = z
   .looseObject({
-    data: z.unknown().optional(),
+    data: z.record(z.string(), z.unknown()).nullable().optional(),
     errors: z.array(graphQLErrorSchema).optional(),
   })
   .refine(
@@ -20,16 +22,15 @@ const graphQLEnvelopeSchema = z
 const graphQLBodyKind: 'graphql' = 'graphql'
 const otherBodyKind: 'other' = 'other'
 const railwayResponseBodySchema = z.union([
-  graphQLEnvelopeSchema.transform((envelope) => ({
-    envelope,
+  graphQLResponseSchema.transform((value) => ({
     kind: graphQLBodyKind,
+    value,
   })),
-  z.json().transform((body) => ({ body, kind: otherBodyKind })),
+  z.json().transform((value) => ({ kind: otherBodyKind, value })),
 ])
 
 type ErrorWriter = (line: string) => void
 type Fetch = (request: Request) => Promise<Response>
-type Variables = Readonly<Record<string, unknown>>
 
 type RailwayClientOptions = Readonly<{
   apiUrl: string
@@ -37,11 +38,10 @@ type RailwayClientOptions = Readonly<{
   writeError?: ErrorWriter
 }>
 
-type RailwayRequest<Data> = Readonly<{
-  dataSchema: z.ZodType<Data>
-  query: string
+type RailwayRequest<Result, Variables> = Readonly<{
+  document: TadaDocumentNode<Result, Variables>
   token: string
-  variables?: Variables
+  variables: NoInfer<Variables>
 }>
 
 function readRetryAfterSeconds(value: string | null) {
@@ -53,16 +53,19 @@ function readRetryAfterSeconds(value: string | null) {
   return Number.isSafeInteger(seconds) ? seconds : undefined
 }
 
-function createRequest(apiUrl: string, input: RailwayRequest<unknown>) {
+function createRequest(
+  apiUrl: string,
+  document: DocumentNode,
+  token: string,
+  variables: unknown | undefined,
+) {
   const body =
-    input.variables === undefined
-      ? { query: input.query }
-      : { query: input.query, variables: input.variables }
+    variables === undefined ? { query: print(document) } : { query: print(document), variables }
 
   return new Request(apiUrl, {
     body: JSON.stringify(body),
     headers: {
-      authorization: `Bearer ${input.token}`,
+      authorization: `Bearer ${token}`,
       'content-type': 'application/json',
     },
     method: 'POST',
@@ -89,8 +92,8 @@ export function createRailwayClient({
   writeError = console.error,
 }: RailwayClientOptions) {
   return {
-    async request<Data>(input: RailwayRequest<Data>) {
-      const request = createRequest(apiUrl, input)
+    async request<Result, Variables>(input: RailwayRequest<Result, Variables>): Promise<Result> {
+      const request = createRequest(apiUrl, input.document, input.token, input.variables)
       const response = await fetchRequest(request)
       const body = await readResponseBody(response)
 
@@ -109,17 +112,15 @@ export function createRailwayClient({
         throw new RailwayResponseError()
       }
 
-      if (body.envelope.errors !== undefined && body.envelope.errors.length > 0) {
-        throw new RailwayGraphQLError(body.envelope.errors.map((error) => error.message))
+      if (body.value.errors !== undefined && body.value.errors.length > 0) {
+        throw new RailwayGraphQLError(body.value.errors.map((error) => error.message))
       }
 
-      const data = input.dataSchema.safeParse(body.envelope.data)
-
-      if (!data.success) {
+      if (body.value.data === undefined || body.value.data === null) {
         throw new RailwayResponseError()
       }
 
-      return data.data
+      return body.value.data as Result
     },
   }
 }
