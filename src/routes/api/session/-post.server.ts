@@ -18,7 +18,7 @@ function redactToken(message: string, token: string) {
   return message.replaceAll(token, '[REDACTED]')
 }
 
-function createRailwayErrorResponse(error: unknown, token: string) {
+function createTokenVerificationErrorResponse(error: unknown, token: string) {
   if (error instanceof RailwayGraphQLError) {
     return createSessionErrorResponse(
       redactToken(error.message, token),
@@ -57,7 +57,7 @@ export async function handleSessionPost(
       variables: {},
     })
   } catch (error) {
-    return createRailwayErrorResponse(error, parsedBody.data.token)
+    return createTokenVerificationErrorResponse(error, parsedBody.data.token)
   }
 
   await writeSession(parsedBody.data.token, config.sessionSecret)
