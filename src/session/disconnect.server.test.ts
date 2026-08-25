@@ -28,7 +28,7 @@ describe('disconnect Railway session', () => {
     expect(response.headers.get('set-cookie')).toBe(clearedSessionCookie)
   })
 
-  it('reports and clears an ended session', async () => {
+  it('reports and clears an expired session', async () => {
     vi.useFakeTimers()
     const cookie = await createSessionCookie()
 
@@ -38,7 +38,7 @@ describe('disconnect Railway session', () => {
       { cookie },
     )
 
-    expect(result).toEqual({ ok: true, value: 'ended' })
+    expect(result).toEqual({ ok: true, value: 'expired' })
     expect(response.headers.get('set-cookie')).toBe(clearedSessionCookie)
   })
 })

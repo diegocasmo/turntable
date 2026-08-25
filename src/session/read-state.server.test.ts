@@ -10,7 +10,7 @@ describe('read session state', () => {
     vi.useRealTimers()
   })
 
-  it('reads signed-out, authenticated, and ended states', async () => {
+  it('reads signed-out, authenticated, and expired states', async () => {
     vi.useFakeTimers()
     const signedOut = await runServerRequest(() => readSessionState(testSessionSecret, false))
     const created = await runServerRequest(() => writeSession(testRailwayToken, testSessionSecret))
@@ -20,13 +20,15 @@ describe('read session state', () => {
     })
 
     vi.advanceTimersByTime(sessionLifetimeSeconds * 1_000)
-    const ended = await runServerRequest(() => readSessionState(testSessionSecret, true), {
+    const expired = await runServerRequest(() => readSessionState(testSessionSecret, true), {
       cookie,
     })
 
     expect(signedOut.result).toEqual({ ok: true, value: 'signed-out' })
     expect(authenticated.result).toEqual({ ok: true, value: 'authenticated' })
-    expect(ended.result).toEqual({ ok: true, value: 'ended' })
-    expect(ended.response.headers.get('set-cookie')).toContain(`${sessionCookieName}=; Max-Age=0;`)
+    expect(expired.result).toEqual({ ok: true, value: 'expired' })
+    expect(expired.response.headers.get('set-cookie')).toContain(
+      `${sessionCookieName}=; Max-Age=0;`,
+    )
   })
 })

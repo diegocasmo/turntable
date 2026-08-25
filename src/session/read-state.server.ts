@@ -14,7 +14,7 @@ export async function readSessionState(
     return 'authenticated'
   } catch (error) {
     if (error instanceof InvalidSessionError) {
-      return 'ended'
+      return 'expired'
     }
 
     throw error

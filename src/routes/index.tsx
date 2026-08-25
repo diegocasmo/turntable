@@ -10,5 +10,5 @@ export const Route = createFileRoute('/')({
 })
 
 function IndexPage() {
-  return <TurntablePage initialSessionState={Route.useLoaderData()} />
+  return <TurntablePage sessionState={Route.useLoaderData()} />
 }

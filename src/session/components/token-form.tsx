@@ -9,10 +9,10 @@ import { useConnectSession } from '@/session/hooks/use-connect-session'
 import { sessionInputSchema } from '@/session/schema'
 
 type TokenFormProps = Readonly<{
-  ended: boolean
+  expired: boolean
 }>
 
-export function TokenForm({ ended }: TokenFormProps) {
+export function TokenForm({ expired }: TokenFormProps) {
   const session = useConnectSession()
   const form = useForm({
     defaultValues: { token: '' },
@@ -48,12 +48,12 @@ export function TokenForm({ ended }: TokenFormProps) {
         .
       </p>
 
-      {ended ? (
+      {expired ? (
         <p
           role="alert"
           className="mt-6 border-l-2 border-[#e5ad68] bg-[#2b281f] px-4 py-3 text-sm leading-6 text-[#f4d4a9]"
         >
-          Your Railway session ended. Enter your workspace token again.
+          Your session expired. Enter your workspace token again.
         </p>
       ) : null}
 
