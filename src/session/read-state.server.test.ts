@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { sessionCookieName, sessionLifetimeSeconds, writeSession } from '@/session/cookie.server'
 import { readSessionState } from '@/session/read-state.server'
-import { testRailwayToken, testSessionSecret } from '@/test/fixtures'
+import { testSessionSecret } from '@/test/fixtures'
+import { testRailwayToken } from '@/test/railway'
 import { readFirstCookie, runServerRequest } from '@/test/start-request'
 
 describe('read session state', () => {

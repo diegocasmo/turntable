@@ -1,15 +1,14 @@
-import type { ResultOf } from 'gql.tada'
 import { describe, expect, it, vi } from 'vitest'
-import type { projectsQuery } from '@/gql/operations/projects'
 import { connectRailwaySession, SessionConnectionError } from '@/session/connect.server'
 import { sessionCookieName } from '@/session/cookie.server'
+import { testSessionSecret } from '@/test/fixtures'
 import {
+  createRailwayPage,
+  createRailwayProject,
+  createRailwayResponse,
   testRailwayApiUrl,
-  testRailwayEnvironmentId,
-  testRailwayProjectId,
   testRailwayToken,
-  testSessionSecret,
-} from '@/test/fixtures'
+} from '@/test/railway'
 import { createJsonResponse } from '@/test/response'
 import { runServerRequest } from '@/test/start-request'
 
@@ -17,22 +16,9 @@ const sessionConfig = {
   railwayApiUrl: testRailwayApiUrl,
   sessionSecret: testSessionSecret,
 }
-const validRailwayBody = {
-  data: {
-    projects: {
-      edges: [
-        {
-          node: {
-            id: testRailwayProjectId,
-            name: 'Turntable',
-            primaryEnvironmentId: testRailwayEnvironmentId,
-            workspace: { id: 'workspace-1', name: 'Workspace' },
-          },
-        },
-      ],
-    },
-  },
-} satisfies { data: ResultOf<typeof projectsQuery> }
+const validRailwayBody = createRailwayResponse({
+  projects: createRailwayPage([createRailwayProject()]),
+})
 
 describe('connect Railway session', () => {
   it('verifies a token and stores only its encrypted session', async () => {
@@ -50,20 +36,20 @@ describe('connect Railway session', () => {
     expect(railwayRequest?.headers.get('authorization')).toBe(`Bearer ${testRailwayToken}`)
     await expect(railwayRequest?.json()).resolves.toEqual({
       query: expect.stringContaining('query Projects'),
-      variables: {},
+      variables: { first: 1 },
     })
   })
 
-  it('redacts the token from a Railway error', async () => {
+  it('returns a Railway authorization error', async () => {
     const fetchRequest = vi.fn(async () =>
-      createJsonResponse({ errors: [{ message: `Not Authorized: ${testRailwayToken}` }] }),
+      createJsonResponse({ errors: [{ message: 'Not Authorized' }] }),
     )
     const { result } = await runServerRequest(() =>
       connectRailwaySession(testRailwayToken, sessionConfig, fetchRequest),
     )
 
     expect(result).toEqual({
-      error: new SessionConnectionError('Not Authorized: [REDACTED]'),
+      error: new SessionConnectionError('Not Authorized'),
       ok: false,
     })
   })

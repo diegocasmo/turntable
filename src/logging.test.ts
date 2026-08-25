@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { formatRequestLog } from '@/logging'
-import { testAppOrigin, testRailwayToken } from '@/test/fixtures'
+import { testAppOrigin } from '@/test/fixtures'
+import { testRailwayToken } from '@/test/railway'
 
 describe('request log redaction', () => {
   it('does not log private headers or a request body', () => {

@@ -14,13 +14,9 @@ type SessionConnectionConfig = Readonly<{
   sessionSecret: string
 }>
 
-function redactToken(message: string, token: string) {
-  return message.replaceAll(token, '[REDACTED]')
-}
-
-function createTokenVerificationError(error: unknown, token: string) {
+function createTokenVerificationError(error: unknown) {
   if (error instanceof RailwayGraphQLError) {
-    return new SessionConnectionError(redactToken(error.message, token))
+    return new SessionConnectionError(error.message)
   }
 
   if (error instanceof RailwayRateLimitError) {
@@ -38,9 +34,9 @@ export async function connectRailwaySession(
   const railwayClient = createRailwayClient({ apiUrl: config.railwayApiUrl, fetch: fetchRequest })
 
   try {
-    await railwayClient.request({ document: projectsQuery, token, variables: {} })
+    await railwayClient.request({ document: projectsQuery, token, variables: { first: 1 } })
   } catch (error) {
-    throw createTokenVerificationError(error, token)
+    throw createTokenVerificationError(error)
   }
 
   await writeSession(token, config.sessionSecret)

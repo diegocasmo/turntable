@@ -66,18 +66,18 @@ Trade-off: `deploymentStop` stops a deployment, but it does not mark it removed.
 
 ### Selecting a service
 
-The application reads `projects` with no argument. Each project carries `workspace { id name }`, so the screen shows the workspace as a label.
+The application reads `projects` without `me` or a workspace filter. It follows Railway's cursor pages until it has every project. Each project carries `workspace { id name }`, so the screen shows the workspace as a label.
 
 The application never calls `me`. Measured: a workspace-scoped token gets "Not Authorized" from `me`. A design that reads `me { workspaces }` therefore breaks for the exact token that the form asks for.
 
-Three pickers follow: project, environment, and service. The application skips a picker when the level holds one choice. The CLI does the same for a service in [`link.rs`](https://github.com/railwayapp/cli/blob/3efce83e618a158b16de8eed3a9e1f4f2e585d80/src/commands/link.rs).
+Three pickers follow: project, environment, and service. Each picker stays visible. This keeps the selected target clear and lets the user change it. The application preselects the only choice at a level.
 
 Two details come from the schema:
 
 1. The environment picker preselects `Project.primaryEnvironmentId`. There is no field named `defaultEnvironment`.
 2. The service list comes from `Environment.serviceInstances`. Each `ServiceInstance` carries `serviceId` and `serviceName`. `Project.services` cannot answer this, because the `Service` type holds no environment.
 
-The route holds the environment ID and the service ID. A reload keeps the choice.
+The route holds the project ID, environment ID, and service ID. A reload keeps the choice.
 
 ### Deployment identity
 

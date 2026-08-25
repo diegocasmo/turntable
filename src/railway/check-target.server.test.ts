@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { loadRailwaySmokeConfig } from '@/railway/check-target.server'
-import { testRailwayEnvironmentId, testRailwayProjectId, testRailwayToken } from '@/test/fixtures'
+import { testRailwayEnvironmentId, testRailwayProjectId, testRailwayToken } from '@/test/railway'
 
 const validEnvironment = {
   RAILWAY_API_URL: 'https://backboard.railway.com/graphql/v2',
