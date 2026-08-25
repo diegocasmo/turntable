@@ -6,7 +6,7 @@ import { InvalidSessionError, readSession } from '@/session/cookie.server'
 
 function createSelectionReadError(error: unknown, token?: string) {
   if (error instanceof InvalidSessionError) {
-    return new Error('Your session expired. Sign in to Railway again.')
+    return new Error('Your session expired. Enter your workspace token again.')
   }
 
   if (error instanceof RailwayGraphQLError && token !== undefined) {
