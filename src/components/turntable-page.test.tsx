@@ -18,8 +18,10 @@ const { connectToRailwayMock, disconnectFromRailwayMock } = vi.hoisted(() => ({
   disconnectFromRailwayMock: vi.fn(),
 }))
 
-vi.mock('@/session/functions', () => ({
+vi.mock('@/session/connect-to-railway', () => ({
   connectToRailway: connectToRailwayMock,
+}))
+vi.mock('@/session/disconnect-from-railway', () => ({
   disconnectFromRailway: disconnectFromRailwayMock,
 }))
 vi.stubGlobal('scrollTo', vi.fn())
