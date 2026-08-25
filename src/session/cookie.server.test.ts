@@ -32,7 +32,7 @@ function changeLastCharacter(value: string) {
   return `${value.slice(0, -1)}${lastCharacter === 'A' ? 'B' : 'A'}`
 }
 
-describe('session cookie', () => {
+describe('framework session', () => {
   afterEach(() => {
     vi.useRealTimers()
   })

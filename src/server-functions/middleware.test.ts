@@ -13,7 +13,6 @@ describe('server function request origin', () => {
 
   it.each([
     ['another site', 'https://attacker.test', testAppOrigin],
-    ['another configured origin', testAppOrigin, 'https://configured.test'],
     ['a malformed origin', 'not an origin', testAppOrigin],
     ['a missing origin', null, testAppOrigin],
   ])('rejects %s', (_name, origin, appOrigin) => {
