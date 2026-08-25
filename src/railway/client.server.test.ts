@@ -76,7 +76,7 @@ describe('Railway HTTP client', () => {
     })
   })
 
-  it('rejects a 200 body that is not a GraphQL envelope', async () => {
+  it('rejects a 200 body that is not a GraphQL response', async () => {
     const { client } = setup(jsonResponse({ message: 'Problem processing request' }))
 
     await expect(sendRequest(client)).rejects.toBeInstanceOf(RailwayResponseError)
@@ -85,7 +85,7 @@ describe('Railway HTTP client', () => {
   it.each([
     ['missing', {}],
     ['null', { data: null }],
-  ])('rejects a GraphQL envelope with %s data', async (_name, body) => {
+  ])('rejects a GraphQL response with %s data', async (_name, body) => {
     const { client } = setup(jsonResponse(body))
 
     await expect(sendRequest(client)).rejects.toBeInstanceOf(RailwayResponseError)
