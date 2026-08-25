@@ -14,6 +14,7 @@ import {
   testRailwayProjectId,
   testRailwayToken,
 } from '@/test/fixtures'
+import { createJsonResponse } from '@/test/response'
 
 const query = print(railwaySmokeQuery)
 const variables = {
@@ -30,14 +31,7 @@ const validData = {
   project: { id: testRailwayProjectId, name: 'Turntable' },
 }
 
-function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    headers: { 'content-type': 'application/json' },
-    status,
-  })
-}
-
-function setup(response: Response) {
+function setUpClient(response: Response) {
   const fetchRequest = vi.fn(async (_request: Request) => response)
   const writeError = vi.fn<(line: string) => void>()
   const client = createRailwayClient({
@@ -55,7 +49,7 @@ function sendRequest(client: ReturnType<typeof createRailwayClient>) {
 
 describe('Railway HTTP client', () => {
   it('sends an authorized GraphQL request and returns valid data', async () => {
-    const { client, fetchRequest } = setup(jsonResponse({ data: validData }))
+    const { client, fetchRequest } = setUpClient(createJsonResponse({ data: validData }))
 
     await expect(sendRequest(client)).resolves.toEqual(validData)
 
@@ -74,11 +68,11 @@ describe('Railway HTTP client', () => {
 
   it('stops on GraphQL errors and identifies the pinned authorization message', async () => {
     const notAuthorizedMessage = 'Not Authorized'
-    const response = jsonResponse({
+    const response = createJsonResponse({
       data: { project: { id: 'partial-project' } },
       errors: [{ message: notAuthorizedMessage }, { message: 'A second Railway error' }],
     })
-    const { client } = setup(response)
+    const { client } = setUpClient(response)
 
     await expect(sendRequest(client)).rejects.toMatchObject({
       isUnauthorized: true,
@@ -88,7 +82,7 @@ describe('Railway HTTP client', () => {
   })
 
   it('rejects a 200 body that is not a GraphQL response', async () => {
-    const { client } = setup(jsonResponse({ message: 'Problem processing request' }))
+    const { client } = setUpClient(createJsonResponse({ message: 'Problem processing request' }))
 
     await expect(sendRequest(client)).rejects.toBeInstanceOf(RailwayResponseError)
   })
@@ -97,14 +91,14 @@ describe('Railway HTTP client', () => {
     ['missing', {}],
     ['null', { data: null }],
   ])('rejects a GraphQL response with %s data', async (_name, body) => {
-    const { client } = setup(jsonResponse(body))
+    const { client } = setUpClient(createJsonResponse(body))
 
     await expect(sendRequest(client)).rejects.toBeInstanceOf(RailwayResponseError)
   })
 
   it('reads whole Retry-After seconds from a 429 response', async () => {
     const response = new Response(null, { headers: { 'retry-after': '12' }, status: 429 })
-    const { client } = setup(response)
+    const { client } = setUpClient(response)
 
     await expect(sendRequest(client)).rejects.toMatchObject({
       name: RailwayRateLimitError.name,
@@ -119,7 +113,7 @@ describe('Railway HTTP client', () => {
         retryAfter === undefined
           ? new Response(null, { status: 429 })
           : new Response(null, { headers: { 'retry-after': retryAfter }, status: 429 })
-      const { client } = setup(response)
+      const { client } = setUpClient(response)
 
       await expect(sendRequest(client)).rejects.toMatchObject({ retryAfterSeconds: undefined })
     },
@@ -130,7 +124,7 @@ describe('Railway HTTP client', () => {
     [404, 'Not Found'],
   ])('logs a safe HTTP %i failure with any response body', async (status, body) => {
     const response = new Response(body, { status })
-    const { client, writeError } = setup(response)
+    const { client, writeError } = setUpClient(response)
 
     await expect(sendRequest(client)).rejects.toMatchObject({
       name: RailwayHttpError.name,

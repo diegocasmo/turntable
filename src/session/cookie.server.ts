@@ -1,7 +1,7 @@
 import { clearSession, getSession, updateSession } from '@tanstack/react-start/server'
 import { z } from 'zod'
+import { invalidRailwayTokenMessage, railwayTokenSchema } from '@/session/schema'
 
-export const maximumSessionTokenByteLength = 512
 export const sessionCookieName = '__Host-turntable'
 export const sessionLifetimeSeconds = 60 * 60
 
@@ -34,18 +34,6 @@ function createSessionConfig(sessionSecret: string): Parameters<typeof getSessio
   }
 }
 
-function measureTokenByteLength(token: string) {
-  return new TextEncoder().encode(token).byteLength
-}
-
-export const railwayTokenSchema = z
-  .string()
-  .min(1)
-  .refine(
-    (token) => measureTokenByteLength(token) <= maximumSessionTokenByteLength,
-    `must not exceed ${maximumSessionTokenByteLength} UTF-8 bytes`,
-  )
-
 const sessionDataSchema = z.object({
   railwayToken: railwayTokenSchema,
 })
@@ -54,9 +42,7 @@ type SessionData = z.infer<typeof sessionDataSchema>
 
 function checkToken(token: string) {
   if (!railwayTokenSchema.safeParse(token).success) {
-    throw new RangeError(
-      `The Railway token must contain 1 to ${maximumSessionTokenByteLength} UTF-8 bytes.`,
-    )
+    throw new RangeError(invalidRailwayTokenMessage)
   }
 }
 

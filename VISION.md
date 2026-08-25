@@ -186,17 +186,17 @@ Alternatives considered:
 
 The session cookie alone is not a full defense. The application also does this:
 
-1. Every state-changing route compares the `Origin` header to `APP_ORIGIN`. A different origin, a missing origin, or a malformed origin gets status 403. `APP_ORIGIN` is configuration, and the server validates it at startup. The check never reads the `Host` header, because a client controls that header.
+1. Every state-changing server function or route compares the `Origin` header to `APP_ORIGIN`. A different origin, a missing origin, or a malformed origin gets status 403. `APP_ORIGIN` is configuration, and the server validates it at startup. The check never reads the `Host` header, because a client controls that header.
 2. Every response carries a Content-Security-Policy with a random nonce for that request. The policy allows scripts with that nonce only, and it includes `frame-ancestors 'none'`. The nonce goes through the framework's server-side render option, so the page still hydrates. TanStack keeps [CSP tests](https://github.com/TanStack/router/blob/main/e2e/react-start/csp/tests/csp.spec.ts) for this path.
 3. Responses also carry `Referrer-Policy` and `X-Content-Type-Options`. Authenticated responses carry `Cache-Control: no-store`.
 4. The upstream API address is configuration. Production and tests that call Railway accept Railway's own address only. Reason: a wrong value sends every user's token to another host, and the screen shows no symptom.
-5. An expired or invalid session gets status 401 on a normal route. The client then shows the token form. The event stream answers differently, and "Browser transport" explains why.
+5. An expired or invalid session returns the expired session state to the application. The application then shows the token form. The event stream answers differently, and "Browser transport" explains why.
 
 ### Browser transport: Server-Sent Events
 
 The server must speak WebSocket to Railway. That leg is fixed. The browser leg is a choice.
 
-Decision: one Server-Sent Events (SSE) stream per screen. Commands go up as plain POST requests.
+Decision: one Server-Sent Events (SSE) stream per screen. Commands use TanStack Start server functions.
 
 Why: the data flow is one-directional. `EventSource` is in every browser, and it reconnects by itself ([HTML specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)). A WebSocket client must implement its own reconnect loop.
 
@@ -280,7 +280,7 @@ The 13 statuses still have a job. One function maps a status to a badge colour a
 
 Two rules bound the policy:
 
-1. Every command route resolves the current state again on the server, checks the gate, and compares the expected deployment ID. A stale screen cannot act. One command per service runs at a time, and the gate holds until the command returns.
+1. Every command server function resolves the current state again on the server, checks the gate, and compares the expected deployment ID. A stale screen cannot act. One command per service runs at a time, and the gate holds until the command returns.
 2. The server parses the full GraphQL response, including the `errors` array ([GraphQL specification](https://spec.graphql.org/September2025/#sec-Response)). It never retries a mutation by itself after an unclear answer, because a repeat of a destructive call can act twice.
 
 ### State: TanStack Query only
@@ -295,11 +295,11 @@ The status reducer replaces the snapshot on each event, because the default redu
 
 ### Framework: TanStack Start
 
-The application needs three things from a framework: typed server routes for the API proxy and the event stream, cookie handling, and a page that updates often in the browser. It does not need server-side rendering of data. The page sits behind a token form.
+The application needs four things from a framework: typed server functions for internal reads and commands, a raw server route for the event stream, cookie handling, and a page that updates often in the browser. The initial session state loads on the server. A reload therefore keeps a valid session without exposing the stored token to browser JavaScript.
 
 Decision: [TanStack Start](https://tanstack.com/start/latest), pinned to one exact version. TanStack labels Start a release candidate. The pinned version never changes during the project.
 
-The framework wins on three points. It has the strongest end-to-end types of the three options. Its server routes return standard `Response` objects. It supports the nonce path that the security policy above needs.
+The framework wins on three points. Its [server functions](https://tanstack.com/start/latest/docs/framework/react/guide/server-functions) provide typed internal calls and zod input validation. Its raw server routes return standard `Response` objects for protocols such as SSE. It supports the nonce path that the security policy above needs.
 
 [Nitro](https://nitro.build) is the production adapter for Railway. The [TanStack Start hosting guide](https://tanstack.com/start/latest/docs/framework/react/guide/hosting) tells Railway applications to use Nitro and gives the Vite plugin setup. `package.json` is the source for the pinned version and the production start command.
 
@@ -327,7 +327,7 @@ Alternative considered: GraphQL Code Generator can create the same schema snapsh
 
 ### Tests: injected states, one real end-to-end path
 
-Decision: unit, component, client, and route tests inject HTTP responses and WebSocket events at the client boundary. They can produce errors and status sequences on demand. They do not need a token or a fake Railway server. Vitest covers these tests.
+Decision: unit, component, client, server action, and route tests inject HTTP responses and WebSocket events at the client boundary. They can produce errors and status sequences on demand. They do not need a token or a fake Railway server. Vitest covers these tests.
 
 `pnpm test:e2e` is the only end-to-end command. Playwright drives Turntable against the configured real Railway project, environment, and service. A local run uses the `local` target. Trusted CI uses the `ci` target. Fork pull requests do not get the token and skip this test.
 
