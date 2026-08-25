@@ -1,4 +1,4 @@
-import { SelectionControls } from '@/selection/components/selection-controls'
+import { SelectionPickers } from '@/selection/components/selection-pickers'
 import { SessionControls } from '@/session/components/session-controls'
 import { TokenForm } from '@/session/components/token-form'
 import type { SessionState } from '@/session/schema'
@@ -48,7 +48,7 @@ export function TurntablePage({ sessionState }: TurntablePageProps) {
             <div className="flex min-h-[30rem] items-center p-8 sm:p-12">
               {sessionState === 'authenticated' ? (
                 <SessionControls>
-                  <SelectionControls />
+                  <SelectionPickers />
                 </SessionControls>
               ) : (
                 <TokenForm expired={sessionState === 'expired'} />

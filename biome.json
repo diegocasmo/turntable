@@ -19,7 +19,8 @@
     "enabled": true,
     "rules": {
       "preset": "recommended",
-      "a11y": "error"
+      "a11y": "error",
+      "style": { "noNestedTernary": "error" }
     }
   },
   "javascript": {

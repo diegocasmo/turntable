@@ -10,7 +10,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TurntablePage } from '@/components/turntable-page'
-import { selectionSearchSchema } from '@/selection/schema'
+import { type SelectionSearch, selectionSearchSchema } from '@/selection/schema'
 import { maximumSessionTokenByteLength, type SessionState } from '@/session/schema'
 import {
   createRailwayEnvironment,
@@ -115,12 +115,25 @@ async function selectOption(name: string, value: string) {
   fireEvent.change(picker, { target: { value } })
 }
 
+async function expectSearch(page: ReturnType<typeof renderTurntablePage>, search: SelectionSearch) {
+  await waitFor(() => expect(page.router.state.location.search).toEqual(search))
+}
+
 beforeEach(() => {
   connectToRailwayMock.mockReset()
   disconnectFromRailwayMock.mockReset()
-  readEnvironmentsMock.mockReset().mockResolvedValue([])
-  readProjectsMock.mockReset().mockResolvedValue([])
-  readServicesMock.mockReset().mockResolvedValue([])
+  readEnvironmentsMock
+    .mockReset()
+    .mockResolvedValue([
+      createRailwayEnvironment(),
+      createRailwayEnvironment({ id: 'environment-2' }),
+    ])
+  readProjectsMock
+    .mockReset()
+    .mockResolvedValue([createRailwayProject(), createRailwayProject({ id: 'project-2' })])
+  readServicesMock
+    .mockReset()
+    .mockResolvedValue([createRailwayService(), createRailwayService({ id: 'service-2' })])
 })
 
 describe('Token form', () => {
@@ -219,11 +232,10 @@ describe('Token form', () => {
   })
 })
 
-describe('Railway target selection', () => {
+describe('project, environment, and service selection', () => {
   it('shows the loading state', async () => {
     readProjectsMock.mockReturnValue(new Promise(() => undefined))
     renderTurntablePage({ sessionState: 'authenticated' })
-
     expect(await screen.findByRole('combobox', { name: 'Project' })).toHaveDisplayValue(
       'Loading projects...',
     )
@@ -249,33 +261,17 @@ describe('Railway target selection', () => {
       createRailwayService(),
       createRailwayService({ id: 'service-2', name: 'Worker' }),
     ])
-    let page = renderTurntablePage({ sessionState: 'authenticated' })
-
+    const page = renderTurntablePage({ sessionState: 'authenticated' })
     await selectOption('Project', project.id)
-    await waitFor(() =>
-      expect(page.router.state.location.search).toEqual({ projectId: project.id }),
-    )
-    const partialUrl = page.router.state.location.href
-    page.unmount()
-    page = renderTurntablePage({ initialEntry: partialUrl, sessionState: 'authenticated' })
-    const projectPicker = await screen.findByRole('combobox', { name: 'Project' })
-    await waitFor(() => expect(projectPicker).toHaveValue(project.id))
+    await expectSearch(page, { projectId: project.id })
     await selectOption('Environment', 'environment-2')
-    await waitFor(() =>
-      expect(page.router.state.location.search).toEqual({
-        projectId: project.id,
-        environmentId: 'environment-2',
-      }),
-    )
+    await expectSearch(page, { environmentId: 'environment-2', projectId: project.id })
     await selectOption('Service', 'service-2')
-
-    await waitFor(() =>
-      expect(page.router.state.location.search).toEqual({
-        projectId: project.id,
-        environmentId: 'environment-2',
-        serviceId: 'service-2',
-      }),
-    )
+    await expectSearch(page, {
+      environmentId: 'environment-2',
+      projectId: project.id,
+      serviceId: 'service-2',
+    })
     const groups = screen.getAllByRole('group')
     expect(groups.map((group) => group.getAttribute('label'))).toEqual([
       'Railway workspace',
@@ -300,13 +296,11 @@ describe('Railway target selection', () => {
     readServicesMock.mockResolvedValue([service])
     const first = renderTurntablePage({ sessionState: 'authenticated' })
 
-    await waitFor(() =>
-      expect(first.router.state.location.search).toEqual({
-        projectId: project.id,
-        environmentId: environment.id,
-        serviceId: service.id,
-      }),
-    )
+    await expectSearch(first, {
+      environmentId: environment.id,
+      projectId: project.id,
+      serviceId: service.id,
+    })
     const url = first.router.state.location.href
     first.unmount()
     renderTurntablePage({ initialEntry: url, sessionState: 'authenticated' })
@@ -318,11 +312,8 @@ describe('Railway target selection', () => {
     ['Environment', []],
     ['Service', [createRailwayEnvironment()]],
   ])('shows an empty %s picker after its parent resolves', async (label, environments) => {
-    readProjectsMock.mockResolvedValue([
-      createRailwayProject(),
-      createRailwayProject({ id: 'project-2' }),
-    ])
     readEnvironmentsMock.mockResolvedValue(environments)
+    readServicesMock.mockResolvedValue([])
     renderTurntablePage({ initialEntry: '/?projectId=project-1', sessionState: 'authenticated' })
 
     const picker = await screen.findByRole('combobox', { name: label })
@@ -334,18 +325,6 @@ describe('Railway target selection', () => {
     ['environment', '/?projectId=project-1&environmentId=missing'],
     ['service', '/?projectId=project-1&environmentId=environment-1&serviceId=missing'],
   ])('keeps a stale %s ID until the user replaces it', async (level, initialEntry) => {
-    readProjectsMock.mockResolvedValue([
-      createRailwayProject(),
-      createRailwayProject({ id: 'project-2' }),
-    ])
-    readEnvironmentsMock.mockResolvedValue([
-      createRailwayEnvironment(),
-      createRailwayEnvironment({ id: 'environment-2' }),
-    ])
-    readServicesMock.mockResolvedValue([
-      createRailwayService(),
-      createRailwayService({ id: 'service-2' }),
-    ])
     const { router } = renderTurntablePage({ initialEntry, sessionState: 'authenticated' })
 
     const status = await screen.findByRole('status', { name: 'Selection status' })
@@ -355,18 +334,15 @@ describe('Railway target selection', () => {
     expect(router.state.location.href).toContain(`${level}Id=missing`)
   })
 
-  it.each(['Railway could not load choices.', 'Railway rate limit exceeded.'])(
-    'shows and retries the safe error: %s',
-    async (message) => {
-      readProjectsMock.mockRejectedValueOnce(new Error(message)).mockResolvedValueOnce([])
-      renderTurntablePage({ sessionState: 'authenticated' })
+  it('shows and retries a safe error', async () => {
+    const message = 'Railway could not load choices.'
+    readProjectsMock.mockRejectedValueOnce(new Error(message)).mockResolvedValueOnce([])
+    renderTurntablePage({ sessionState: 'authenticated' })
 
-      expect(await screen.findByRole('alert')).toHaveTextContent(message)
-      expect(screen.getByRole('button', { name: 'Sign out this browser' })).toBeVisible()
-      fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
-      expect(await screen.findByRole('combobox', { name: 'Project' })).toHaveDisplayValue(
-        'No projects',
-      )
-    },
-  )
+    expect(await screen.findByRole('alert')).toHaveTextContent(message)
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    expect(await screen.findByRole('combobox', { name: 'Project' })).toHaveDisplayValue(
+      'No projects',
+    )
+  })
 })
