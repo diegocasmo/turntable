@@ -145,7 +145,8 @@ Layer 2 reads the body:
 
 1. Zod parses the response body. It must also accept a body that is not GraphQL, because the 400 case has no `errors` array.
 2. A non-empty `errors` array stops the work. The screen shows Railway's own message.
-3. A message that contains "not authorized" also tells the client to offer the token form. This is a hint only. Measured, an auth failure can also read "Deployment not found", so the text is never the only test of a live session.
+3. A request that uses the stored token and gets a message that contains "not authorized" ends the browser session. The server deletes the session cookie and redirects the browser to the current URL with a full document load. The new document has a new client cache, and the initial session read shows the normal token form. This is a hint only. Measured, an auth failure can also read "Deployment not found", so the text is never the only test of a live session.
+4. A request from the token form does not use this rule. It shows the Railway error and keeps the form open.
 
 The CLI matches message text in the same way, and `errors.rs` says in a comment that the match is fragile. A test pins our one string, as `errors.rs` does for its own.
 
