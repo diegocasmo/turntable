@@ -1,4 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ResultOf } from 'gql.tada'
+import { describe, expect, it, vi } from 'vitest'
+import type { projectsQuery } from '@/gql/operations/projects'
 import { connectRailwaySession, SessionConnectionError } from '@/session/connect.server'
 import { sessionCookieName } from '@/session/cookie.server'
 import {
@@ -11,7 +13,6 @@ import {
 import { createJsonResponse } from '@/test/response'
 import { runServerRequest } from '@/test/start-request'
 
-const currentDate = new Date('2027-01-15T12:00:00.000Z')
 const sessionConfig = {
   railwayApiUrl: testRailwayApiUrl,
   sessionSecret: testSessionSecret,
@@ -31,18 +32,9 @@ const validRailwayBody = {
       ],
     },
   },
-}
+} satisfies { data: ResultOf<typeof projectsQuery> }
 
 describe('connect Railway session', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-    vi.setSystemTime(currentDate)
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
   it('verifies a token and stores only its encrypted session', async () => {
     const fetchRequest = vi.fn(async (_request: Request) => createJsonResponse(validRailwayBody))
     const { response, result } = await runServerRequest(() =>
