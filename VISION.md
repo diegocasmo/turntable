@@ -18,7 +18,7 @@ Three goals shape every decision in this document:
 
 1. Correct semantics. The application must use the API operations that Railway itself uses for "up" and "down".
 2. Pushed state. Every open screen must show the true state, live, without polls.
-3. Token safety. Browser JavaScript must never read the user's API token.
+3. Token safety. The browser must not keep the plaintext token after it connects.
 
 ## Verified facts
 
@@ -149,7 +149,7 @@ Layer 2 reads the body:
 
 The CLI matches message text in the same way, and `errors.rs` says in a comment that the match is fragile. A test pins our one string, as `errors.rs` does for its own.
 
-### The token is readable only on the server
+### The stored token is readable only on the server
 
 Decision: the user pastes a token once. The server verifies it against Railway. Then the server puts the token in an authenticated encrypted session. It sends that session as one cookie value.
 
@@ -165,12 +165,14 @@ The lifetime is one absolute hour, in the sealed session and in the cookie expir
 
 The form asks for a workspace token ([tokens page](https://railway.com/account/tokens)). Measured: a workspace token lists projects, runs both life-cycle mutations, and holds a subscription, all with the `authorization: Bearer` header. A project token uses the `Project-Access-Token` header instead, and Turntable does not support it. That is future work.
 
+The form and its request hold the plaintext token while the form is visible. The application never persists or logs it. After a successful connection, the form unmounts and its mutation leaves the Query cache. The encrypted session cookie is then the only browser copy.
+
 Why: a Railway token can control many resources ([token docs](https://docs.railway.com/integrations/api)). Browser JavaScript can never read an `httpOnly` cookie, so script injection cannot steal the token. The client holds only ciphertext, so a copy of the cookie store does not give the token.
 
 Two honest limits:
 
 1. A copied cookie still works until it expires. So the lifetime is short, and a rotation of `SESSION_SECRET` ends every new request at once. Existing streams end when the process restarts.
-2. Logout deletes the cookie in that browser. It cannot delete a copy. The user interface says this, and it links to the tokens page, where the user can delete the Railway token itself.
+2. Logout deletes the cookie in that browser. It cannot delete a copy. The control says that it signs out this browser.
 
 Alternatives considered:
 
@@ -283,9 +285,9 @@ Two rules bound the policy:
 1. Every command server function resolves the current state again on the server, checks the gate, and compares the expected deployment ID. A stale screen cannot act. One command per service runs at a time, and the gate holds until the command returns.
 2. The server parses the full GraphQL response, including the `errors` array ([GraphQL specification](https://spec.graphql.org/September2025/#sec-Response)). It never retries a mutation by itself after an unclear answer, because a repeat of a destructive call can act twice.
 
-### State: TanStack Query only
+### State ownership
 
-Server state lives in the Query cache. Mutations give `isPending` and `error` states for the buttons, and the action policy gives the enabled state. Components only render query results. No component contains `useEffect`. No other state library exists in the project.
+TanStack Query owns server state and asynchronous action state. Mutations give `isPending` and `error` states for the buttons, and the action policy gives the enabled state. TanStack Form owns form values and field errors. The token form and its server function use the same zod input schema. Components only render these states. No component contains `useEffect`. No other state library exists in the project.
 
 The data layer wraps one `EventSource` as an `AsyncIterable`, and TanStack Query's [`streamedQuery`](https://tanstack.com/query/latest/docs/reference/streamedQuery) consumes it. Query starts the stream with the first subscriber, and it ends the stream through its `AbortSignal` with the last.
 
@@ -303,7 +305,7 @@ The framework wins on three points. Its [server functions](https://tanstack.com/
 
 [Nitro](https://nitro.build) is the production adapter for Railway. The [TanStack Start hosting guide](https://tanstack.com/start/latest/docs/framework/react/guide/hosting) tells Railway applications to use Nitro and gives the Vite plugin setup. `package.json` is the source for the pinned version and the production start command.
 
-Trade-off: the guide marks the `nitro/vite` plugin as under active development. The exact version keeps builds stable. The production smoke test starts the generated server and requests the placeholder page before a change can merge.
+Trade-off: the guide marks the `nitro/vite` plugin as under active development. The exact version keeps builds stable. The production smoke test starts the generated server and requests the application page before a change can merge.
 
 The pinned version needs Node 22.12 or later. The repository pins that Node version in `engines`, in `.nvmrc`, and in CI.
 
