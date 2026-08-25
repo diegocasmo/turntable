@@ -10,7 +10,7 @@ These rules apply to all work in this repository. This file is the only source f
 
 1. Write all documents in ASD-STE100 Simplified Technical English. Use short sentences. Use the active voice. Use simple words.
 2. Point to the single source of truth. Do not copy information that has a source. Give a link or a file path instead.
-3. Use strict TypeScript. Do not use `any`. Do not use a type assertion to hide an error.
+3. Use strict TypeScript. Do not use `any`. Do not use a type assertion to hide an error. The Railway client can assert the successful `data` value once, after it validates the response envelope and rejects errors, missing data, and null data.
 4. Do not write `useEffect`. Use TanStack Query for server state. Ask the project owner before you add a different state tool.
 5. Use GraphQL subscriptions for live data. Do not poll. There is no exception.
 6. Keep the Railway API token readable only on the server. Browser JavaScript must never read the token. The client stores only ciphertext.
@@ -19,7 +19,7 @@ These rules apply to all work in this repository. This file is the only source f
 9. A feature's dependencies land in a pull request before its feature code. A dependency pull request can add the minimum configuration, generated output, and tests that prove the dependencies work. The scaffold pull request can add the dependencies of the scaffold.
 10. Put tests in the same pull request as the code that they test.
 11. Make the user interface accessible. Use semantic HTML. Use an `aria-live` region for the live status.
-12. Validate every response from the Railway API at the boundary with zod. The body is not always GraphQL. Map an unknown status to the unknown badge. Do not crash.
+12. Validate every Railway response envelope at the boundary with zod. The body is not always GraphQL. Use gql.tada for successful GraphQL result and variable types. Do not copy a GraphQL result shape into zod or a hand-written type. Validate a domain rule with zod when GraphQL cannot express it. Map an unknown status to the unknown badge. Do not crash.
 13. Never log a request body. Redact `Authorization`, `Cookie`, and `Set-Cookie` in every log line and every error path.
 14. Write commit messages and pull request titles in the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format.
 15. CI must be green before you merge.
@@ -28,6 +28,7 @@ These rules apply to all work in this repository. This file is the only source f
 18. In component tests, query the rendered user interface by semantic role and accessible name. Do not assert serialized HTML with substring matches.
 19. Use the `@/` alias for each hand-maintained import that points to a file in `src`. Keep imports in the `vite.config.ts` dependency graph relative because [Vite cannot resolve a project alias while it loads the config](https://github.com/vitejs/vite/issues/16718). Keep relative imports that point outside `src`.
 20. Before you write infrastructure that a selected framework or dependency can provide, inspect its pinned public API and official documentation. Use that API when it meets the requirements. If it does not, record the exact missing behavior and evidence before you write a custom replacement.
+21. Define each GraphQL operation once with gql.tada's `graphql()` function. Infer its result and variables from that document.
 
 ## Commands
 

@@ -7,20 +7,20 @@
     "node": "22.12.0"
   },
   "scripts": {
-    "build": "pnpm codegen && vite build",
-    "codegen": "graphql-codegen",
-    "codegen:schema": "graphql-codegen --config codegen.schema.ts",
+    "build": "pnpm graphql:check && vite build",
     "danger": "danger ci --failOnErrors",
     "dev": "vite dev --port 3000",
     "format": "biome format . --write",
+    "graphql:check": "gql-tada generate-output && gql-tada check",
     "lint": "biome check .",
     "preview": "vite preview",
     "start": "HOST=0.0.0.0 node .output/server/index.mjs",
+    "schema:sync": "gql-tada generate-schema https://backboard.railway.com/graphql/v2 --output src/gql/schema.graphql && pnpm graphql:check",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:railway": "vitest run --config vitest.railway.config.ts",
     "test:smoke": "pnpm build && playwright test --config playwright.smoke.config.ts",
-    "typecheck": "pnpm codegen && tsc --noEmit"
+    "typecheck": "pnpm graphql:check && tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
@@ -47,9 +47,6 @@
     "@commitlint/config-conventional": "21.2.2",
     "@commitlint/lint": "21.2.2",
     "@commitlint/load": "21.2.2",
-    "@graphql-codegen/cli": "7.3.0",
-    "@graphql-codegen/introspection": "6.1.0",
-    "@graphql-codegen/typescript-operations": "6.1.6",
     "@playwright/test": "1.62.1",
     "@tailwindcss/vite": "4.3.3",
     "@testing-library/dom": "10.4.1",
@@ -61,6 +58,7 @@
     "@types/ws": "8.18.1",
     "@vitejs/plugin-react": "6.1.0",
     "danger": "13.0.10",
+    "gql.tada": "1.11.3",
     "jsdom": "28.1.0",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
