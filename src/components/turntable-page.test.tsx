@@ -188,7 +188,7 @@ describe('Token form', () => {
 
   it('shows the success state and clears the token mutation', async () => {
     const { queryClient } = renderTurntablePage()
-    queryClient.setQueryData(['old-session'], 'private')
+    queryClient.setQueryData(['private-test-data'], 'private')
 
     await screen.findByLabelText('Workspace token')
     submitToken()
@@ -201,12 +201,12 @@ describe('Token form', () => {
       data: { token: testRailwayToken },
     })
     await waitFor(() => expect(queryClient.getMutationCache().getAll()).toHaveLength(0))
-    expect(queryClient.getQueryData(['old-session'])).toBeUndefined()
+    expect(queryClient.getQueryData(['private-test-data'])).toBeUndefined()
   })
 
   it('signs out this browser', async () => {
     const { queryClient } = renderTurntablePage({ sessionState: 'authenticated' })
-    queryClient.setQueryData(['old-session'], 'private')
+    queryClient.setQueryData(['private-test-data'], 'private')
 
     fireEvent.click(await screen.findByRole('button', { name: 'Sign out this browser' }))
 
