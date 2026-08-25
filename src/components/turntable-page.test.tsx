@@ -100,9 +100,12 @@ describe('Token form', () => {
     expect(within(main).getByRole('heading', { level: 1, name: 'Turntable' })).toBeVisible()
     expect(within(main).getByLabelText('Workspace token')).toBeRequired()
     expect(within(main).getByRole('button', { name: 'Connect to Railway' })).toBeEnabled()
-    expect(
-      within(main).getByRole('link', { name: 'workspace token from Railway' }),
-    ).toHaveAttribute('href', 'https://railway.com/account/tokens')
+    const railwayTokensLink = within(main).getByRole('link', {
+      name: 'workspace token from Railway (opens in a new tab)',
+    })
+    expect(railwayTokensLink).toHaveAttribute('href', 'https://railway.com/account/tokens')
+    expect(railwayTokensLink).toHaveAttribute('target', '_blank')
+    expect(railwayTokensLink).toHaveAttribute('rel', 'noreferrer')
     expect(screen.getByRole('contentinfo')).toHaveTextContent('Unofficial. Not a Railway product.')
   })
 

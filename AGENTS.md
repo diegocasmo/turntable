@@ -34,6 +34,7 @@ These rules apply to all work in this repository. This file is the only source f
 24. Put an input schema that the browser and server share in a non-server file. Use the same schema in TanStack Form and the server function validator.
 25. Group a capability that spans the user interface and server under `src/<domain>`. Keep application composition outside the domain.
 26. Put each independent server action in a verb-named `.server.ts` file. Keep shared protocol or storage policy in one explicit module. Use direct imports. Do not add barrel files.
+27. Open an external link in a new tab only when leaving Turntable would interrupt the current task. Use `rel="noreferrer"`. Give a visual and accessible warning that the link opens in a new tab.
 
 ## Commands
 

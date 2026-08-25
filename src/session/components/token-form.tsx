@@ -1,5 +1,6 @@
+import { ArrowSquareOutIcon } from '@phosphor-icons/react'
 import { useForm } from '@tanstack/react-form'
-import type { FormEvent } from 'react'
+import type { SubmitEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,7 +20,7 @@ export function TokenForm({ expired }: TokenFormProps) {
     validators: { onSubmit: sessionInputSchema },
   })
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     void form.handleSubmit()
   }
@@ -37,8 +38,12 @@ export function TokenForm({ expired }: TokenFormProps) {
         <a
           className="text-[#e5ad68] underline underline-offset-4 hover:text-[#f4f0e6] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
           href={railwayTokensUrl}
+          rel="noreferrer"
+          target="_blank"
         >
           workspace token from Railway
+          <ArrowSquareOutIcon aria-hidden="true" className="ml-1 inline size-3 align-[-0.1em]" />{' '}
+          <span className="sr-only">(opens in a new tab)</span>
         </a>
         .
       </p>
