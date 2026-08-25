@@ -4,6 +4,16 @@ Turntable is a web application. [VISION.md](./VISION.md) describes it.
 
 Read VISION.md before you make a design decision. Read the [issues](https://github.com/diegocasmo/turntable/issues) before you start work. Each issue is one pull request. Do them in the order that the blocked-by links give.
 
+<!-- intent-skills:start -->
+## Skill Loading
+
+Before you edit files for a substantial task:
+
+- Run `pnpm skills:list` from the workspace root.
+- If a listed skill matches the task, run `pnpm skills:load <package>#<skill>` before the edit.
+- Use the loaded `SKILL.md` guidance while you make the change.
+<!-- intent-skills:end -->
+
 ## Rules
 
 These rules apply to all work in this repository. This file is the only source for these rules.
