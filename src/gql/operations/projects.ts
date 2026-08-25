@@ -1,8 +1,8 @@
 import { graphql, type ResultOf } from 'gql.tada'
 
 export const projectsQuery = graphql(`
-  query Projects($first: Int, $after: String) {
-    projects(first: $first, after: $after) {
+  query Projects($workspaceId: String!, $first: Int, $after: String) {
+    projects(workspaceId: $workspaceId, first: $first, after: $after) {
       edges {
         node {
           id

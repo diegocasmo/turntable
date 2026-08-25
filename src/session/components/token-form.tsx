@@ -34,14 +34,14 @@ export function TokenForm({ expired }: TokenFormProps) {
         Connect to Railway
       </h2>
       <p className="mt-4 leading-7 text-[#c9c5b9]">
-        Use a{' '}
+        Create a token on{' '}
         <a
           className="text-[#e5ad68] underline underline-offset-4 hover:text-[#f4f0e6] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
           href={railwayTokensUrl}
           rel="noreferrer"
           target="_blank"
         >
-          workspace token from Railway
+          Railway's token page
           <ArrowSquareOutIcon aria-hidden="true" className="ml-1 inline size-3 align-[-0.1em]" />{' '}
           <span className="sr-only">(opens in a new tab)</span>
         </a>
@@ -53,7 +53,7 @@ export function TokenForm({ expired }: TokenFormProps) {
           role="alert"
           className="mt-6 border-l-2 border-[#e5ad68] bg-[#2b281f] px-4 py-3 text-sm leading-6 text-[#f4d4a9]"
         >
-          Your session expired. Enter your workspace token again.
+          Your session expired. Enter your Railway API token again.
         </p>
       ) : null}
 
@@ -74,7 +74,7 @@ export function TokenForm({ expired }: TokenFormProps) {
           return (
             <div className="mt-8 grid gap-3">
               <Label htmlFor="railway-token" className="uppercase tracking-[0.12em] text-[#c9c5b9]">
-                Workspace token
+                Railway API token
               </Label>
               <Input
                 id="railway-token"

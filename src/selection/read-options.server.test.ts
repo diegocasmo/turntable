@@ -14,6 +14,7 @@ import {
   testRailwayEnvironmentId,
   testRailwayProjectId,
   testRailwayToken,
+  testRailwayWorkspaceId,
 } from '@/test/railway'
 import { createJsonResponse } from '@/test/response'
 
@@ -32,11 +33,18 @@ function createRailwayFetch(...bodies: readonly unknown[]) {
   })
 }
 
+function createTokenContext(...workspaceIds: readonly string[]) {
+  return createRailwayResponse({
+    apiToken: { workspaces: workspaceIds.map((id) => ({ id })) },
+  })
+}
+
 describe('Railway selection reads', () => {
-  it('reads every project page and returns only selection data', async () => {
+  it('reads every project page for a workspace token', async () => {
     const firstProject = createRailwayProject()
     const secondProject = createRailwayProject({ id: 'project-2', name: 'Wheels' })
     const fetchRequest = createRailwayFetch(
+      createTokenContext(testRailwayWorkspaceId),
       createRailwayResponse({
         projects: createRailwayPage([firstProject], {
           endCursor: 'project-cursor',
@@ -49,12 +57,55 @@ describe('Railway selection reads', () => {
     const projects = await readRailwayProjects(testRailwayToken, testRailwayApiUrl, fetchRequest)
 
     expect(projects).toEqual([firstProject, secondProject])
-    await expect(fetchRequest.mock.calls[0]?.[0].json()).resolves.toMatchObject({
-      variables: { first: railwayConnectionPageSize },
+    await expect(fetchRequest.mock.calls[0]?.[0].json()).resolves.toEqual({
+      query: expect.stringContaining('query ApiTokenWorkspaces'),
+      variables: {},
     })
     await expect(fetchRequest.mock.calls[1]?.[0].json()).resolves.toMatchObject({
-      variables: { after: 'project-cursor', first: railwayConnectionPageSize },
+      variables: { first: railwayConnectionPageSize, workspaceId: testRailwayWorkspaceId },
     })
+    await expect(fetchRequest.mock.calls[2]?.[0].json()).resolves.toMatchObject({
+      variables: {
+        after: 'project-cursor',
+        first: railwayConnectionPageSize,
+        workspaceId: testRailwayWorkspaceId,
+      },
+    })
+  })
+
+  it('reads projects from every workspace for an account token', async () => {
+    const secondWorkspaceId = 'workspace-2'
+    const firstProject = createRailwayProject()
+    const secondProject = createRailwayProject({
+      id: 'project-2',
+      workspace: { id: secondWorkspaceId, name: 'Second workspace' },
+    })
+    const fetchRequest = createRailwayFetch(
+      createTokenContext(testRailwayWorkspaceId, secondWorkspaceId),
+      createRailwayResponse({ projects: createRailwayPage([firstProject]) }),
+      createRailwayResponse({ projects: createRailwayPage([secondProject]) }),
+    )
+
+    await expect(
+      readRailwayProjects(testRailwayToken, testRailwayApiUrl, fetchRequest),
+    ).resolves.toEqual([firstProject, secondProject])
+    await expect(fetchRequest.mock.calls[1]?.[0].json()).resolves.toMatchObject({
+      variables: { workspaceId: testRailwayWorkspaceId },
+    })
+    await expect(fetchRequest.mock.calls[2]?.[0].json()).resolves.toMatchObject({
+      variables: { workspaceId: secondWorkspaceId },
+    })
+  })
+
+  it('returns no projects from an empty workspace', async () => {
+    const fetchRequest = createRailwayFetch(
+      createTokenContext(testRailwayWorkspaceId),
+      createRailwayResponse({ projects: createRailwayPage([]) }),
+    )
+
+    await expect(
+      readRailwayProjects(testRailwayToken, testRailwayApiUrl, fetchRequest),
+    ).resolves.toEqual([])
   })
 
   it('reads project environments', async () => {
@@ -105,9 +156,12 @@ describe('Railway selection reads', () => {
   })
 
   it('rejects a next page without a cursor', async () => {
+    const secondWorkspaceId = 'workspace-2'
     const fetchRequest = createRailwayFetch(
+      createTokenContext(testRailwayWorkspaceId, secondWorkspaceId),
+      createRailwayResponse({ projects: createRailwayPage([createRailwayProject()]) }),
       createRailwayResponse({
-        projects: createRailwayPage([createRailwayProject()], {
+        projects: createRailwayPage([], {
           endCursor: null,
           hasNextPage: true,
         }),
@@ -117,6 +171,6 @@ describe('Railway selection reads', () => {
     await expect(
       readRailwayProjects(testRailwayToken, testRailwayApiUrl, fetchRequest),
     ).rejects.toBeInstanceOf(RailwayResponseError)
-    expect(fetchRequest).toHaveBeenCalledOnce()
+    expect(fetchRequest).toHaveBeenCalledTimes(3)
   })
 })

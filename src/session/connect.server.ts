@@ -1,4 +1,4 @@
-import { projectsQuery } from '@/gql/operations/projects'
+import { apiTokenWorkspacesQuery } from '@/gql/operations/api-token-workspaces'
 import { createRailwayClient } from '@/railway/client.server'
 import { RailwayGraphQLError, RailwayRateLimitError } from '@/railway/errors'
 import { writeSession } from '@/session/cookie.server'
@@ -34,7 +34,7 @@ export async function connectRailwaySession(
   const railwayClient = createRailwayClient({ apiUrl: config.railwayApiUrl, fetch: fetchRequest })
 
   try {
-    await railwayClient.request({ document: projectsQuery, token, variables: { first: 1 } })
+    await railwayClient.request({ document: apiTokenWorkspacesQuery, token, variables: {} })
   } catch (error) {
     throw createTokenVerificationError(error)
   }

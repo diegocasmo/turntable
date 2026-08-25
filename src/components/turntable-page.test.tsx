@@ -103,7 +103,7 @@ function renderTurntablePage(options: RenderOptions = {}) {
 }
 
 function submitToken(token = testRailwayToken) {
-  fireEvent.change(screen.getByLabelText('Workspace token'), {
+  fireEvent.change(screen.getByLabelText('Railway API token'), {
     target: { value: token },
   })
   fireEvent.submit(screen.getByRole('form', { name: 'Connect to Railway' }))
@@ -136,10 +136,10 @@ describe('Token form', () => {
     const main = await screen.findByRole('main')
 
     expect(within(main).getByRole('heading', { level: 1, name: 'Turntable' })).toBeVisible()
-    expect(within(main).getByLabelText('Workspace token')).toBeRequired()
+    expect(within(main).getByLabelText('Railway API token')).toBeRequired()
     expect(within(main).getByRole('button', { name: 'Connect to Railway' })).toBeEnabled()
     const railwayTokensLink = within(main).getByRole('link', {
-      name: 'workspace token from Railway (opens in a new tab)',
+      name: "Railway's token page (opens in a new tab)",
     })
     expect(railwayTokensLink).toHaveAttribute('href', 'https://railway.com/account/tokens')
     expect(railwayTokensLink).toHaveAttribute('target', '_blank')
@@ -150,11 +150,11 @@ describe('Token form', () => {
   it('shows the pending state while Railway checks the token', async () => {
     renderTurntablePage({ connect: () => new Promise<SessionState>(() => undefined) })
 
-    await screen.findByLabelText('Workspace token')
+    await screen.findByLabelText('Railway API token')
     submitToken()
 
     expect(await screen.findByRole('button', { name: 'Connecting...' })).toBeDisabled()
-    expect(screen.getByLabelText('Workspace token')).toBeDisabled()
+    expect(screen.getByLabelText('Railway API token')).toBeDisabled()
     expect(screen.getByText('Railway is checking the token.')).toBeVisible()
   })
 
@@ -162,7 +162,7 @@ describe('Token form', () => {
     renderTurntablePage()
     const tokenAboveByteLimit = `${'é'.repeat(maximumSessionTokenByteLength / 2)}a`
 
-    await screen.findByLabelText('Workspace token')
+    await screen.findByLabelText('Railway API token')
     submitToken(tokenAboveByteLimit)
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -176,7 +176,7 @@ describe('Token form', () => {
       connect: () => Promise.reject(new Error('Railway could not verify this token.')),
     })
 
-    await screen.findByLabelText('Workspace token')
+    await screen.findByLabelText('Railway API token')
     submitToken()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -190,7 +190,7 @@ describe('Token form', () => {
     const { queryClient } = renderTurntablePage()
     queryClient.setQueryData(['private-test-data'], 'private')
 
-    await screen.findByLabelText('Workspace token')
+    await screen.findByLabelText('Railway API token')
     submitToken()
 
     expect(await screen.findByRole('heading', { name: 'Connected to Railway' })).toBeVisible()
@@ -210,7 +210,7 @@ describe('Token form', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Sign out this browser' }))
 
-    expect(await screen.findByLabelText('Workspace token')).toBeVisible()
+    expect(await screen.findByLabelText('Railway API token')).toBeVisible()
     expect(disconnectFromRailwayMock.mock.calls[0]?.[0]).toEqual({})
     expect(queryClient.getQueryCache().getAll()).toHaveLength(0)
   })
@@ -219,9 +219,9 @@ describe('Token form', () => {
     renderTurntablePage({ sessionState: 'expired' })
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Your session expired. Enter your workspace token again.',
+      'Your session expired. Enter your Railway API token again.',
     )
-    expect(screen.getByLabelText('Workspace token')).toBeVisible()
+    expect(screen.getByLabelText('Railway API token')).toBeVisible()
   })
 })
 

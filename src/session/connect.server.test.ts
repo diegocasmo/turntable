@@ -3,11 +3,10 @@ import { connectRailwaySession, SessionConnectionError } from '@/session/connect
 import { sessionCookieName } from '@/session/cookie.server'
 import { testSessionSecret } from '@/test/fixtures'
 import {
-  createRailwayPage,
-  createRailwayProject,
   createRailwayResponse,
   testRailwayApiUrl,
   testRailwayToken,
+  testRailwayWorkspaceId,
 } from '@/test/railway'
 import { createJsonResponse } from '@/test/response'
 import { runServerRequest } from '@/test/start-request'
@@ -17,7 +16,7 @@ const sessionConfig = {
   sessionSecret: testSessionSecret,
 }
 const validRailwayBody = createRailwayResponse({
-  projects: createRailwayPage([createRailwayProject()]),
+  apiToken: { workspaces: [{ id: testRailwayWorkspaceId }] },
 })
 
 describe('connect Railway session', () => {
@@ -35,8 +34,8 @@ describe('connect Railway session', () => {
 
     expect(railwayRequest?.headers.get('authorization')).toBe(`Bearer ${testRailwayToken}`)
     await expect(railwayRequest?.json()).resolves.toEqual({
-      query: expect.stringContaining('query Projects'),
-      variables: { first: 1 },
+      query: expect.stringContaining('query ApiTokenWorkspaces'),
+      variables: {},
     })
   })
 

@@ -43,7 +43,7 @@ pnpm test
 
 The normal test suite does not use Railway or a token.
 
-To run the read-only Railway check, add a workspace token and the test target IDs to `.env`. The
+To run the read-only Railway check, add a Railway API token and the test target IDs to `.env`. The
 names are in `.env.example`.
 
 ```sh
