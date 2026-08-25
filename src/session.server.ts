@@ -1,6 +1,9 @@
 import { clearSession, getSession, updateSession } from '@tanstack/react-start/server'
 import { z } from 'zod'
-import { invalidRailwayTokenMessage, railwayTokenSchema } from '@/session-schema'
+import { projectsQuery } from '@/gql/operations/projects'
+import { createRailwayClient } from '@/railway/client.server'
+import { RailwayGraphQLError, RailwayRateLimitError } from '@/railway/errors'
+import { invalidRailwayTokenMessage, railwayTokenSchema, type SessionState } from '@/session-schema'
 
 export const sessionCookieName = '__Host-turntable'
 export const sessionLifetimeSeconds = 60 * 60
@@ -17,6 +20,17 @@ export class InvalidSessionError extends Error {
     super('The session is invalid or expired.')
   }
 }
+
+export class SessionActionError extends Error {
+  override readonly name = 'SessionActionError'
+}
+
+type FetchRequest = (request: Request) => Promise<Response>
+
+type SessionConnectionConfig = Readonly<{
+  railwayApiUrl: string
+  sessionSecret: string
+}>
 
 function createSessionConfig(sessionSecret: string): Parameters<typeof getSession>[0] {
   return {
@@ -53,6 +67,22 @@ function createTurntableSession(token: string, createdAt: number): TurntableSess
   }
 }
 
+function redactToken(message: string, token: string) {
+  return message.replaceAll(token, '[REDACTED]')
+}
+
+function createTokenVerificationError(error: unknown, token: string) {
+  if (error instanceof RailwayGraphQLError) {
+    return new SessionActionError(redactToken(error.message, token))
+  }
+
+  if (error instanceof RailwayRateLimitError) {
+    return new SessionActionError(error.message)
+  }
+
+  return new SessionActionError('Railway could not verify this token.')
+}
+
 export async function writeSession(token: string, sessionSecret: string) {
   checkToken(token)
   const config = createSessionConfig(sessionSecret)
@@ -77,4 +107,61 @@ export async function readSession(sessionSecret: string) {
 
 export function clearSessionCookie(sessionSecret: string) {
   return clearSession(createSessionConfig(sessionSecret))
+}
+
+export function requireAppOrigin(request: Request, appOrigin: string) {
+  if (request.headers.get('origin') !== appOrigin) {
+    throw new SessionActionError('The request origin is not allowed.')
+  }
+}
+
+export async function connectRailwaySession(
+  token: string,
+  config: SessionConnectionConfig,
+  fetchRequest: FetchRequest = globalThis.fetch,
+) {
+  const railwayClient = createRailwayClient({ apiUrl: config.railwayApiUrl, fetch: fetchRequest })
+
+  try {
+    await railwayClient.request({ document: projectsQuery, token, variables: {} })
+  } catch (error) {
+    throw createTokenVerificationError(error, token)
+  }
+
+  await writeSession(token, config.sessionSecret)
+}
+
+export async function readSessionState(
+  sessionSecret: string,
+  hasSessionCookie: boolean,
+): Promise<SessionState> {
+  if (!hasSessionCookie) {
+    return 'signed-out'
+  }
+
+  try {
+    await readSession(sessionSecret)
+    return 'authenticated'
+  } catch (error) {
+    if (error instanceof InvalidSessionError) {
+      return 'expired'
+    }
+
+    throw error
+  }
+}
+
+export async function disconnectRailwaySession(sessionSecret: string): Promise<SessionState> {
+  try {
+    await readSession(sessionSecret)
+  } catch (error) {
+    if (error instanceof InvalidSessionError) {
+      return 'expired'
+    }
+
+    throw error
+  }
+
+  await clearSessionCookie(sessionSecret)
+  return 'signed-out'
 }

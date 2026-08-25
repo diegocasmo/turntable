@@ -14,3 +14,7 @@ export const railwayTokenSchema = z.string().check(
     invalidRailwayTokenMessage,
   ),
 )
+
+export const sessionInputSchema = z.object({ token: railwayTokenSchema })
+
+export type SessionState = 'authenticated' | 'expired' | 'signed-out'

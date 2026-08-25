@@ -1,4 +1,3 @@
-import { requestHandler } from '@tanstack/react-start/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   InvalidSessionError,
@@ -8,46 +7,10 @@ import {
   writeSession,
 } from '@/session.server'
 import { maximumSessionTokenByteLength } from '@/session-schema'
-import { testAppOrigin, testRailwayToken, testSessionSecret } from '@/test/fixtures'
+import { testRailwayToken, testSessionSecret } from '@/test/fixtures'
+import { readFirstCookie, runServerRequest } from '@/test/start'
 
 const currentDate = new Date('2027-01-15T08:00:00.000Z')
-
-type OperationResult<T> = Readonly<{ ok: true; value: T }> | Readonly<{ error: unknown; ok: false }>
-
-async function runRequest<T>(operation: () => Promise<T>, headers?: HeadersInit) {
-  let result: OperationResult<T> = {
-    error: new Error('The request handler did not run.'),
-    ok: false,
-  }
-
-  const handle = requestHandler(async () => {
-    try {
-      const value = await operation()
-      result = { ok: true, value }
-      return new Response(null, { status: 204 })
-    } catch (error) {
-      result = { error, ok: false }
-      return new Response(null, { status: 401 })
-    }
-  })
-
-  const request =
-    headers === undefined
-      ? new Request(`${testAppOrigin}/session`)
-      : new Request(`${testAppOrigin}/session`, { headers })
-  const response = await handle(request, {})
-  return { response, result }
-}
-
-function readCookie(setCookie: string) {
-  const cookie = setCookie.split(';', 1)[0]
-
-  if (cookie === undefined) {
-    throw new Error('The response did not contain a cookie.')
-  }
-
-  return cookie
-}
 
 function readCookieValue(cookie: string) {
   const separatorIndex = cookie.indexOf('=')
@@ -80,15 +43,9 @@ describe('framework session', () => {
   })
 
   it('round trips a valid session without renewal', async () => {
-    const created = await runRequest(() => writeSession(testRailwayToken, testSessionSecret))
-    const setCookie = created.response.headers.getSetCookie()[0]
-
-    if (setCookie === undefined) {
-      throw new Error('The response did not set a session cookie.')
-    }
-
-    const read = await runRequest(() => readSession(testSessionSecret), {
-      Cookie: readCookie(setCookie),
+    const created = await runServerRequest(() => writeSession(testRailwayToken, testSessionSecret))
+    const read = await runServerRequest(() => readSession(testSessionSecret), {
+      Cookie: readFirstCookie(created.response),
     })
 
     expect(read.result).toEqual({
@@ -103,7 +60,9 @@ describe('framework session', () => {
 
   it('sets one bounded cookie with the required attributes', async () => {
     const lastAcceptedToken = 'é'.repeat(maximumSessionTokenByteLength / 2)
-    const { response } = await runRequest(() => writeSession(lastAcceptedToken, testSessionSecret))
+    const { response } = await runServerRequest(() =>
+      writeSession(lastAcceptedToken, testSessionSecret),
+    )
     const setCookies = response.headers.getSetCookie()
     const expires = new Date(currentDate.getTime() + sessionLifetimeSeconds * 1_000).toUTCString()
 
@@ -122,7 +81,7 @@ describe('framework session', () => {
     ['an empty token', ''],
     ['the first token length above the limit', `${'é'.repeat(maximumSessionTokenByteLength / 2)}a`],
   ])('rejects %s', async (_name, rejectedToken) => {
-    const { response, result } = await runRequest(() =>
+    const { response, result } = await runServerRequest(() =>
       writeSession(rejectedToken, testSessionSecret),
     )
 
@@ -131,15 +90,9 @@ describe('framework session', () => {
   })
 
   it('rejects a changed cookie', async () => {
-    const created = await runRequest(() => writeSession(testRailwayToken, testSessionSecret))
-    const setCookie = created.response.headers.getSetCookie()[0]
-
-    if (setCookie === undefined) {
-      throw new Error('The response did not set a session cookie.')
-    }
-
-    const changedCookie = changeLastCharacter(readCookie(setCookie))
-    const { response, result } = await runRequest(() => readSession(testSessionSecret), {
+    const created = await runServerRequest(() => writeSession(testRailwayToken, testSessionSecret))
+    const changedCookie = changeLastCharacter(readFirstCookie(created.response))
+    const { response, result } = await runServerRequest(() => readSession(testSessionSecret), {
       Cookie: changedCookie,
     })
 
@@ -150,31 +103,21 @@ describe('framework session', () => {
   })
 
   it('rejects a session at its absolute expiry', async () => {
-    const created = await runRequest(() => writeSession(testRailwayToken, testSessionSecret))
-    const setCookie = created.response.headers.getSetCookie()[0]
-
-    if (setCookie === undefined) {
-      throw new Error('The response did not set a session cookie.')
-    }
+    const created = await runServerRequest(() => writeSession(testRailwayToken, testSessionSecret))
 
     vi.advanceTimersByTime(sessionLifetimeSeconds * 1_000)
-    const { result } = await runRequest(() => readSession(testSessionSecret), {
-      Cookie: readCookie(setCookie),
+    const { result } = await runServerRequest(() => readSession(testSessionSecret), {
+      Cookie: readFirstCookie(created.response),
     })
 
     expect(result).toEqual({ error: expect.any(InvalidSessionError), ok: false })
   })
 
   it('does not accept the H3 session header', async () => {
-    const created = await runRequest(() => writeSession(testRailwayToken, testSessionSecret))
-    const setCookie = created.response.headers.getSetCookie()[0]
-
-    if (setCookie === undefined) {
-      throw new Error('The response did not set a session cookie.')
-    }
-
-    const { result } = await runRequest(() => readSession(testSessionSecret), {
-      [`x-${sessionCookieName.toLowerCase()}-session`]: readCookieValue(readCookie(setCookie)),
+    const created = await runServerRequest(() => writeSession(testRailwayToken, testSessionSecret))
+    const cookie = readFirstCookie(created.response)
+    const { result } = await runServerRequest(() => readSession(testSessionSecret), {
+      [`x-${sessionCookieName.toLowerCase()}-session`]: readCookieValue(cookie),
     })
 
     expect(result).toEqual({ error: expect.any(InvalidSessionError), ok: false })
