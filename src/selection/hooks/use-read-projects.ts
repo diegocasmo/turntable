@@ -6,7 +6,7 @@ export function useReadProjects() {
   const read = useServerFn(readProjects)
   return useQuery({
     queryFn: () => read({}),
-    queryKey: ['selection', 'projects'],
+    queryKey: ['projects'],
     retry: false,
   })
 }

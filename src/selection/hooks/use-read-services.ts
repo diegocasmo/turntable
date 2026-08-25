@@ -9,7 +9,7 @@ export function useReadServices(projectId: string | undefined, environmentId: st
       projectId === undefined || environmentId === undefined
         ? skipToken
         : () => read({ data: { environmentId, projectId } }),
-    queryKey: ['selection', 'services', projectId, environmentId],
+    queryKey: ['services', projectId, environmentId],
     retry: false,
   })
 }

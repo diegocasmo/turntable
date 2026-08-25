@@ -10,12 +10,15 @@ type TurntablePageProps = Readonly<{
 export function TurntablePage({ sessionState }: TurntablePageProps) {
   return (
     <div className="relative grid min-h-screen grid-rows-[1fr_auto] overflow-hidden bg-[#141613] text-[#f4f0e6]">
+      <p aria-label="Session status" className="sr-only" role="status">
+        {sessionState === 'authenticated' ? 'Connected to Railway.' : null}
+      </p>
       <div
         aria-hidden="true"
         className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(244,240,230,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(244,240,230,0.05)_1px,transparent_1px)] [background-size:42px_42px]"
       />
 
-      <main className="relative grid place-items-center px-6 py-14 sm:py-20">
+      <main className="relative grid place-items-center px-6 py-8 sm:py-12">
         <section
           aria-labelledby="page-title"
           className="w-full max-w-5xl border border-[#706d60] bg-[#1d201c]/95 shadow-[14px_14px_0_#090a08]"

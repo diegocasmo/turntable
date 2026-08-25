@@ -74,6 +74,10 @@ export function usePickerSelections() {
   const failure = failedQuery?.error
     ? { message: failedQuery.error.message, retry: () => void failedQuery.refetch() }
     : undefined
+  let status = resolveStatus(project, environment, service)
+  if (projectsQuery.isPending) status = 'Loading projects.'
+  else if (project.selectedOption && environmentsQuery.isPending) status = 'Loading environments.'
+  else if (environment.selectedOption && servicesQuery.isPending) status = 'Loading services.'
   let searchWithDefaultOption: typeof search | undefined
   if (project.defaultOption)
     searchWithDefaultOption = { ...search, projectId: project.defaultOption.id }
@@ -117,6 +121,6 @@ export function usePickerSelections() {
     },
     failure,
     searchWithDefaultOption,
-    status: resolveStatus(project, environment, service),
+    status,
   }
 }

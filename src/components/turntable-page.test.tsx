@@ -122,18 +122,11 @@ async function expectSearch(page: ReturnType<typeof renderTurntablePage>, search
 beforeEach(() => {
   connectToRailwayMock.mockReset()
   disconnectFromRailwayMock.mockReset()
-  readEnvironmentsMock
-    .mockReset()
-    .mockResolvedValue([
-      createRailwayEnvironment(),
-      createRailwayEnvironment({ id: 'environment-2' }),
-    ])
+  readEnvironmentsMock.mockReset().mockResolvedValue([createRailwayEnvironment()])
   readProjectsMock
     .mockReset()
     .mockResolvedValue([createRailwayProject(), createRailwayProject({ id: 'project-2' })])
-  readServicesMock
-    .mockReset()
-    .mockResolvedValue([createRailwayService(), createRailwayService({ id: 'service-2' })])
+  readServicesMock.mockReset().mockResolvedValue([createRailwayService()])
 })
 
 describe('Token form', () => {
@@ -162,7 +155,7 @@ describe('Token form', () => {
 
     expect(await screen.findByRole('button', { name: 'Connecting...' })).toBeDisabled()
     expect(screen.getByLabelText('Workspace token')).toBeDisabled()
-    expect(screen.getByRole('status')).toHaveTextContent('Railway is checking the token.')
+    expect(screen.getByText('Railway is checking the token.')).toBeVisible()
   })
 
   it('rejects an invalid token before it calls the server', async () => {
@@ -202,7 +195,7 @@ describe('Token form', () => {
 
     expect(await screen.findByRole('heading', { name: 'Connected to Railway' })).toBeVisible()
     expect(screen.getByRole('status', { name: 'Session status' })).toHaveTextContent(
-      'Railway accepted your workspace token.',
+      'Connected to Railway.',
     )
     expect(connectToRailwayMock.mock.calls[0]?.[0]).toEqual({
       data: { token: testRailwayToken },
@@ -236,8 +229,8 @@ describe('project, environment, and service selection', () => {
   it('shows the loading state', async () => {
     readProjectsMock.mockReturnValue(new Promise(() => undefined))
     renderTurntablePage({ sessionState: 'authenticated' })
-    expect(await screen.findByRole('combobox', { name: 'Project' })).toHaveDisplayValue(
-      'Loading projects...',
+    expect(await screen.findByRole('status', { name: 'Selection status' })).toHaveTextContent(
+      'Loading projects.',
     )
   })
 
@@ -295,7 +288,6 @@ describe('project, environment, and service selection', () => {
     ])
     readServicesMock.mockResolvedValue([service])
     const first = renderTurntablePage({ sessionState: 'authenticated' })
-
     await expectSearch(first, {
       environmentId: environment.id,
       projectId: project.id,

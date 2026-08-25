@@ -6,7 +6,7 @@ export function useReadEnvironments(projectId: string | undefined) {
   const read = useServerFn(readEnvironments)
   return useQuery({
     queryFn: projectId === undefined ? skipToken : () => read({ data: { projectId } }),
-    queryKey: ['selection', 'environments', projectId],
+    queryKey: ['environments', projectId],
     retry: false,
   })
 }
