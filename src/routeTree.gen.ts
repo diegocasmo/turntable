@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HealthzRouteImport } from './routes/healthz'
-import { Route as ApiSessionRouteImport } from './routes/api/session'
+import { Route as ApiSessionRouteRouteImport } from './routes/api/session/route'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,7 +23,7 @@ const HealthzRoute = HealthzRouteImport.update({
   path: '/healthz',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiSessionRoute = ApiSessionRouteImport.update({
+const ApiSessionRouteRoute = ApiSessionRouteRouteImport.update({
   id: '/api/session',
   path: '/api/session',
   getParentRoute: () => rootRouteImport,
@@ -32,18 +32,18 @@ const ApiSessionRoute = ApiSessionRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
-  '/api/session': typeof ApiSessionRoute
+  '/api/session': typeof ApiSessionRouteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
-  '/api/session': typeof ApiSessionRoute
+  '/api/session': typeof ApiSessionRouteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
-  '/api/session': typeof ApiSessionRoute
+  '/api/session': typeof ApiSessionRouteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -56,7 +56,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HealthzRoute: typeof HealthzRoute
-  ApiSessionRoute: typeof ApiSessionRoute
+  ApiSessionRouteRoute: typeof ApiSessionRouteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -79,7 +79,7 @@ declare module '@tanstack/react-router' {
       id: '/api/session'
       path: '/api/session'
       fullPath: '/api/session'
-      preLoaderRoute: typeof ApiSessionRouteImport
+      preLoaderRoute: typeof ApiSessionRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -88,7 +88,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HealthzRoute: HealthzRoute,
-  ApiSessionRoute: ApiSessionRoute,
+  ApiSessionRouteRoute: ApiSessionRouteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

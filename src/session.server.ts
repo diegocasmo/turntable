@@ -18,7 +18,7 @@ export class InvalidSessionError extends Error {
   }
 }
 
-function sessionConfig(sessionSecret: string) {
+function createSessionConfig(sessionSecret: string) {
   return {
     cookie: {
       httpOnly: true,
@@ -34,7 +34,7 @@ function sessionConfig(sessionSecret: string) {
   } as const
 }
 
-function tokenByteLength(token: string) {
+function measureTokenByteLength(token: string) {
   return new TextEncoder().encode(token).byteLength
 }
 
@@ -42,7 +42,7 @@ export const railwayTokenSchema = z
   .string()
   .min(1)
   .refine(
-    (token) => tokenByteLength(token) <= maximumSessionTokenByteLength,
+    (token) => measureTokenByteLength(token) <= maximumSessionTokenByteLength,
     `must not exceed ${maximumSessionTokenByteLength} UTF-8 bytes`,
   )
 
@@ -60,7 +60,7 @@ function checkToken(token: string) {
   }
 }
 
-function toTurntableSession(token: string, createdAt: number): TurntableSession {
+function createTurntableSession(token: string, createdAt: number): TurntableSession {
   return {
     expiresAtUnixSeconds: Math.floor(createdAt / 1_000) + sessionLifetimeSeconds,
     token,
@@ -69,14 +69,14 @@ function toTurntableSession(token: string, createdAt: number): TurntableSession 
 
 export async function writeSession(token: string, sessionSecret: string) {
   checkToken(token)
-  const config = sessionConfig(sessionSecret)
+  const config = createSessionConfig(sessionSecret)
 
   await clearSession(config)
   await updateSession<SessionData>(config, { railwayToken: token })
 }
 
 export async function readSession(sessionSecret: string) {
-  const config = sessionConfig(sessionSecret)
+  const config = createSessionConfig(sessionSecret)
   const session = await getSession<SessionData>(config)
   const data = sessionDataSchema.safeParse(session.data)
   const expiresAt = session.createdAt + sessionLifetimeSeconds * 1_000
@@ -86,9 +86,9 @@ export async function readSession(sessionSecret: string) {
     throw new InvalidSessionError()
   }
 
-  return toTurntableSession(data.data.railwayToken, session.createdAt)
+  return createTurntableSession(data.data.railwayToken, session.createdAt)
 }
 
 export function clearSessionCookie(sessionSecret: string) {
-  return clearSession(sessionConfig(sessionSecret))
+  return clearSession(createSessionConfig(sessionSecret))
 }
