@@ -5,6 +5,7 @@ import { useReadEnvironments } from '@/selection/hooks/use-read-environments'
 import { useReadProjects } from '@/selection/hooks/use-read-projects'
 import { useReadServices } from '@/selection/hooks/use-read-services'
 import { resolvePickerSelection } from '@/selection/resolve-picker-selection'
+import type { SelectionSearch } from '@/selection/schema'
 
 function compareOptions(left: PickerOption, right: PickerOption) {
   return left.name.localeCompare(right.name) || left.id.localeCompare(right.id)
@@ -46,7 +47,11 @@ function resolveStatus(
   project: ReturnType<typeof resolvePickerSelection>,
   environment: ReturnType<typeof resolvePickerSelection>,
   service: ReturnType<typeof resolvePickerSelection>,
+  pending: { project: boolean; environment: boolean; service: boolean },
 ) {
+  if (pending.project) return 'Loading projects.'
+  if (project.selectedOption && pending.environment) return 'Loading environments.'
+  if (environment.selectedOption && pending.service) return 'Loading services.'
   if (project.isStale) return 'The selected project is no longer available. Choose another project.'
   if (environment.isStale)
     return 'The selected environment is no longer available. Choose another environment.'
@@ -55,6 +60,17 @@ function resolveStatus(
   if (environment.selectedOption) return 'Choose a service.'
   if (project.selectedOption) return 'Choose an environment.'
   return 'Choose a project.'
+}
+
+function resolveSearchWithDefaultOption(
+  search: SelectionSearch,
+  project: ReturnType<typeof resolvePickerSelection>,
+  environment: ReturnType<typeof resolvePickerSelection>,
+  service: ReturnType<typeof resolvePickerSelection>,
+) {
+  if (project.defaultOption) return { ...search, projectId: project.defaultOption.id }
+  if (environment.defaultOption) return { ...search, environmentId: environment.defaultOption.id }
+  if (service.defaultOption) return { ...search, serviceId: service.defaultOption.id }
 }
 
 export function usePickerSelections() {
@@ -74,17 +90,17 @@ export function usePickerSelections() {
   const failure = failedQuery?.error
     ? { message: failedQuery.error.message, retry: () => void failedQuery.refetch() }
     : undefined
-  let status = resolveStatus(project, environment, service)
-  if (projectsQuery.isPending) status = 'Loading projects.'
-  else if (project.selectedOption && environmentsQuery.isPending) status = 'Loading environments.'
-  else if (environment.selectedOption && servicesQuery.isPending) status = 'Loading services.'
-  let searchWithDefaultOption: typeof search | undefined
-  if (project.defaultOption)
-    searchWithDefaultOption = { ...search, projectId: project.defaultOption.id }
-  else if (environment.defaultOption)
-    searchWithDefaultOption = { ...search, environmentId: environment.defaultOption.id }
-  else if (service.defaultOption)
-    searchWithDefaultOption = { ...search, serviceId: service.defaultOption.id }
+  const status = resolveStatus(project, environment, service, {
+    project: projectsQuery.isPending,
+    environment: environmentsQuery.isPending,
+    service: servicesQuery.isPending,
+  })
+  const searchWithDefaultOption = resolveSearchWithDefaultOption(
+    search,
+    project,
+    environment,
+    service,
+  )
 
   return {
     project: {
