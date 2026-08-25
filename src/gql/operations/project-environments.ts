@@ -1,4 +1,4 @@
-import { graphql } from 'gql.tada'
+import { graphql, type ResultOf } from 'gql.tada'
 
 export const projectEnvironmentsQuery = graphql(`
   query ProjectEnvironments($projectId: String!, $first: Int, $after: String) {
@@ -18,3 +18,8 @@ export const projectEnvironmentsQuery = graphql(`
     }
   }
 `)
+
+export type ProjectEnvironmentsConnection = ResultOf<
+  typeof projectEnvironmentsQuery
+>['project']['environments']
+export type EnvironmentOption = ProjectEnvironmentsConnection['edges'][number]['node']

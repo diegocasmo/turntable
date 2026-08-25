@@ -1,15 +1,14 @@
-import type { ResultOf } from 'gql.tada'
-import type { environmentServicesQuery } from '@/gql/operations/environment-services'
-import type { projectEnvironmentsQuery } from '@/gql/operations/project-environments'
-import type { projectsQuery } from '@/gql/operations/projects'
+import type { EnvironmentServicesConnection } from '@/gql/operations/environment-services'
+import type { ProjectEnvironmentsConnection } from '@/gql/operations/project-environments'
+import type { ProjectsConnection } from '@/gql/operations/projects'
 import { RailwayResponseError } from '@/railway/errors'
 
 export const railwayConnectionPageSize = 500
 
 type RailwayConnection =
-  | ResultOf<typeof projectsQuery>['projects']
-  | ResultOf<typeof projectEnvironmentsQuery>['project']['environments']
-  | ResultOf<typeof environmentServicesQuery>['environment']['serviceInstances']
+  | ProjectsConnection
+  | ProjectEnvironmentsConnection
+  | EnvironmentServicesConnection
 
 type ConnectionNode<Connection extends RailwayConnection> = Connection['edges'][number]['node']
 

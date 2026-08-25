@@ -1,7 +1,6 @@
-import type { ResultOf } from 'gql.tada'
-import type { environmentServicesQuery } from '@/gql/operations/environment-services'
-import type { projectEnvironmentsQuery } from '@/gql/operations/project-environments'
-import type { projectsQuery } from '@/gql/operations/projects'
+import type { ServiceOption } from '@/gql/operations/environment-services'
+import type { EnvironmentOption } from '@/gql/operations/project-environments'
+import type { ProjectOption, ProjectsConnection } from '@/gql/operations/projects'
 
 export const testRailwayApiUrl = 'https://backboard.railway.test/graphql/v2'
 export const testRailwayEnvironmentId = 'environment-1'
@@ -10,15 +9,7 @@ export const testRailwayServiceId = 'service-1'
 export const testRailwayToken = 'railway-token-that-must-not-leak'
 export const testRailwayWorkspaceId = 'workspace-1'
 
-type Project = ResultOf<typeof projectsQuery>['projects']['edges'][number]['node']
-type Environment = ResultOf<
-  typeof projectEnvironmentsQuery
->['project']['environments']['edges'][number]['node']
-type Service = ResultOf<
-  typeof environmentServicesQuery
->['environment']['serviceInstances']['edges'][number]['node']
-
-type PageInfo = ResultOf<typeof projectsQuery>['projects']['pageInfo']
+type PageInfo = ProjectsConnection['pageInfo']
 
 export function createRailwayEdge<Node>(node: Node) {
   return { node }
@@ -31,7 +22,7 @@ export function createRailwayPage<Node>(
   return { edges: nodes.map(createRailwayEdge), pageInfo }
 }
 
-export function createRailwayProject(overrides: Partial<Project> = {}): Project {
+export function createRailwayProject(overrides: Partial<ProjectOption> = {}): ProjectOption {
   return {
     id: testRailwayProjectId,
     name: 'Turntable',
@@ -41,11 +32,13 @@ export function createRailwayProject(overrides: Partial<Project> = {}): Project 
   }
 }
 
-export function createRailwayEnvironment(overrides: Partial<Environment> = {}): Environment {
+export function createRailwayEnvironment(
+  overrides: Partial<EnvironmentOption> = {},
+): EnvironmentOption {
   return { id: testRailwayEnvironmentId, name: 'Production', ...overrides }
 }
 
-export function createRailwayService(overrides: Partial<Service> = {}): Service {
+export function createRailwayService(overrides: Partial<ServiceOption> = {}): ServiceOption {
   return { id: testRailwayServiceId, name: 'Web', ...overrides }
 }
 

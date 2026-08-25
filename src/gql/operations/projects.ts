@@ -1,4 +1,4 @@
-import { graphql } from 'gql.tada'
+import { graphql, type ResultOf } from 'gql.tada'
 
 export const projectsQuery = graphql(`
   query Projects($first: Int, $after: String) {
@@ -21,3 +21,6 @@ export const projectsQuery = graphql(`
     }
   }
 `)
+
+export type ProjectsConnection = ResultOf<typeof projectsQuery>['projects']
+export type ProjectOption = ProjectsConnection['edges'][number]['node']

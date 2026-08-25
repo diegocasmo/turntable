@@ -1,4 +1,4 @@
-import { graphql } from 'gql.tada'
+import { graphql, type ResultOf } from 'gql.tada'
 
 export const environmentServicesQuery = graphql(`
   query EnvironmentServices(
@@ -23,3 +23,8 @@ export const environmentServicesQuery = graphql(`
     }
   }
 `)
+
+export type EnvironmentServicesConnection = ResultOf<
+  typeof environmentServicesQuery
+>['environment']['serviceInstances']
+export type ServiceOption = EnvironmentServicesConnection['edges'][number]['node']
