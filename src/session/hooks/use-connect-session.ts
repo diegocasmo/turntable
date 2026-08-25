@@ -11,18 +11,23 @@ export function useConnectSession() {
 
   const mutation = useMutation({
     gcTime: 0,
-    mutationFn: () => connect({ data: { token: token.current } }),
+    mutationFn: async () => {
+      try {
+        return await connect({ data: { token: token.current } })
+      } finally {
+        token.current = ''
+      }
+    },
     onSuccess: () => router.invalidate({ sync: true }),
   })
 
-  async function connectSession(railwayToken: string) {
-    token.current = railwayToken
-
-    try {
-      return await mutation.mutateAsync()
-    } finally {
-      token.current = ''
+  function connectSession(railwayToken: string) {
+    if (token.current !== '') {
+      return
     }
+
+    token.current = railwayToken
+    mutation.mutate()
   }
 
   return {

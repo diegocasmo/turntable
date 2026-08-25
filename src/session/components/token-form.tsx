@@ -21,8 +21,7 @@ export function TokenForm({ expired }: TokenFormProps) {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    // The mutation renders the error. The rejected submit promise must not reach the browser.
-    void form.handleSubmit().catch(() => undefined)
+    void form.handleSubmit()
   }
 
   return (
