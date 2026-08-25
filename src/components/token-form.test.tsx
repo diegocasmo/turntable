@@ -1,28 +1,81 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  RouterProvider,
+} from '@tanstack/react-router'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { describe, expect, it, vi } from 'vitest'
-import { TokenForm } from '@/components/token-form'
-import { maximumSessionTokenByteLength } from '@/session-schema'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { TurntablePage } from '@/components/turntable-page'
+import { maximumSessionTokenByteLength, type SessionState } from '@/session-schema'
 import { testRailwayToken } from '@/test/fixtures'
 
-function createJsonResponse(body: unknown, status: number) {
-  return Response.json(body, { status })
-}
+const { connectToRailwayMock, disconnectFromRailwayMock } = vi.hoisted(() => ({
+  connectToRailwayMock: vi.fn(),
+  disconnectFromRailwayMock: vi.fn(),
+}))
 
-function renderTokenForm(fetchRequest = vi.fn(async () => new Response(null, { status: 204 }))) {
+vi.mock('@/session.functions', () => ({
+  connectToRailway: connectToRailwayMock,
+  disconnectFromRailway: disconnectFromRailwayMock,
+}))
+vi.stubGlobal('scrollTo', vi.fn())
+
+type SessionOperation = () => Promise<SessionState>
+
+type RenderOptions = Readonly<{
+  connect?: SessionOperation
+  disconnect?: SessionOperation
+  sessionState?: SessionState
+}>
+
+function renderTurntablePage(options: RenderOptions = {}) {
+  let sessionState = options.sessionState ?? 'signed-out'
+  const connect =
+    options.connect ??
+    (async () => {
+      sessionState = 'authenticated'
+      return sessionState
+    })
+  const disconnect =
+    options.disconnect ??
+    (async () => {
+      sessionState = 'signed-out'
+      return sessionState
+    })
+
+  connectToRailwayMock.mockImplementation(connect)
+  disconnectFromRailwayMock.mockImplementation(disconnect)
+
+  const rootRoute = createRootRoute()
+  const pageRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/',
+    loader: () => sessionState,
+    component: TestPage,
+  })
+
+  function TestPage() {
+    return <TurntablePage sessionState={pageRoute.useLoaderData()} />
+  }
+
   const queryClient = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
   })
+  const router = createRouter({
+    history: createMemoryHistory({ initialEntries: ['/'] }),
+    routeTree: rootRoute.addChildren([pageRoute]),
+    Wrap: ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    ),
+  })
 
   return {
-    fetchRequest,
     queryClient,
-    ...render(<TokenForm fetchRequest={fetchRequest} />, {
-      wrapper: ({ children }: { children: ReactNode }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-      ),
-    }),
+    ...render(<RouterProvider router={router} />),
   }
 }
 
@@ -34,10 +87,15 @@ function submitToken(token = testRailwayToken) {
 }
 
 describe('Token form', () => {
-  it('shows the idle state and the required help text', () => {
-    renderTokenForm()
+  beforeEach(() => {
+    connectToRailwayMock.mockReset()
+    disconnectFromRailwayMock.mockReset()
+  })
 
-    const main = screen.getByRole('main')
+  it('shows the idle state and the required product text', async () => {
+    renderTurntablePage()
+
+    const main = await screen.findByRole('main')
 
     expect(within(main).getByRole('heading', { level: 1, name: 'Turntable' })).toBeVisible()
     expect(within(main).getByLabelText('Workspace token')).toBeRequired()
@@ -49,9 +107,9 @@ describe('Token form', () => {
   })
 
   it('shows the pending state while Railway checks the token', async () => {
-    const fetchRequest = vi.fn(() => new Promise<Response>(() => undefined))
-    renderTokenForm(fetchRequest)
+    renderTurntablePage({ connect: () => new Promise<SessionState>(() => undefined) })
 
+    await screen.findByLabelText('Workspace token')
     submitToken()
 
     expect(await screen.findByRole('button', { name: 'Connecting...' })).toBeDisabled()
@@ -59,65 +117,58 @@ describe('Token form', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Railway is checking the token.')
   })
 
-  it('rejects an invalid token before it sends a request', async () => {
-    const { fetchRequest } = renderTokenForm()
+  it('rejects an invalid token before it calls the server', async () => {
+    renderTurntablePage()
     const tokenAboveByteLimit = `${'é'.repeat(maximumSessionTokenByteLength / 2)}a`
 
+    await screen.findByLabelText('Workspace token')
     submitToken(tokenAboveByteLimit)
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'The Railway token must contain 1 to 512 UTF-8 bytes.',
     )
-    expect(fetchRequest).not.toHaveBeenCalled()
+    expect(connectToRailwayMock).not.toHaveBeenCalled()
   })
 
-  it('shows the error returned by the session route', async () => {
-    const fetchRequest = vi.fn(async () => createJsonResponse({ error: 'Not Authorized' }, 401))
-    renderTokenForm(fetchRequest)
+  it('shows a safe server error', async () => {
+    renderTurntablePage({
+      connect: () => Promise.reject(new Error('Railway could not verify this token.')),
+    })
 
+    await screen.findByLabelText('Workspace token')
     submitToken()
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Not Authorized')
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Railway could not verify this token.',
+    )
     expect(screen.getByRole('button', { name: 'Connect to Railway' })).toBeEnabled()
   })
 
-  it('shows the success state and lets the user sign out this browser', async () => {
-    const fetchRequest = vi.fn(async () => new Response(null, { status: 204 }))
-    const { queryClient } = renderTokenForm(fetchRequest)
+  it('shows the success state and clears the token mutation', async () => {
+    const { queryClient } = renderTurntablePage()
 
+    await screen.findByLabelText('Workspace token')
     submitToken()
 
     expect(await screen.findByRole('heading', { name: 'Connected to Railway' })).toBeVisible()
     expect(screen.getByRole('status')).toHaveTextContent('Railway accepted your workspace token.')
-    expect(screen.queryByLabelText('Workspace token')).not.toBeInTheDocument()
-    expect(fetchRequest).toHaveBeenNthCalledWith(1, '/api/session', {
-      body: JSON.stringify({ token: testRailwayToken }),
-      headers: { 'content-type': 'application/json' },
-      method: 'POST',
+    expect(connectToRailwayMock.mock.calls[0]?.[0]).toEqual({
+      data: { token: testRailwayToken },
     })
-    expect(JSON.stringify(queryClient.getMutationCache().getAll())).not.toContain(testRailwayToken)
-    expect(screen.getByRole('link', { name: 'delete it on Railway' })).toHaveAttribute(
-      'href',
-      'https://railway.com/account/tokens',
-    )
-
-    fireEvent.click(screen.getByRole('button', { name: 'Sign out this browser' }))
-
-    expect(await screen.findByLabelText('Workspace token')).toBeVisible()
-    expect(fetchRequest).toHaveBeenLastCalledWith('/api/session', { method: 'DELETE' })
+    await waitFor(() => expect(queryClient.getMutationCache().getAll()).toHaveLength(0))
   })
 
-  it('returns to the token form when the session expired', async () => {
-    const fetchRequest = vi
-      .fn()
-      .mockResolvedValueOnce(new Response(null, { status: 204 }))
-      .mockResolvedValueOnce(
-        createJsonResponse({ error: 'The session is invalid or expired.' }, 401),
-      )
-    renderTokenForm(fetchRequest)
+  it('signs out this browser', async () => {
+    renderTurntablePage({ sessionState: 'authenticated' })
 
-    submitToken()
     fireEvent.click(await screen.findByRole('button', { name: 'Sign out this browser' }))
+
+    expect(await screen.findByLabelText('Workspace token')).toBeVisible()
+    expect(disconnectFromRailwayMock.mock.calls[0]?.[0]).toEqual({})
+  })
+
+  it('shows an expired session', async () => {
+    renderTurntablePage({ sessionState: 'expired' })
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Your session expired. Enter your workspace token again.',

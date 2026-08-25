@@ -11,9 +11,9 @@ These rules apply to all work in this repository. This file is the only source f
 1. Write all documents in ASD-STE100 Simplified Technical English. Use short sentences. Use the active voice. Use simple words.
 2. Point to the single source of truth. Do not copy information that has a source. Give a link or a file path instead.
 3. Use strict TypeScript. Do not use `any`. Do not use a type assertion to hide an error. The Railway client can assert the successful `data` value once, after it validates the GraphQL response and rejects errors, missing data, and null data.
-4. Do not write `useEffect`. Use TanStack Query for server state. Ask the project owner before you add a different state tool.
+4. Do not write `useEffect`. Use TanStack Query for server state and asynchronous action state. Use TanStack Form for form state. Ask the project owner before you add a different state tool.
 5. Use GraphQL subscriptions for live data. Do not poll. There is no exception.
-6. Keep the Railway API token readable only on the server. Browser JavaScript must never read the token. The client stores only ciphertext.
+6. Keep the plaintext Railway API token in the token form and its request only. Never persist, log, or put it in a long-lived client cache. Remove the form and its mutation from client state after a successful connection. The client then stores only ciphertext.
 7. Keep each pull request at or below the added-line limit that [the Dangerfile](./dangerfile.mts) defines and enforces. The check counts tests like other files. Split the work instead.
 8. `.gitattributes` marks each file that a tool owns and replaces with `linguist-generated=true`. The size check in CI does not count these files, and GitHub hides them in the diff. Do not mark source code that the project owns and maintains.
 9. A feature's dependencies land in a pull request before its feature code. A dependency pull request can add the minimum configuration, generated output, and tests that prove the dependencies work. The scaffold pull request can add the dependencies of the scaffold.
@@ -30,6 +30,8 @@ These rules apply to all work in this repository. This file is the only source f
 20. Before you write infrastructure that a selected framework or dependency can provide, inspect its pinned public API and official documentation. Use that API when it meets the requirements. If it does not, record the exact missing behavior and evidence before you write a custom replacement.
 21. Start each hand-maintained, non-component function name with an action verb. Keep framework-required names and third-party API names.
 22. Define each GraphQL operation once with gql.tada's `graphql()` function. Infer its result and variables from that document.
+23. Use TanStack Start server functions for internal reads and commands. Use a raw server route only when the HTTP protocol needs a `Response`, such as SSE and health checks.
+24. Put an input schema that the browser and server share in a non-server file. Use the same schema in TanStack Form and the server function validator.
 
 ## Commands
 
