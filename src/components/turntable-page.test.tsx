@@ -10,8 +10,13 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TurntablePage } from '@/components/turntable-page'
+import { endRailwaySession } from '@/selection/hooks/use-read-selection-result'
 import { type SelectionSearch, selectionSearchSchema } from '@/selection/schema'
-import { maximumSessionTokenByteLength, type SessionState } from '@/session/schema'
+import {
+  maximumSessionTokenByteLength,
+  type RailwaySessionResult,
+  type SessionState,
+} from '@/session/schema'
 import {
   createRailwayEnvironment,
   createRailwayProject,
@@ -81,7 +86,7 @@ function renderTurntablePage(options: RenderOptions = {}) {
   })
 
   function TestPage() {
-    return <TurntablePage sessionState={pageRoute.useLoaderData()} />
+    return <TurntablePage initialSessionState={pageRoute.useLoaderData()} />
   }
 
   const queryClient = new QueryClient({
@@ -109,6 +114,10 @@ function submitToken(token = testRailwayToken) {
   fireEvent.submit(screen.getByRole('form', { name: 'Connect to Railway' }))
 }
 
+function createSuccess<Value>(value: Value): RailwaySessionResult<Value> {
+  return { kind: 'success', value }
+}
+
 async function selectOption(name: string, value: string) {
   const picker = await screen.findByRole('combobox', { name })
   await waitFor(() => expect(picker).toBeEnabled())
@@ -122,11 +131,13 @@ async function expectSearch(page: ReturnType<typeof renderTurntablePage>, search
 beforeEach(() => {
   connectToRailwayMock.mockReset()
   disconnectFromRailwayMock.mockReset()
-  readEnvironmentsMock.mockReset().mockResolvedValue([createRailwayEnvironment()])
+  readEnvironmentsMock.mockReset().mockResolvedValue(createSuccess([createRailwayEnvironment()]))
   readProjectsMock
     .mockReset()
-    .mockResolvedValue([createRailwayProject(), createRailwayProject({ id: 'project-2' })])
-  readServicesMock.mockReset().mockResolvedValue([createRailwayService()])
+    .mockResolvedValue(
+      createSuccess([createRailwayProject(), createRailwayProject({ id: 'project-2' })]),
+    )
+  readServicesMock.mockReset().mockResolvedValue(createSuccess([createRailwayService()]))
 })
 
 describe('Token form', () => {
@@ -212,16 +223,27 @@ describe('Token form', () => {
 
     expect(await screen.findByLabelText('Workspace token')).toBeVisible()
     expect(disconnectFromRailwayMock.mock.calls[0]?.[0]).toEqual({})
-    expect(queryClient.getQueryCache().getAll()).toHaveLength(0)
+    expect(queryClient.getQueryData(['private-test-data'])).toBeUndefined()
   })
 
-  it('shows an expired session', async () => {
-    renderTurntablePage({ sessionState: 'expired' })
+  it('shows an ended session', async () => {
+    renderTurntablePage({ sessionState: 'ended' })
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Your session expired. Enter your workspace token again.',
+      'Your Railway session ended. Enter your workspace token again.',
     )
     expect(screen.getByLabelText('Workspace token')).toBeVisible()
+  })
+
+  it('shows no ended notice after a new page load', async () => {
+    const endedPage = renderTurntablePage({ sessionState: 'ended' })
+    await screen.findByText('Your Railway session ended. Enter your workspace token again.')
+    endedPage.unmount()
+
+    renderTurntablePage({ sessionState: 'signed-out' })
+
+    expect(await screen.findByLabelText('Workspace token')).toBeVisible()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })
 
@@ -239,14 +261,16 @@ describe('project, environment, and service selection', () => {
     const environment = createRailwayEnvironment({ id: 'environment-2', name: 'Staging' })
     const service = createRailwayService({ id: 'service-2', name: 'Worker' })
     const workspace = { id: 'workspace-2', name: 'Zulu' }
-    readProjectsMock.mockResolvedValue([
-      createRailwayProject({ id: 'project-2', name: 'Alpha', workspace }),
-      createRailwayProject({ id: 'project-3', name: 'Beta' }),
-      createRailwayProject({ id: 'project-4', name: 'Aardvark' }),
-      project,
-    ])
-    readEnvironmentsMock.mockResolvedValue([createRailwayEnvironment(), environment])
-    readServicesMock.mockResolvedValue([createRailwayService(), service])
+    readProjectsMock.mockResolvedValue(
+      createSuccess([
+        createRailwayProject({ id: 'project-2', name: 'Alpha', workspace }),
+        createRailwayProject({ id: 'project-3', name: 'Beta' }),
+        createRailwayProject({ id: 'project-4', name: 'Aardvark' }),
+        project,
+      ]),
+    )
+    readEnvironmentsMock.mockResolvedValue(createSuccess([createRailwayEnvironment(), environment]))
+    readServicesMock.mockResolvedValue(createSuccess([createRailwayService(), service]))
     const page = renderTurntablePage({ sessionState: 'authenticated' })
     await selectOption('Project', project.id)
     await selectOption('Environment', environment.id)
@@ -272,12 +296,11 @@ describe('project, environment, and service selection', () => {
     const project = createRailwayProject()
     const environment = createRailwayEnvironment()
     const service = createRailwayService()
-    readProjectsMock.mockResolvedValue([project])
-    readEnvironmentsMock.mockResolvedValue([
-      environment,
-      createRailwayEnvironment({ id: 'environment-2' }),
-    ])
-    readServicesMock.mockResolvedValue([service])
+    readProjectsMock.mockResolvedValue(createSuccess([project]))
+    readEnvironmentsMock.mockResolvedValue(
+      createSuccess([environment, createRailwayEnvironment({ id: 'environment-2' })]),
+    )
+    readServicesMock.mockResolvedValue(createSuccess([service]))
     const first = renderTurntablePage({ sessionState: 'authenticated' })
     await expectSearch(first, {
       environmentId: environment.id,
@@ -295,8 +318,8 @@ describe('project, environment, and service selection', () => {
     ['Environment', []],
     ['Service', [createRailwayEnvironment()]],
   ])('shows an empty %s picker after its parent resolves', async (label, environments) => {
-    readEnvironmentsMock.mockResolvedValue(environments)
-    readServicesMock.mockResolvedValue([])
+    readEnvironmentsMock.mockResolvedValue(createSuccess(environments))
+    readServicesMock.mockResolvedValue(createSuccess([]))
     renderTurntablePage({ initialEntry: '/?projectId=project-1', sessionState: 'authenticated' })
 
     const picker = await screen.findByRole('combobox', { name: label })
@@ -319,7 +342,9 @@ describe('project, environment, and service selection', () => {
 
   it('shows and retries a safe error', async () => {
     const message = 'Railway could not load choices.'
-    readProjectsMock.mockRejectedValueOnce(new Error(message)).mockResolvedValueOnce([])
+    readProjectsMock
+      .mockRejectedValueOnce(new Error(message))
+      .mockResolvedValueOnce(createSuccess([]))
     renderTurntablePage({ sessionState: 'authenticated' })
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message)
@@ -327,5 +352,43 @@ describe('project, environment, and service selection', () => {
     expect(await screen.findByRole('combobox', { name: 'Project' })).toHaveDisplayValue(
       'No projects',
     )
+  })
+
+  it.each([
+    ['project', readProjectsMock],
+    ['environment', readEnvironmentsMock],
+    ['service', readServicesMock],
+  ])(
+    'ends the session when the %s read returns the session-ended tag',
+    async (_level, readMock) => {
+      readMock.mockResolvedValue({ kind: 'session-ended' })
+      const initialEntry = '/?projectId=project-1&environmentId=environment-1&serviceId=service-1'
+      const page = renderTurntablePage({ initialEntry, sessionState: 'authenticated' })
+      page.queryClient.setQueryData(['private-test-data'], 'private')
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Your Railway session ended. Enter your workspace token again.',
+      )
+      expect(page.queryClient.getQueryData(['private-test-data'])).toBeUndefined()
+      expect(page.router.state.location.href).toBe(initialEntry)
+      expect(screen.queryByText(/Not Authorized/i)).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
+    },
+  )
+
+  it('runs the repeated session-ended transition once', async () => {
+    const page = renderTurntablePage({
+      initialEntry: '/?projectId=project-1&environmentId=environment-1&serviceId=service-1',
+      sessionState: 'authenticated',
+    })
+    await screen.findByRole('heading', { name: 'Connected to Railway' })
+    const invalidate = vi.spyOn(page.router, 'invalidate')
+
+    await Promise.all([
+      endRailwaySession(page.queryClient, page.router),
+      endRailwaySession(page.queryClient, page.router),
+    ])
+
+    expect(invalidate).toHaveBeenCalledOnce()
   })
 })

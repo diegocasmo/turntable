@@ -145,7 +145,8 @@ Layer 2 reads the body:
 
 1. Zod parses the response body. It must also accept a body that is not GraphQL, because the 400 case has no `errors` array.
 2. A non-empty `errors` array stops the work. The screen shows Railway's own message.
-3. A message that contains "not authorized" also tells the client to offer the token form. This is a hint only. Measured, an auth failure can also read "Deployment not found", so the text is never the only test of a live session.
+3. A request that uses the stored token and gets a message that contains "not authorized" ends the browser session. The server deletes the session cookie. The client clears private query data and shows the token form. This is a hint only. Measured, an auth failure can also read "Deployment not found", so the text is never the only test of a live session.
+4. A request from the token form does not use this rule. It shows the Railway error and keeps the form open.
 
 The CLI matches message text in the same way, and `errors.rs` says in a comment that the match is fragile. A test pins our one string, as `errors.rs` does for its own.
 
@@ -192,7 +193,7 @@ The session cookie alone is not a full defense. The application also does this:
 2. Every response carries a Content-Security-Policy with a random nonce for that request. The policy allows scripts with that nonce only, and it includes `frame-ancestors 'none'`. The nonce goes through the framework's server-side render option, so the page still hydrates. TanStack keeps [CSP tests](https://github.com/TanStack/router/blob/main/e2e/react-start/csp/tests/csp.spec.ts) for this path.
 3. Responses also carry `Referrer-Policy` and `X-Content-Type-Options`. Authenticated responses carry `Cache-Control: no-store`.
 4. The upstream API address is configuration. Production and tests that call Railway accept Railway's own address only. Reason: a wrong value sends every user's token to another host, and the screen shows no symptom.
-5. An expired or invalid session returns the expired session state to the application. The application then shows the token form. The event stream answers differently, and "Browser transport" explains why.
+5. An expired or invalid session returns the ended session state to the application. The application then shows the token form. The event stream answers differently, and "Browser transport" explains why.
 
 ### Browser transport: Server-Sent Events
 
@@ -351,7 +352,7 @@ Every screen defines its states. The required set:
 | Life cycle | no deployment, spin-down in progress, removed, deployment failed |
 | Stream | reconnecting, reconnect gave up, watching a new deployment, unknown status |
 | Failure | Railway error, rate limited, service gone |
-| Session | expired session |
+| Session | ended session |
 
 Each state has visible text. Each state has one allowed-action rule from the action policy. Each state has one test. No state outside the "Life cycle" group allows a destructive action.
 

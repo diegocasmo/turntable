@@ -17,4 +17,8 @@ export const railwayTokenSchema = z.string().check(
 
 export const sessionInputSchema = z.object({ token: railwayTokenSchema })
 
-export type SessionState = 'authenticated' | 'expired' | 'signed-out'
+export type SessionState = 'authenticated' | 'ended' | 'signed-out'
+
+export type RailwaySessionResult<Value> =
+  | Readonly<{ kind: 'success'; value: Value }>
+  | Readonly<{ kind: 'session-ended' }>

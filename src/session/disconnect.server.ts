@@ -6,7 +6,7 @@ export async function disconnectRailwaySession(sessionSecret: string): Promise<S
     await readSession(sessionSecret)
   } catch (error) {
     if (error instanceof InvalidSessionError) {
-      return 'expired'
+      return 'ended'
     }
 
     throw error

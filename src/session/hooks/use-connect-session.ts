@@ -3,6 +3,7 @@ import { useRouter } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import { useRef } from 'react'
 import { connectToRailway } from '@/session/connect-to-railway'
+import { clearPrivateDataAndSetSessionState } from '@/session/hooks/use-session-state'
 
 export function useConnectSession() {
   const router = useRouter()
@@ -19,8 +20,8 @@ export function useConnectSession() {
         token.current = ''
       }
     },
-    onSuccess: () => {
-      queryClient.clear()
+    onSuccess: (sessionState) => {
+      clearPrivateDataAndSetSessionState(queryClient, sessionState)
       return router.invalidate({ sync: true })
     },
   })

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import { disconnectFromRailway } from '@/session/disconnect-from-railway'
+import { clearPrivateDataAndSetSessionState } from '@/session/hooks/use-session-state'
 
 export function useDisconnectSession() {
   const router = useRouter()
@@ -10,8 +11,8 @@ export function useDisconnectSession() {
 
   return useMutation({
     mutationFn: disconnect,
-    onSuccess: () => {
-      queryClient.clear()
+    onSuccess: (sessionState) => {
+      clearPrivateDataAndSetSessionState(queryClient, sessionState)
       return router.invalidate({ sync: true })
     },
   })

@@ -1,13 +1,16 @@
 import { SelectionPickers } from '@/selection/components/selection-pickers'
 import { SessionControls } from '@/session/components/session-controls'
 import { TokenForm } from '@/session/components/token-form'
+import { useSessionState } from '@/session/hooks/use-session-state'
 import type { SessionState } from '@/session/schema'
 
 type TurntablePageProps = Readonly<{
-  sessionState: SessionState
+  initialSessionState: SessionState
 }>
 
-export function TurntablePage({ sessionState }: TurntablePageProps) {
+export function TurntablePage({ initialSessionState }: TurntablePageProps) {
+  const sessionState = useSessionState(initialSessionState).data
+
   return (
     <div className="relative grid min-h-screen grid-rows-[1fr_auto] overflow-hidden bg-[#141613] text-[#f4f0e6]">
       <p aria-label="Session status" className="sr-only" role="status">
@@ -54,7 +57,7 @@ export function TurntablePage({ sessionState }: TurntablePageProps) {
                   <SelectionPickers />
                 </SessionControls>
               ) : (
-                <TokenForm expired={sessionState === 'expired'} />
+                <TokenForm ended={sessionState === 'ended'} />
               )}
             </div>
           </div>
