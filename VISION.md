@@ -22,7 +22,7 @@ Three goals shape every decision in this document:
 
 ## Verified facts
 
-This document states measured facts. A person ran each measurement against the live API on 2026-08-21. The conformance script in "Tests" repeats them. Two claims stay unverified, and both say so where they appear.
+This document states measured facts. A person ran each measurement against the live API on 2026-08-21, except for the token-scope measurements from 2026-08-25. The conformance script in "Tests" repeats them. Two claims stay unverified, and both say so where they appear.
 
 The Railway CLI is the second source. Every link to it points at commit [`3efce83`](https://github.com/railwayapp/cli/tree/3efce83e618a158b16de8eed3a9e1f4f2e585d80). The CLI moves fast, so `master` is not a stable citation.
 
@@ -66,9 +66,9 @@ Trade-off: `deploymentStop` stops a deployment, but it does not mark it removed.
 
 ### Selecting a service
 
-The application reads `projects` without `me` or a workspace filter. It follows Railway's cursor pages until it has every project. Each project carries `workspace { id name }`, so the screen shows the workspace as a label.
+The application reads `apiToken { workspaces { id } }`. It then reads `projects(workspaceId)` for each workspace and follows Railway's cursor pages until it has every project. Each project carries `workspace { id name }`, so the screen shows the workspace as a label.
 
-The application never calls `me`. Measured: a workspace-scoped token gets "Not Authorized" from `me`. A design that reads `me { workspaces }` therefore breaks for the exact token that the form asks for.
+The application never calls `me`. Measured on 2026-08-25: both an account token and a workspace token return their accessible workspaces through `apiToken` and return projects through `projects(workspaceId)`. A workspace token gets "Not Authorized" from `me`, so `me { workspaces }` cannot provide the shared path.
 
 Three pickers follow: project, environment, and service. Each picker stays visible. This keeps the selected target clear and lets the user change it. The application preselects the only choice at a level.
 
@@ -164,7 +164,7 @@ The server rejects a token above 512 bytes in UTF-8. A session test checks the f
 
 The lifetime is one absolute hour, in the sealed session and in the cookie expiry. There is no renewal. The server checks the expiry on every request. Every stream also closes at the earlier of the session expiry and its own 14-minute limit. A cookie expiry cannot close an open response by itself, so the stream owns that timer.
 
-The form asks for a workspace token ([tokens page](https://railway.com/account/tokens)). Measured: a workspace token lists projects, runs both life-cycle mutations, and holds a subscription, all with the `authorization: Bearer` header. A project token uses the `Project-Access-Token` header instead, and Turntable does not support it. That is future work.
+The form asks for a Railway API token ([tokens page](https://railway.com/account/tokens)). Turntable accepts account tokens and workspace tokens. Measured on 2026-08-25: both token types list projects through the shared workspace path. Railway documents that both use the `authorization: Bearer` header. A workspace token also runs both life-cycle mutations and holds a subscription with this header. A project token uses the `Project-Access-Token` header instead, and Turntable does not support it. That is future work.
 
 The form and its request hold the plaintext token while the form is visible. The application never persists or logs it. After a successful connection, the form unmounts and its mutation leaves the Query cache. The encrypted session cookie is then the only browser copy.
 
