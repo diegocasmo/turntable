@@ -13,7 +13,7 @@ import {
   testRailwayEnvironmentId,
   testRailwayProjectId,
   testRailwayToken,
-} from '@/test/fixtures'
+} from '@/test/railway'
 import { createJsonResponse } from '@/test/response'
 
 const query = print(railwaySmokeQuery)

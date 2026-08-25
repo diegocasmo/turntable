@@ -11,7 +11,7 @@ import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TurntablePage } from '@/components/turntable-page'
 import { maximumSessionTokenByteLength, type SessionState } from '@/session/schema'
-import { testRailwayToken } from '@/test/fixtures'
+import { testRailwayToken } from '@/test/railway'
 
 const { connectToRailwayMock, disconnectFromRailwayMock } = vi.hoisted(() => ({
   connectToRailwayMock: vi.fn(),

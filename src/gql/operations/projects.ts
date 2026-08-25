@@ -1,8 +1,8 @@
 import { graphql } from 'gql.tada'
 
 export const projectsQuery = graphql(`
-  query Projects {
-    projects {
+  query Projects($first: Int, $after: String) {
+    projects(first: $first, after: $after) {
       edges {
         node {
           id
@@ -13,6 +13,10 @@ export const projectsQuery = graphql(`
             name
           }
         }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
       }
     }
   }

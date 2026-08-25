@@ -7,7 +7,8 @@ import {
   writeSession,
 } from '@/session/cookie.server'
 import { maximumSessionTokenByteLength } from '@/session/schema'
-import { testRailwayToken, testSessionSecret } from '@/test/fixtures'
+import { testSessionSecret } from '@/test/fixtures'
+import { testRailwayToken } from '@/test/railway'
 import { readFirstCookie, runServerRequest } from '@/test/start-request'
 
 const currentDate = new Date('2027-01-15T08:00:00.000Z')
