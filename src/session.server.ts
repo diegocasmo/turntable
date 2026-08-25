@@ -1,12 +1,9 @@
 import { clearSession, getSession, updateSession } from '@tanstack/react-start/server'
+import { z } from 'zod'
 
 export const maximumSessionTokenByteLength = 512
 export const sessionCookieName = '__Host-turntable'
 export const sessionLifetimeSeconds = 60 * 60
-
-type SessionData = {
-  railwayToken?: string
-}
 
 export type TurntableSession = Readonly<{
   expiresAtUnixSeconds: number
@@ -21,7 +18,7 @@ export class InvalidSessionError extends Error {
   }
 }
 
-function sessionConfig(sessionSecret: string) {
+function createSessionConfig(sessionSecret: string): Parameters<typeof getSession>[0] {
   return {
     cookie: {
       httpOnly: true,
@@ -34,22 +31,36 @@ function sessionConfig(sessionSecret: string) {
     name: sessionCookieName,
     password: sessionSecret,
     sessionHeader: false,
-  } as const
+  }
 }
 
-function tokenByteLength(token: string) {
+function measureTokenByteLength(token: string) {
   return new TextEncoder().encode(token).byteLength
 }
 
-function checkTokenLength(token: string) {
-  if (tokenByteLength(token) > maximumSessionTokenByteLength) {
+export const railwayTokenSchema = z
+  .string()
+  .min(1)
+  .refine(
+    (token) => measureTokenByteLength(token) <= maximumSessionTokenByteLength,
+    `must not exceed ${maximumSessionTokenByteLength} UTF-8 bytes`,
+  )
+
+const sessionDataSchema = z.object({
+  railwayToken: railwayTokenSchema,
+})
+
+type SessionData = z.infer<typeof sessionDataSchema>
+
+function checkToken(token: string) {
+  if (!railwayTokenSchema.safeParse(token).success) {
     throw new RangeError(
-      `The Railway token must not exceed ${maximumSessionTokenByteLength} UTF-8 bytes.`,
+      `The Railway token must contain 1 to ${maximumSessionTokenByteLength} UTF-8 bytes.`,
     )
   }
 }
 
-function toTurntableSession(token: string, createdAt: number): TurntableSession {
+function createTurntableSession(token: string, createdAt: number): TurntableSession {
   return {
     expiresAtUnixSeconds: Math.floor(createdAt / 1_000) + sessionLifetimeSeconds,
     token,
@@ -57,31 +68,27 @@ function toTurntableSession(token: string, createdAt: number): TurntableSession 
 }
 
 export async function writeSession(token: string, sessionSecret: string) {
-  checkTokenLength(token)
-  const config = sessionConfig(sessionSecret)
+  checkToken(token)
+  const config = createSessionConfig(sessionSecret)
 
   await clearSession(config)
   await updateSession<SessionData>(config, { railwayToken: token })
 }
 
 export async function readSession(sessionSecret: string) {
-  const config = sessionConfig(sessionSecret)
+  const config = createSessionConfig(sessionSecret)
   const session = await getSession<SessionData>(config)
-  const token = session.data.railwayToken
+  const data = sessionDataSchema.safeParse(session.data)
   const expiresAt = session.createdAt + sessionLifetimeSeconds * 1_000
 
-  if (
-    typeof token !== 'string' ||
-    tokenByteLength(token) > maximumSessionTokenByteLength ||
-    Date.now() >= expiresAt
-  ) {
+  if (!data.success || Date.now() >= expiresAt) {
     await clearSession(config)
     throw new InvalidSessionError()
   }
 
-  return toTurntableSession(token, session.createdAt)
+  return createTurntableSession(data.data.railwayToken, session.createdAt)
 }
 
 export function clearSessionCookie(sessionSecret: string) {
-  return clearSession(sessionConfig(sessionSecret))
+  return clearSession(createSessionConfig(sessionSecret))
 }

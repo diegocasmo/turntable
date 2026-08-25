@@ -8,19 +8,26 @@ import {
   RailwayRateLimitError,
   RailwayResponseError,
 } from '@/railway/errors'
+import {
+  testRailwayApiUrl,
+  testRailwayEnvironmentId,
+  testRailwayProjectId,
+  testRailwayToken,
+} from '@/test/fixtures'
 
-const apiUrl = 'https://backboard.railway.test/graphql/v2'
 const query = print(railwaySmokeQuery)
-const token = 'railway-token-that-must-not-leak'
-const variables = { environmentId: 'environment-1', projectId: 'project-1' }
+const variables = {
+  environmentId: testRailwayEnvironmentId,
+  projectId: testRailwayProjectId,
+}
 const validData = {
   environment: {
-    id: 'environment-1',
+    id: testRailwayEnvironmentId,
     name: 'Production',
-    projectId: 'project-1',
+    projectId: testRailwayProjectId,
     serviceInstances: { edges: [] },
   },
-  project: { id: 'project-1', name: 'Turntable' },
+  project: { id: testRailwayProjectId, name: 'Turntable' },
 }
 
 function jsonResponse(body: unknown, status = 200) {
@@ -33,13 +40,17 @@ function jsonResponse(body: unknown, status = 200) {
 function setup(response: Response) {
   const fetchRequest = vi.fn(async (_request: Request) => response)
   const writeError = vi.fn<(line: string) => void>()
-  const client = createRailwayClient({ apiUrl, fetch: fetchRequest, writeError })
+  const client = createRailwayClient({
+    apiUrl: testRailwayApiUrl,
+    fetch: fetchRequest,
+    writeError,
+  })
 
   return { client, fetchRequest, writeError }
 }
 
 function sendRequest(client: ReturnType<typeof createRailwayClient>) {
-  return client.request({ document: railwaySmokeQuery, token, variables })
+  return client.request({ document: railwaySmokeQuery, token: testRailwayToken, variables })
 }
 
 describe('Railway HTTP client', () => {
@@ -51,9 +62,9 @@ describe('Railway HTTP client', () => {
     const request = fetchRequest.mock.calls[0]?.[0]
 
     expect(request).toBeInstanceOf(Request)
-    expect(request?.url).toBe(apiUrl)
+    expect(request?.url).toBe(testRailwayApiUrl)
     expect(request?.method).toBe('POST')
-    expect(request?.headers.get('authorization')).toBe(`Bearer ${token}`)
+    expect(request?.headers.get('authorization')).toBe(`Bearer ${testRailwayToken}`)
     expect(request?.headers.get('content-type')).toBe('application/json')
     await expect(request?.json()).resolves.toEqual({
       query,
@@ -130,7 +141,7 @@ describe('Railway HTTP client', () => {
     const line = writeError.mock.calls[0]?.[0]
     expect(line).toContain(`HTTP status ${status}`)
     expect(line).toContain('[REDACTED]')
-    expect(line).not.toContain(token)
+    expect(line).not.toContain(testRailwayToken)
     expect(line).not.toContain(body)
     expect(line).not.toContain('body')
     expect(response.bodyUsed).toBe(true)

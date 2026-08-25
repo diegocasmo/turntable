@@ -1,4 +1,6 @@
-export const projectsQuery = /* GraphQL */ `
+import { graphql } from 'gql.tada'
+
+export const projectsQuery = graphql(`
   query Projects {
     projects {
       edges {
@@ -14,4 +16,4 @@ export const projectsQuery = /* GraphQL */ `
       }
     }
   }
-`
+`)
