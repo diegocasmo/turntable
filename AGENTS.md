@@ -32,6 +32,8 @@ These rules apply to all work in this repository. This file is the only source f
 22. Define each GraphQL operation once with gql.tada's `graphql()` function. Infer its result and variables from that document.
 23. Use TanStack Start server functions for internal reads and commands. Use a raw server route only when the HTTP protocol needs a `Response`, such as SSE and health checks.
 24. Put an input schema that the browser and server share in a non-server file. Use the same schema in TanStack Form and the server function validator.
+25. Group a capability that spans the user interface and server under `src/<domain>`. Keep application composition outside the domain.
+26. Put each independent server action in a verb-named `.server.ts` file. Keep shared protocol or storage policy in one explicit module. Use direct imports. Do not add barrel files.
 
 ## Commands
 
