@@ -120,14 +120,7 @@ export function usePickerSelections() {
     },
     service: {
       label: 'Service',
-      onSelect: (serviceId: string) =>
-        void navigate({
-          search: {
-            environmentId: environment.selectedOption?.id,
-            projectId: project.selectedOption?.id,
-            serviceId,
-          },
-        }),
+      onSelect: (serviceId: string) => void navigate({ search: { ...search, serviceId } }),
       options: sortOptions(servicesQuery.data),
       selectedOption: service.selectedOption,
       state: resolvePickerState(

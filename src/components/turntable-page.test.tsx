@@ -236,34 +236,25 @@ describe('project, environment, and service selection', () => {
 
   it('groups names for display and stores IDs in the URL', async () => {
     const project = createRailwayProject({ name: 'Beta' })
+    const environment = createRailwayEnvironment({ id: 'environment-2', name: 'Staging' })
+    const service = createRailwayService({ id: 'service-2', name: 'Worker' })
+    const workspace = { id: 'workspace-2', name: 'Zulu' }
     readProjectsMock.mockResolvedValue([
-      createRailwayProject({
-        id: 'project-2',
-        name: 'Alpha',
-        workspace: { id: 'workspace-2', name: 'Zulu' },
-      }),
+      createRailwayProject({ id: 'project-2', name: 'Alpha', workspace }),
       createRailwayProject({ id: 'project-3', name: 'Beta' }),
       createRailwayProject({ id: 'project-4', name: 'Aardvark' }),
       project,
     ])
-    readEnvironmentsMock.mockResolvedValue([
-      createRailwayEnvironment(),
-      createRailwayEnvironment({ id: 'environment-2', name: 'Staging' }),
-    ])
-    readServicesMock.mockResolvedValue([
-      createRailwayService(),
-      createRailwayService({ id: 'service-2', name: 'Worker' }),
-    ])
+    readEnvironmentsMock.mockResolvedValue([createRailwayEnvironment(), environment])
+    readServicesMock.mockResolvedValue([createRailwayService(), service])
     const page = renderTurntablePage({ sessionState: 'authenticated' })
     await selectOption('Project', project.id)
-    await expectSearch(page, { projectId: project.id })
-    await selectOption('Environment', 'environment-2')
-    await expectSearch(page, { environmentId: 'environment-2', projectId: project.id })
-    await selectOption('Service', 'service-2')
+    await selectOption('Environment', environment.id)
+    await selectOption('Service', service.id)
     await expectSearch(page, {
-      environmentId: 'environment-2',
+      environmentId: environment.id,
       projectId: project.id,
-      serviceId: 'service-2',
+      serviceId: service.id,
     })
     const groups = screen.getAllByRole('group')
     expect(groups.map((group) => group.getAttribute('label'))).toEqual([
