@@ -7,22 +7,26 @@ import {
   type SessionRouteConfig,
 } from '@/routes/api/session/-request.server'
 import { sessionCookieName, sessionLifetimeSeconds, writeSession } from '@/session.server'
+import {
+  testAppOrigin,
+  testRailwayApiUrl,
+  testRailwayEnvironmentId,
+  testRailwayProjectId,
+  testRailwayToken,
+  testSessionSecret,
+} from '@/test/fixtures'
 
-const appOrigin = 'https://turntable.test'
-const apiUrl = 'https://backboard.railway.test/graphql/v2'
 const currentDate = new Date('2027-01-15T12:00:00.000Z')
-const sessionSecret = Buffer.alloc(32, 1).toString('base64')
-const token = 'railway-token-that-must-not-leak'
 const routeConfig: SessionRouteConfig = {
-  appOrigin,
-  railwayApiUrl: apiUrl,
-  sessionSecret,
+  appOrigin: testAppOrigin,
+  railwayApiUrl: testRailwayApiUrl,
+  sessionSecret: testSessionSecret,
 }
 
 const validProject = {
-  id: 'project-1',
+  id: testRailwayProjectId,
   name: 'Turntable',
-  primaryEnvironmentId: 'environment-1',
+  primaryEnvironmentId: testRailwayEnvironmentId,
   workspace: { id: 'workspace-1', name: 'Workspace' },
 }
 const validRailwayBody = { data: { projects: { edges: [{ node: validProject }] } } }
@@ -49,9 +53,9 @@ function runSessionRoute(
 }
 
 async function createSessionCookie() {
-  const request = new Request(`${appOrigin}/api/session`)
+  const request = new Request(`${testAppOrigin}/api/session`)
   const response = await runRequest(request, async () => {
-    await writeSession(token, sessionSecret)
+    await writeSession(testRailwayToken, testSessionSecret)
     return new Response(null, { status: 204 })
   })
   const setCookie = response.headers.getSetCookie()[0]
@@ -69,14 +73,14 @@ async function createSessionCookie() {
   return cookie
 }
 
-function createPostRequest(value = token, origin: string | null = appOrigin) {
+function createPostRequest(value = testRailwayToken, origin: string | null = testAppOrigin) {
   const headers = new Headers({ 'content-type': 'application/json' })
 
   if (origin !== null) {
     headers.set('origin', origin)
   }
 
-  return new Request(`${appOrigin}/api/session`, {
+  return new Request(`${testAppOrigin}/api/session`, {
     body: JSON.stringify({ token: value }),
     headers,
     method: 'POST',
@@ -94,8 +98,8 @@ function postSession(
 }
 
 function createDeleteRequest(cookie: string) {
-  return new Request(`${appOrigin}/api/session`, {
-    headers: { cookie, origin: appOrigin },
+  return new Request(`${testAppOrigin}/api/session`, {
+    headers: { cookie, origin: testAppOrigin },
     method: 'DELETE',
   })
 }
@@ -128,11 +132,11 @@ describe('session route', () => {
     expect(result.body).toBe('')
     expect(result.headers['cache-control']).toBe('no-store')
     expect(result.headers['set-cookie']).toMatch(new RegExp(`^${sessionCookieName}=[^;]+;`))
-    expect(JSON.stringify(result)).not.toContain(token)
+    expect(JSON.stringify(result)).not.toContain(testRailwayToken)
 
     const railwayRequest = fetchRequest.mock.calls[0]?.[0]
 
-    expect(railwayRequest?.headers.get('authorization')).toBe(`Bearer ${token}`)
+    expect(railwayRequest?.headers.get('authorization')).toBe(`Bearer ${testRailwayToken}`)
     await expect(railwayRequest?.json()).resolves.toEqual({
       query: expect.stringContaining('query Projects'),
       variables: {},
@@ -141,7 +145,7 @@ describe('session route', () => {
 
   it('returns a Railway authorization failure without exposing the token', async () => {
     const fetchRequest = vi.fn(async () =>
-      createJsonResponse({ errors: [{ message: `Not Authorized: ${token}` }] }),
+      createJsonResponse({ errors: [{ message: `Not Authorized: ${testRailwayToken}` }] }),
     )
     const request = createPostRequest()
     const result = await readResponse(await postSession(request, fetchRequest))
@@ -154,7 +158,7 @@ describe('session route', () => {
       },
       status: 401,
     })
-    expect(JSON.stringify(result)).not.toContain(token)
+    expect(JSON.stringify(result)).not.toContain(testRailwayToken)
   })
 
   it('rejects a Railway body that is not GraphQL', async () => {
@@ -185,14 +189,14 @@ describe('session route', () => {
     ['a cross-site request', 'https://attacker.test', routeConfig],
     [
       'an origin that differs from APP_ORIGIN',
-      appOrigin,
+      testAppOrigin,
       { ...routeConfig, appOrigin: 'https://configured.test' },
     ],
     ['a malformed origin', 'not an origin', routeConfig],
     ['a request without an Origin header', null, routeConfig],
   ])('rejects %s', async (_name, origin, config) => {
     const fetchRequest = vi.fn(async () => createJsonResponse(validRailwayBody))
-    const request = createPostRequest(token, origin)
+    const request = createPostRequest(testRailwayToken, origin)
     const result = await readResponse(await postSession(request, fetchRequest, config))
 
     expect(result.status).toBe(403)

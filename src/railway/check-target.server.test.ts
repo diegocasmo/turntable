@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { loadRailwaySmokeConfig } from '@/railway/check-target.server'
+import { testRailwayEnvironmentId, testRailwayProjectId, testRailwayToken } from '@/test/fixtures'
 
 const validEnvironment = {
   RAILWAY_API_URL: 'https://backboard.railway.com/graphql/v2',
-  RAILWAY_TEST_ENVIRONMENT_ID: 'environment-1',
-  RAILWAY_TEST_PROJECT_ID: 'project-1',
+  RAILWAY_TEST_ENVIRONMENT_ID: testRailwayEnvironmentId,
+  RAILWAY_TEST_PROJECT_ID: testRailwayProjectId,
   RAILWAY_TEST_SERVICE_ID: 'service-1',
-  RAILWAY_TEST_TOKEN: 'token-that-must-not-leak',
+  RAILWAY_TEST_TOKEN: testRailwayToken,
 }
 
 describe('Railway smoke configuration', () => {

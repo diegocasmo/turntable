@@ -8,10 +8,9 @@ import {
   sessionLifetimeSeconds,
   writeSession,
 } from '@/session.server'
+import { testAppOrigin, testRailwayToken, testSessionSecret } from '@/test/fixtures'
 
 const currentDate = new Date('2027-01-15T08:00:00.000Z')
-const sessionSecret = Buffer.alloc(32, 1).toString('base64')
-const token = 'railway-workspace-token'
 
 type OperationResult<T> = Readonly<{ ok: true; value: T }> | Readonly<{ error: unknown; ok: false }>
 
@@ -34,8 +33,8 @@ async function runRequest<T>(operation: () => Promise<T>, headers?: HeadersInit)
 
   const request =
     headers === undefined
-      ? new Request('https://turntable.test/session')
-      : new Request('https://turntable.test/session', { headers })
+      ? new Request(`${testAppOrigin}/session`)
+      : new Request(`${testAppOrigin}/session`, { headers })
   const response = await handle(request, {})
   return { response, result }
 }
@@ -81,14 +80,14 @@ describe('framework session', () => {
   })
 
   it('round trips a valid session without renewal', async () => {
-    const created = await runRequest(() => writeSession(token, sessionSecret))
+    const created = await runRequest(() => writeSession(testRailwayToken, testSessionSecret))
     const setCookie = created.response.headers.getSetCookie()[0]
 
     if (setCookie === undefined) {
       throw new Error('The response did not set a session cookie.')
     }
 
-    const read = await runRequest(() => readSession(sessionSecret), {
+    const read = await runRequest(() => readSession(testSessionSecret), {
       Cookie: readCookie(setCookie),
     })
 
@@ -96,7 +95,7 @@ describe('framework session', () => {
       ok: true,
       value: {
         expiresAtUnixSeconds: Math.floor(currentDate.getTime() / 1_000) + sessionLifetimeSeconds,
-        token,
+        token: testRailwayToken,
       },
     })
     expect(read.response.headers.getSetCookie()).toEqual([])
@@ -104,7 +103,7 @@ describe('framework session', () => {
 
   it('sets one bounded cookie with the required attributes', async () => {
     const lastAcceptedToken = 'é'.repeat(maximumSessionTokenByteLength / 2)
-    const { response } = await runRequest(() => writeSession(lastAcceptedToken, sessionSecret))
+    const { response } = await runRequest(() => writeSession(lastAcceptedToken, testSessionSecret))
     const setCookies = response.headers.getSetCookie()
     const expires = new Date(currentDate.getTime() + sessionLifetimeSeconds * 1_000).toUTCString()
 
@@ -123,14 +122,16 @@ describe('framework session', () => {
     ['an empty token', ''],
     ['the first token length above the limit', `${'é'.repeat(maximumSessionTokenByteLength / 2)}a`],
   ])('rejects %s', async (_name, rejectedToken) => {
-    const { response, result } = await runRequest(() => writeSession(rejectedToken, sessionSecret))
+    const { response, result } = await runRequest(() =>
+      writeSession(rejectedToken, testSessionSecret),
+    )
 
     expect(result).toEqual({ error: expect.any(RangeError), ok: false })
     expect(response.headers.getSetCookie()).toEqual([])
   })
 
   it('rejects a changed cookie', async () => {
-    const created = await runRequest(() => writeSession(token, sessionSecret))
+    const created = await runRequest(() => writeSession(testRailwayToken, testSessionSecret))
     const setCookie = created.response.headers.getSetCookie()[0]
 
     if (setCookie === undefined) {
@@ -138,7 +139,7 @@ describe('framework session', () => {
     }
 
     const changedCookie = changeLastCharacter(readCookie(setCookie))
-    const { response, result } = await runRequest(() => readSession(sessionSecret), {
+    const { response, result } = await runRequest(() => readSession(testSessionSecret), {
       Cookie: changedCookie,
     })
 
@@ -149,7 +150,7 @@ describe('framework session', () => {
   })
 
   it('rejects a session at its absolute expiry', async () => {
-    const created = await runRequest(() => writeSession(token, sessionSecret))
+    const created = await runRequest(() => writeSession(testRailwayToken, testSessionSecret))
     const setCookie = created.response.headers.getSetCookie()[0]
 
     if (setCookie === undefined) {
@@ -157,7 +158,7 @@ describe('framework session', () => {
     }
 
     vi.advanceTimersByTime(sessionLifetimeSeconds * 1_000)
-    const { result } = await runRequest(() => readSession(sessionSecret), {
+    const { result } = await runRequest(() => readSession(testSessionSecret), {
       Cookie: readCookie(setCookie),
     })
 
@@ -165,14 +166,14 @@ describe('framework session', () => {
   })
 
   it('does not accept the H3 session header', async () => {
-    const created = await runRequest(() => writeSession(token, sessionSecret))
+    const created = await runRequest(() => writeSession(testRailwayToken, testSessionSecret))
     const setCookie = created.response.headers.getSetCookie()[0]
 
     if (setCookie === undefined) {
       throw new Error('The response did not set a session cookie.')
     }
 
-    const { result } = await runRequest(() => readSession(sessionSecret), {
+    const { result } = await runRequest(() => readSession(testSessionSecret), {
       [`x-${sessionCookieName.toLowerCase()}-session`]: readCookieValue(readCookie(setCookie)),
     })
 

@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { formatRequestLog } from '@/logging'
+import { testAppOrigin, testRailwayToken } from '@/test/fixtures'
 
 describe('request log redaction', () => {
   it('does not log private headers or a request body', () => {
-    const token = 'railway-token-that-must-not-leak'
-    const request = new Request('https://turntable.test/api/session', {
-      body: token,
+    const request = new Request(`${testAppOrigin}/api/session`, {
+      body: testRailwayToken,
       headers: {
-        Authorization: `Bearer ${token}`,
-        Cookie: `session=${token}`,
-        'Set-Cookie': `session=${token}`,
+        Authorization: `Bearer ${testRailwayToken}`,
+        Cookie: `session=${testRailwayToken}`,
+        'Set-Cookie': `session=${testRailwayToken}`,
         'X-Request-Id': 'request-1',
       },
       method: 'POST',
@@ -17,7 +17,7 @@ describe('request log redaction', () => {
 
     const line = formatRequestLog('request failed', request)
 
-    expect(line).not.toContain(token)
+    expect(line).not.toContain(testRailwayToken)
     expect(line).not.toContain('body')
     expect(line).toContain('[REDACTED]')
     expect(line).toContain('request-1')

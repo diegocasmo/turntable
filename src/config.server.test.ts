@@ -2,18 +2,19 @@ import { Buffer } from 'node:buffer'
 import { describe, expect, it, vi } from 'vitest'
 import { loadConfig, readConfig, readPort } from '@/config.server'
 import { railwayHostname } from '@/railway/url-schema'
+import { testAppOrigin, testSessionSecret } from '@/test/fixtures'
 
 const validEnvironment = {
   APP_ORIGIN: 'http://127.0.0.1:3000',
   NODE_ENV: 'test',
   RAILWAY_API_URL: 'http://127.0.0.1:4000/graphql/v2',
   RAILWAY_WEBSOCKET_URL: 'ws://127.0.0.1:4000/graphql/v2',
-  SESSION_SECRET: Buffer.alloc(32, 1).toString('base64'),
+  SESSION_SECRET: testSessionSecret,
 }
 
 const validProductionEnvironment = {
   ...validEnvironment,
-  APP_ORIGIN: 'https://turntable.test',
+  APP_ORIGIN: testAppOrigin,
   NODE_ENV: 'production',
   RAILWAY_API_URL: `https://${railwayHostname}/custom-api-path`,
   RAILWAY_WEBSOCKET_URL: `wss://${railwayHostname}/custom-websocket-path`,
