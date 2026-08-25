@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   InvalidSessionError,
   readSession,
@@ -33,16 +33,13 @@ function changeLastCharacter(value: string) {
 }
 
 describe('session cookie', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-    vi.setSystemTime(currentDate)
-  })
-
   afterEach(() => {
     vi.useRealTimers()
   })
 
   it('round trips a valid session without renewal', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(currentDate)
     const created = await runServerRequest(() => writeSession(testRailwayToken, testSessionSecret))
     const read = await runServerRequest(() => readSession(testSessionSecret), {
       Cookie: readFirstCookie(created.response),
@@ -59,6 +56,8 @@ describe('session cookie', () => {
   })
 
   it('sets one bounded cookie with the required attributes', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(currentDate)
     const lastAcceptedToken = 'é'.repeat(maximumSessionTokenByteLength / 2)
     const { response } = await runServerRequest(() =>
       writeSession(lastAcceptedToken, testSessionSecret),
@@ -103,6 +102,7 @@ describe('session cookie', () => {
   })
 
   it('rejects a session at its absolute expiry', async () => {
+    vi.useFakeTimers()
     const created = await runServerRequest(() => writeSession(testRailwayToken, testSessionSecret))
 
     vi.advanceTimersByTime(sessionLifetimeSeconds * 1_000)
