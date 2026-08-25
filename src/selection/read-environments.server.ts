@@ -1,6 +1,9 @@
 import { projectEnvironmentsQuery } from '@/gql/operations/project-environments'
 import { createRailwayClient } from '@/railway/client.server'
-import { railwayConnectionPageSize, readConnectionNodes } from '@/selection/read-connection.server'
+import {
+  railwayConnectionPageSize,
+  readAllConnectionNodes,
+} from '@/selection/read-all-connection-nodes.server'
 
 type FetchRequest = (request: Request) => Promise<Response>
 
@@ -18,7 +21,7 @@ export async function readRailwayEnvironments(
       variables: { after, first: railwayConnectionPageSize, projectId },
     })
   const firstPage = await readPage()
-  return readConnectionNodes(firstPage.project.environments, async (after) => {
+  return readAllConnectionNodes(firstPage.project.environments, async (after) => {
     const page = await readPage(after)
     return page.project.environments
   })

@@ -13,7 +13,7 @@ type RailwayConnection =
 
 type ConnectionNode<Connection extends RailwayConnection> = Connection['edges'][number]['node']
 
-export async function readConnectionNodes<Connection extends RailwayConnection>(
+export async function readAllConnectionNodes<Connection extends RailwayConnection>(
   firstPage: Connection,
   readNextPage: (after: string) => Promise<Connection>,
 ) {

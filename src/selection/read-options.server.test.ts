@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { RailwayResponseError } from '@/railway/errors'
-import { railwayConnectionPageSize } from '@/selection/read-connection.server'
+import { railwayConnectionPageSize } from '@/selection/read-all-connection-nodes.server'
 import { readRailwayEnvironments } from '@/selection/read-environments.server'
 import { readRailwayProjects } from '@/selection/read-projects.server'
 import { readRailwayServices } from '@/selection/read-services.server'
