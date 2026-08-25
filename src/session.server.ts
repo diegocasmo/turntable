@@ -18,7 +18,7 @@ export class InvalidSessionError extends Error {
   }
 }
 
-function createSessionConfig(sessionSecret: string) {
+function createSessionConfig(sessionSecret: string): Parameters<typeof getSession>[0] {
   return {
     cookie: {
       httpOnly: true,
@@ -31,7 +31,7 @@ function createSessionConfig(sessionSecret: string) {
     name: sessionCookieName,
     password: sessionSecret,
     sessionHeader: false,
-  } as const
+  }
 }
 
 function measureTokenByteLength(token: string) {
