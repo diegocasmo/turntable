@@ -18,10 +18,8 @@ const { connectToRailwayMock, disconnectFromRailwayMock } = vi.hoisted(() => ({
   disconnectFromRailwayMock: vi.fn(),
 }))
 
-vi.mock('@/session/functions', () => ({
-  connectToRailway: connectToRailwayMock,
-  disconnectFromRailway: disconnectFromRailwayMock,
-}))
+vi.mock('@/session/connect', () => ({ connectToRailway: connectToRailwayMock }))
+vi.mock('@/session/disconnect', () => ({ disconnectFromRailway: disconnectFromRailwayMock }))
 vi.stubGlobal('scrollTo', vi.fn())
 
 type SessionOperation = () => Promise<SessionState>

@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { useServerFn } from '@tanstack/react-start'
 import { useRef } from 'react'
-import { connectToRailway } from '@/session/functions'
+import { connectToRailway } from '@/session/connect'
 
 export function useConnectSession() {
   const router = useRouter()

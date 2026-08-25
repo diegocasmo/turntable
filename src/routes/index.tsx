@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { TurntablePage } from '@/components/turntable-page'
-import { readSessionState } from '@/session/functions'
+import { readSessionState } from '@/session/read-state'
 
 export const Route = createFileRoute('/')({
   loader: () => readSessionState(),
