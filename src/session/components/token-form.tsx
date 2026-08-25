@@ -3,19 +3,19 @@ import type { FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useConnectSession } from '@/hooks/session/use-connect-session'
 import { railwayTokensUrl } from '@/railway/urls'
-import { sessionInputSchema } from '@/session-schema'
+import { useConnectSession } from '@/session/hooks/use-connect-session'
+import { sessionInputSchema } from '@/session/schema'
 
 type TokenFormProps = Readonly<{
   expired: boolean
 }>
 
 export function TokenForm({ expired }: TokenFormProps) {
-  const connect = useConnectSession()
+  const session = useConnectSession()
   const form = useForm({
     defaultValues: { token: '' },
-    onSubmit: ({ value }) => connect.mutateAsync({ data: value }),
+    onSubmit: ({ value }) => session.connect(value.token),
     validators: { onSubmit: sessionInputSchema },
   })
 
@@ -53,12 +53,12 @@ export function TokenForm({ expired }: TokenFormProps) {
         </p>
       ) : null}
 
-      {connect.error ? (
+      {session.error ? (
         <p
           role="alert"
           className="mt-6 border-l-2 border-[#d97767] bg-[#2d201e] px-4 py-3 text-sm leading-6 text-[#f0b8ae]"
         >
-          {connect.error.message}
+          {session.error.message}
         </p>
       ) : null}
 
@@ -80,12 +80,12 @@ export function TokenForm({ expired }: TokenFormProps) {
                 aria-describedby={validationError ? errorId : undefined}
                 aria-invalid={validationError ? true : undefined}
                 autoComplete="off"
-                disabled={connect.isPending}
+                disabled={session.isPending}
                 spellCheck={false}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => {
-                  connect.reset()
+                  session.reset()
                   field.handleChange(event.target.value)
                 }}
                 className="h-12 border-[#706d60] bg-[#141613] px-4 text-base text-[#f4f0e6] focus-visible:border-[#d59c55] focus-visible:ring-[#d59c55]/40"
@@ -102,13 +102,13 @@ export function TokenForm({ expired }: TokenFormProps) {
 
       <Button
         type="submit"
-        disabled={connect.isPending}
+        disabled={session.isPending}
         className="mt-5 h-12 w-full bg-[#d59c55] px-5 font-mono text-xs uppercase tracking-[0.16em] text-[#141613] hover:bg-[#e5ad68] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
       >
-        {connect.isPending ? 'Connecting...' : 'Connect to Railway'}
+        {session.isPending ? 'Connecting...' : 'Connect to Railway'}
       </Button>
 
-      {connect.isPending ? (
+      {session.isPending ? (
         <p role="status" className="mt-4 text-sm text-[#c9c5b9]">
           Railway is checking the token.
         </p>

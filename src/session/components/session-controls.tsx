@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { useDisconnectSession } from '@/hooks/session/use-disconnect-session'
+import { useDisconnectSession } from '@/session/hooks/use-disconnect-session'
 
 export function SessionControls() {
   const disconnect = useDisconnectSession()

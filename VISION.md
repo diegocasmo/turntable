@@ -297,7 +297,7 @@ The status reducer replaces the snapshot on each event, because the default redu
 
 ### Framework: TanStack Start
 
-The application needs four things from a framework: typed server functions for internal reads and commands, a raw server route for the event stream, cookie handling, and a page that updates often in the browser. The initial session state loads on the server. A reload therefore keeps a valid session without exposing the token to browser JavaScript.
+The application needs four things from a framework: typed server functions for internal reads and commands, a raw server route for the event stream, cookie handling, and a page that updates often in the browser. The initial session state loads on the server. A reload therefore keeps a valid session without exposing the stored token to browser JavaScript.
 
 Decision: [TanStack Start](https://tanstack.com/start/latest), pinned to one exact version. TanStack labels Start a release candidate. The pinned version never changes during the project.
 

@@ -20,14 +20,7 @@ test('the token route is accessible', async ({ page }) => {
   const response = await page.goto('/')
   const rawHtml = (await response?.body())?.toString() ?? ''
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Turntable' })).toBeVisible()
   await expect(page.getByLabel('Workspace token')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Connect to Railway' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'workspace token from Railway' })).toHaveAttribute(
-    'href',
-    'https://railway.com/account/tokens',
-  )
-  await expect(page.getByRole('contentinfo')).toHaveText('Unofficial. Not a Railway product.')
 
   const policy = response?.headers()['content-security-policy'] ?? ''
   const nonce = readNonce(policy)

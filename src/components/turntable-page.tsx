@@ -1,6 +1,6 @@
-import { SessionControls } from '@/components/session-controls'
-import { TokenForm } from '@/components/token-form'
-import type { SessionState } from '@/session-schema'
+import { SessionControls } from '@/session/components/session-controls'
+import { TokenForm } from '@/session/components/token-form'
+import type { SessionState } from '@/session/schema'
 
 type TurntablePageProps = Readonly<{
   sessionState: SessionState

@@ -10,7 +10,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TurntablePage } from '@/components/turntable-page'
-import { maximumSessionTokenByteLength, type SessionState } from '@/session-schema'
+import { maximumSessionTokenByteLength, type SessionState } from '@/session/schema'
 import { testRailwayToken } from '@/test/fixtures'
 
 const { connectToRailwayMock, disconnectFromRailwayMock } = vi.hoisted(() => ({
@@ -18,7 +18,7 @@ const { connectToRailwayMock, disconnectFromRailwayMock } = vi.hoisted(() => ({
   disconnectFromRailwayMock: vi.fn(),
 }))
 
-vi.mock('@/session.functions', () => ({
+vi.mock('@/session/functions', () => ({
   connectToRailway: connectToRailwayMock,
   disconnectFromRailway: disconnectFromRailwayMock,
 }))
@@ -131,7 +131,7 @@ describe('Token form', () => {
   })
 
   it('shows a safe server error', async () => {
-    renderTurntablePage({
+    const { queryClient } = renderTurntablePage({
       connect: () => Promise.reject(new Error('Railway could not verify this token.')),
     })
 
@@ -142,6 +142,7 @@ describe('Token form', () => {
       'Railway could not verify this token.',
     )
     expect(screen.getByRole('button', { name: 'Connect to Railway' })).toBeEnabled()
+    expect(queryClient.getMutationCache().getAll()[0]?.state.variables).toBeUndefined()
   })
 
   it('shows the success state and clears the token mutation', async () => {
