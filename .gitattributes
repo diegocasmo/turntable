@@ -1,4 +1,4 @@
 pnpm-lock.yaml linguist-generated=true
 src/gql/generated/** linguist-generated=true
-src/gql/schema.json linguist-generated=true
+src/gql/schema.graphql linguist-generated=true
 src/routeTree.gen.ts linguist-generated=true

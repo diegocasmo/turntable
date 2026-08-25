@@ -19,14 +19,19 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "plugins": [
+      {
+        "name": "gql.tada/ts-plugin",
+        "schema": "./src/gql/schema.graphql",
+        "tadaOutputLocation": "./src/gql/generated/graphql-env.d.ts"
+      }
+    ],
     "skipLibCheck": true,
     "strict": true,
     "target": "ES2022",
     "types": ["vite/client"]
   },
   "include": [
-    "codegen.schema.ts",
-    "codegen.ts",
     "dangerfile.mts",
     "e2e/**/*.ts",
     "integration/**/*.ts",

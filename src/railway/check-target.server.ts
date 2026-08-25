@@ -3,20 +3,6 @@ import { railwaySmokeQuery } from '@/gql/operations/railway-smoke'
 import { createRailwayClient } from '@/railway/client.server'
 import { railwayHttpsUrlSchema } from '@/railway/url-schema'
 
-const smokeResponseSchema = z.object({
-  environment: z.object({
-    id: z.string(),
-    name: z.string(),
-    projectId: z.string(),
-    serviceInstances: z.object({
-      edges: z.array(
-        z.object({ node: z.object({ serviceId: z.string(), serviceName: z.string() }) }),
-      ),
-    }),
-  }),
-  project: z.object({ id: z.string(), name: z.string() }),
-})
-
 const smokeEnvironmentSchema = z.object({
   RAILWAY_API_URL: railwayHttpsUrlSchema,
   RAILWAY_TEST_ENVIRONMENT_ID: z.string().min(1),
@@ -49,8 +35,7 @@ type RailwaySmokeConfig = ReturnType<typeof loadRailwaySmokeConfig>
 export async function checkRailwayTarget(config: RailwaySmokeConfig) {
   const client = createRailwayClient({ apiUrl: config.apiUrl })
   const data = await client.request({
-    dataSchema: smokeResponseSchema,
-    query: railwaySmokeQuery,
+    document: railwaySmokeQuery,
     token: config.token,
     variables: { environmentId: config.environmentId, projectId: config.projectId },
   })

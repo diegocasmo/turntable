@@ -1,4 +1,6 @@
-export const railwaySmokeQuery = /* GraphQL */ `
+import { graphql } from 'gql.tada'
+
+export const railwaySmokeQuery = graphql(`
   query RailwaySmoke($projectId: String!, $environmentId: String!) {
     project(id: $projectId) {
       id
@@ -18,4 +20,4 @@ export const railwaySmokeQuery = /* GraphQL */ `
       }
     }
   }
-`
+`)

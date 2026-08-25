@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!src/gql/generated", "!src/gql/schema.json", "!src/routeTree.gen.ts"]
+    "includes": ["**", "!src/gql/generated", "!src/gql/schema.graphql", "!src/routeTree.gen.ts"]
   },
   "formatter": {
     "enabled": true,
