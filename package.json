@@ -38,6 +38,7 @@
     "@tanstack/react-start": "1.168.48",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
+    "fuzzysort": "3.1.0",
     "graphql": "16.14.2",
     "graphql-ws": "6.2.1",
     "nitro": "3.0.260610-beta",
