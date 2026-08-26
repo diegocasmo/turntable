@@ -16,7 +16,7 @@ const environmentSchema = z.object({
   RAILWAY_WEBSOCKET_URL: railwayWebSocketUrlSchema,
 })
 
-const targetNames = { project: 'turntable-e2e', service: 'target' } as const
+export const railwayTargetNames = { project: 'turntable-e2e', service: 'target' } as const
 const terminalRestoreStatuses = new Set(['CRASHED', 'FAILED', 'REMOVED', 'SKIPPED'])
 
 export function readRailwayE2EConfig() {
@@ -60,13 +60,13 @@ export async function runWithRailwayE2ETarget<Value>(
   const environment = project?.environments.find(({ id }) => id === target.environmentId)
   const service = environment?.services.find(({ id }) => id === target.serviceId)
   const knownTarget =
-    project?.name === targetNames.project &&
+    project?.name === railwayTargetNames.project &&
     environment?.name === expectedEnvironmentName &&
-    service?.name === targetNames.service
+    service?.name === railwayTargetNames.service
 
   if (!knownTarget) {
     throw new Error(
-      `The Railway E2E target is not ${targetNames.project}/${expectedEnvironmentName}/${targetNames.service}.`,
+      `The Railway E2E target is not ${railwayTargetNames.project}/${expectedEnvironmentName}/${railwayTargetNames.service}.`,
     )
   }
 

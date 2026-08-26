@@ -123,10 +123,16 @@ async function* createEventStream(...events: DeploymentStreamEvent[]) {
   yield* events
 }
 
-async function selectOption(name: string, value: string) {
+async function searchPicker(name: string, query: string) {
   const picker = await screen.findByRole('combobox', { name })
   await waitFor(() => expect(picker).toBeEnabled())
-  fireEvent.change(picker, { target: { value } })
+  fireEvent.input(picker, { inputType: 'insertText', target: { value: query } })
+  return picker
+}
+
+async function selectOption(name: string, optionName: string) {
+  await searchPicker(name, optionName)
+  fireEvent.click(await screen.findByRole('option', { name: optionName }))
 }
 
 async function expectSearch(page: ReturnType<typeof renderTurntablePage>, search: SelectionSearch) {
@@ -278,40 +284,77 @@ describe('project, environment, and service selection', () => {
     expect(await screen.findAllByRole('combobox')).toHaveLength(3)
   })
 
-  it('groups names for display and stores IDs in the URL', async () => {
-    const environment = createSelectionEnvironment({ id: 'environment-2', name: 'Staging' })
-    const service = createRailwayService({ id: 'service-2', name: 'Worker' })
-    const project = createSelectionProject({
-      environments: [createSelectionEnvironment(), { ...environment, services: [service] }],
-      name: 'Beta',
-    })
+  it('finds project names through their workspace group and stores IDs in the URL', async () => {
     const workspace = { id: 'workspace-2', name: 'Zulu' }
+    const project = createSelectionProject({ id: 'project-2', name: 'Alpha', workspace })
+    const environment = project.environments[0]
+    const service = environment?.services[0]
     readSelectionHierarchyMock.mockResolvedValue([
-      createSelectionProject({ id: 'project-2', name: 'Alpha', workspace }),
       createSelectionProject({ id: 'project-3', name: 'Beta' }),
-      createSelectionProject({ id: 'project-4', name: 'Aardvark' }),
       project,
     ])
     const page = renderTurntablePage({ sessionState: 'authenticated' })
-    await selectOption('Project', project.id)
-    await selectOption('Environment', environment.id)
-    await selectOption('Service', service.id)
+    await searchPicker('Project', workspace.name)
+    const group = await screen.findByRole('group', { name: workspace.name })
+    expect(within(group).getByRole('option', { name: project.name })).toBeVisible()
+    expect(screen.queryByRole('group', { name: 'Railway workspace' })).not.toBeInTheDocument()
+    fireEvent.click(within(group).getByRole('option', { name: project.name }))
+    if (!environment || !service) throw new Error('The test project must have a service target.')
+    await selectOption('Environment', environment.name)
+    await selectOption('Service', service.name)
     await expectSearch(page, {
       environmentId: environment.id,
       projectId: project.id,
       serviceId: service.id,
     })
     expect(screen.queryByRole('status', { name: 'Selection status' })).not.toBeInTheDocument()
-    const groups = screen.getAllByRole('group')
-    expect(groups.map((group) => group.getAttribute('label'))).toEqual([
-      'Railway workspace',
-      'Zulu',
+  })
+
+  it('ranks fuzzy matches without navigating until keyboard selection', async () => {
+    const worker = createSelectionProject({ id: 'project-worker', name: 'Worker' })
+    readSelectionHierarchyMock.mockResolvedValue([
+      createSelectionProject({ id: 'project-web', name: 'Web' }),
+      createSelectionProject({ id: 'project-api-worker', name: 'API worker' }),
+      worker,
     ])
-    expect(
-      within(screen.getByRole('group', { name: 'Railway workspace' }))
-        .getAllByRole('option')
-        .map((option) => option.getAttribute('value')),
-    ).toEqual(['project-4', 'project-1', 'project-3'])
+    const page = renderTurntablePage({ sessionState: 'authenticated' })
+    expect(await screen.findByRole('button', { name: 'Show project options' })).toBeInTheDocument()
+    const picker = await searchPicker('Project', 'wkr')
+    expect((await screen.findAllByRole('option')).map((option) => option.textContent)).toEqual([
+      'Worker',
+      'API worker',
+    ])
+    expect(screen.getByRole('status', { name: 'Project results' })).toHaveTextContent(
+      '2 projects found.',
+    )
+    await expectSearch(page, {})
+    fireEvent.keyDown(picker, { key: 'Escape' })
+    fireEvent.blur(picker)
+    await expectSearch(page, {})
+
+    await searchPicker('Project', 'wkr')
+    fireEvent.keyDown(picker, { key: 'Enter' })
+    await expectSearch(page, { projectId: worker.id })
+  })
+
+  it('searches every choice but renders at most 20 results and announces no matches', async () => {
+    readSelectionHierarchyMock.mockResolvedValue(
+      Array.from({ length: 25 }, (_, index) =>
+        createSelectionProject({ id: `project-${index}`, name: `Service ${index}` }),
+      ),
+    )
+    renderTurntablePage({ sessionState: 'authenticated' })
+    const picker = await searchPicker('Project', 'service')
+
+    expect(await screen.findAllByRole('option')).toHaveLength(20)
+    expect(screen.getByRole('status', { name: 'Project results' })).toHaveTextContent(
+      '20 of 25 projects shown.',
+    )
+
+    fireEvent.input(picker, { inputType: 'insertText', target: { value: 'zzzz' } })
+    const emptyResults = screen.getByRole('note', { name: 'Project empty results' })
+    await waitFor(() => expect(emptyResults).toHaveTextContent('No projects found.'))
+    expect(emptyResults).toHaveAttribute('aria-live', 'polite')
   })
 
   it('requires each choice and restores valid IDs after a reload', async () => {
@@ -325,21 +368,21 @@ describe('project, environment, and service selection', () => {
 
     const projectPicker = await screen.findByRole('combobox', { name: 'Project' })
     await waitFor(() => expect(projectPicker).toBeEnabled())
-    expect(projectPicker).toHaveDisplayValue('Choose a project')
+    expect(projectPicker).toHaveAttribute('placeholder', 'Choose a project')
 
-    await selectOption('Project', project.id)
+    await selectOption('Project', project.name)
     const environmentPicker = screen.getByRole('combobox', { name: 'Environment' })
     await waitFor(() => expect(environmentPicker).toBeEnabled())
-    expect(environmentPicker).toHaveDisplayValue('Choose an environment')
+    expect(environmentPicker).toHaveAttribute('placeholder', 'Choose an environment')
     await expectSearch(first, { projectId: project.id })
 
-    await selectOption('Environment', environment.id)
+    await selectOption('Environment', environment.name)
     const servicePicker = screen.getByRole('combobox', { name: 'Service' })
     await waitFor(() => expect(servicePicker).toBeEnabled())
-    expect(servicePicker).toHaveDisplayValue('Choose a service')
+    expect(servicePicker).toHaveAttribute('placeholder', 'Choose a service')
     await expectSearch(first, { environmentId: environment.id, projectId: project.id })
 
-    await selectOption('Service', service.id)
+    await selectOption('Service', service.name)
     await expectSearch(first, {
       environmentId: environment.id,
       projectId: project.id,
@@ -349,18 +392,19 @@ describe('project, environment, and service selection', () => {
     first.unmount()
     renderTurntablePage({ initialEntry: url, sessionState: 'authenticated' })
     await waitFor(() =>
-      expect(screen.getByRole('combobox', { name: 'Service' })).toHaveValue(service.id),
+      expect(screen.getByRole('combobox', { name: 'Service' })).toHaveValue(service.name),
     )
   })
 
   it('clears child choices when a parent changes', async () => {
-    const secondEnvironment = createSelectionEnvironment({ id: 'environment-2' })
+    const secondEnvironment = createSelectionEnvironment({ id: 'environment-2', name: 'Staging' })
     const firstProject = createSelectionProject({
       environments: [createSelectionEnvironment(), secondEnvironment],
     })
     const secondProject = createSelectionProject({
       environments: [secondEnvironment],
       id: 'project-2',
+      name: 'Other',
     })
     readSelectionHierarchyMock.mockResolvedValue([firstProject, secondProject])
     const page = renderTurntablePage({
@@ -368,19 +412,19 @@ describe('project, environment, and service selection', () => {
       sessionState: 'authenticated',
     })
 
-    await selectOption('Environment', secondEnvironment.id)
+    await selectOption('Environment', secondEnvironment.name)
     await expectSearch(page, {
       environmentId: secondEnvironment.id,
       projectId: testRailwayProjectId,
     })
-    await selectOption('Service', testRailwayServiceId)
+    await selectOption('Service', 'Web')
     await expectSearch(page, {
       environmentId: secondEnvironment.id,
       projectId: testRailwayProjectId,
       serviceId: testRailwayServiceId,
     })
 
-    await selectOption('Project', secondProject.id)
+    await selectOption('Project', secondProject.name)
     await expectSearch(page, { projectId: secondProject.id })
   })
 
@@ -396,7 +440,8 @@ describe('project, environment, and service selection', () => {
     renderTurntablePage({ initialEntry: url, sessionState: 'authenticated' })
 
     const picker = await screen.findByRole('combobox', { name: label })
-    await waitFor(() => expect(picker).toHaveDisplayValue(`No ${label.toLowerCase()}s`))
+    await waitFor(() => expect(picker).toHaveAttribute('placeholder', `No ${label.toLowerCase()}s`))
+    expect(picker).toBeDisabled()
   })
 
   it.each([
@@ -421,7 +466,8 @@ describe('project, environment, and service selection', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message)
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
-    expect(await screen.findByRole('combobox', { name: 'Project' })).toHaveDisplayValue(
+    expect(await screen.findByRole('combobox', { name: 'Project' })).toHaveAttribute(
+      'placeholder',
       'No projects',
     )
   })

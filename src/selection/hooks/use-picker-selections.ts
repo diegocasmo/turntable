@@ -12,16 +12,16 @@ function sortOptions<Option extends PickerOption>(options: readonly Option[] | u
 }
 
 function groupProjects(projects: readonly SelectionProject[]) {
-  const groups = new Map<string, { id: string; name: string; options: SelectionProject[] }>()
+  const groups = new Map<string, { id: string; items: SelectionProject[]; name: string }>()
   for (const project of projects) {
     const workspace = project.workspace ?? { id: '', name: 'Workspace unavailable' }
     const group = groups.get(workspace.id)
-    if (group) group.options.push(project)
-    else groups.set(workspace.id, { ...workspace, options: [project] })
+    if (group) group.items.push(project)
+    else groups.set(workspace.id, { ...workspace, items: [project] })
   }
   return sortOptions([...groups.values()]).map((group) => ({
     ...group,
-    options: sortOptions(group.options),
+    items: sortOptions(group.items),
   }))
 }
 
