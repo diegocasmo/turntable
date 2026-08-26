@@ -1,12 +1,29 @@
 import { AlertDialog } from '@base-ui/react/alert-dialog'
 import { buttonVariants } from '@/components/ui/button'
 import { useSpinDownDeployment } from '@/deployment/hooks/use-spin-down-deployment'
+import { cn } from '@/lib/utils'
 
 type SpinDownControlProps = Readonly<{
   deploymentId: string
 }>
 
-const buttonClassName = buttonVariants({ size: 'sm', variant: 'destructive' })
+const actionClassName = 'px-3 font-mono uppercase tracking-[0.08em]'
+const outlineButtonClassName = buttonVariants({ size: 'sm', variant: 'outline' })
+const triggerClassName = cn(
+  outlineButtonClassName,
+  actionClassName,
+  'border-[#d97767] bg-transparent text-[#f0b8ae] hover:bg-[#2d201e] hover:text-[#f0b8ae]',
+)
+const cancelClassName = cn(
+  outlineButtonClassName,
+  actionClassName,
+  'border-[#706d60] bg-transparent text-[#c9c5b9] hover:border-[#c9c5b9] hover:bg-[#242522] hover:text-[#f4f0e6]',
+)
+const confirmClassName = cn(
+  outlineButtonClassName,
+  actionClassName,
+  'border-[#d97767] bg-[#d97767] text-[#141613] hover:bg-[#f0b8ae] hover:text-[#141613]',
+)
 
 export function SpinDownControl({ deploymentId }: SpinDownControlProps) {
   const spinDown = useSpinDownDeployment()
@@ -16,7 +33,7 @@ export function SpinDownControl({ deploymentId }: SpinDownControlProps) {
       <AlertDialog.Root onOpenChange={(open) => open && spinDown.reset()}>
         <AlertDialog.Trigger
           aria-describedby={spinDown.error ? 'spin-down-error' : undefined}
-          className={buttonClassName}
+          className={triggerClassName}
           disabled={spinDown.isPending}
         >
           {spinDown.isPending ? 'Spinning down…' : 'Spin down'}
@@ -33,11 +50,9 @@ export function SpinDownControl({ deploymentId }: SpinDownControlProps) {
               </AlertDialog.Description>
             </div>
             <div className="flex justify-end gap-3">
-              <AlertDialog.Close className={buttonVariants({ size: 'sm', variant: 'outline' })}>
-                Cancel
-              </AlertDialog.Close>
+              <AlertDialog.Close className={cancelClassName}>Cancel</AlertDialog.Close>
               <AlertDialog.Close
-                className={buttonClassName}
+                className={confirmClassName}
                 onClick={() => spinDown.mutate({ deploymentId })}
               >
                 Spin down
