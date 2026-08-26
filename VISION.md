@@ -233,7 +233,7 @@ The stream sends these typed values:
 
 An unexpected failure throws. The client uses TanStack Query `streamedQuery`. It does not set `retry` or `retryDelay`, so it gets the [Query default](https://tanstack.com/query/latest/docs/framework/react/guides/query-retries): three retries with exponential delay. After the last retry, the screen shows an error with a reconnect control.
 
-The stream sends a heartbeat value every 30 seconds. It throws at 14 minutes or sends `session-expired` at the session expiry, whichever comes first. The 14-minute error uses the same Query retry. Railway closes an idle HTTP response after five minutes and any HTTP response after 15 minutes ([streaming guide](https://docs.railway.com/guides/sse-vs-websockets)).
+The stream sends a heartbeat value every four minutes. It throws at 14 minutes or sends `session-expired` at the session expiry, whichever comes first. The 14-minute error uses the same Query retry. Railway closes an idle HTTP response after five minutes and any HTTP response after 15 minutes ([streaming guide](https://docs.railway.com/guides/sse-vs-websockets)).
 
 Recovery needs no replay because every call begins with a snapshot.
 
@@ -350,7 +350,7 @@ Every screen defines its states. The required set:
 | --- | --- |
 | Selection | loading, no projects, no environments, no services |
 | Life cycle | no deployment, spin-down in progress, removed, deployment failed |
-| Stream | reconnecting, reconnect gave up, watching a new deployment, unknown status |
+| Stream | loading, reconnect gave up, watching a new deployment, unknown status |
 | Failure | Railway error, rate limited, service gone |
 | Session | expired session |
 

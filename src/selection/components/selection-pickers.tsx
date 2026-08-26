@@ -16,7 +16,9 @@ export function SelectionPickers() {
 
   return (
     <div className="mt-6 grid gap-4">
-      {searchWithDefaultOption && <Navigate to="/" search={searchWithDefaultOption} replace />}
+      {searchWithDefaultOption && (
+        <Navigate to="/" search={searchWithDefaultOption} replace resetScroll={false} />
+      )}
       <div>
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#8f8c81]">
           Project / Environment / Service

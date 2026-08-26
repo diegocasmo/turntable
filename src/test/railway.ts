@@ -49,7 +49,6 @@ export function createRailwayDeployment(
   return {
     createdAt: '2026-08-25T12:00:00.000Z',
     id: 'deployment-1',
-    status: 'SUCCESS',
     ...overrides,
   }
 }

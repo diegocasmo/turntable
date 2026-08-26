@@ -114,21 +114,25 @@ export function usePickerSelections() {
     project: {
       groups: groupProjects(projectsQuery.data),
       label: 'Project',
-      onSelect: (projectId: string) => void navigate({ search: { projectId } }),
+      onSelect: (projectId: string) => void navigate({ resetScroll: false, search: { projectId } }),
       selectedOption: project.selectedOption,
       state: resolvePickerState(projectsQuery),
     },
     environment: {
       label: 'Environment',
       onSelect: (environmentId: string) =>
-        void navigate({ search: { environmentId, projectId: project.selectedOption?.id } }),
+        void navigate({
+          resetScroll: false,
+          search: { environmentId, projectId: project.selectedOption?.id },
+        }),
       options: sortOptions(environmentsQuery.data),
       selectedOption: environment.selectedOption,
       state: resolvePickerState(environmentsQuery, project.selectedOption ? undefined : 'project'),
     },
     service: {
       label: 'Service',
-      onSelect: (serviceId: string) => void navigate({ search: { ...search, serviceId } }),
+      onSelect: (serviceId: string) =>
+        void navigate({ resetScroll: false, search: { ...search, serviceId } }),
       options: sortOptions(servicesQuery.data),
       selectedOption: service.selectedOption,
       state: resolvePickerState(

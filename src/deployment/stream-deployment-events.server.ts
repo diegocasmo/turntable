@@ -11,7 +11,7 @@ import { createRailwaySubscriptionClient } from '@/railway/create-railway-subscr
 import { RailwayGraphQLError, RailwaySubscriptionError } from '@/railway/errors'
 import type { TurntableSession } from '@/session/cookie.server'
 
-export const deploymentStreamHeartbeatMilliseconds = 30_000
+export const deploymentStreamHeartbeatMilliseconds = 4 * 60 * 1_000
 export const deploymentStreamTransportMilliseconds = 14 * 60 * 1_000
 
 export class DeploymentStreamDeadlineError extends Error {
