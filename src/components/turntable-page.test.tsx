@@ -11,12 +11,13 @@ import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TurntablePage } from '@/components/turntable-page'
 import type { DeploymentStreamEvent } from '@/deployment/event-stream'
+import type { SelectionProject } from '@/gql/operations/projects'
 import { type SelectionSearch, selectionSearchSchema } from '@/selection/schema'
 import { maximumSessionTokenByteLength, type SessionState } from '@/session/schema'
 import {
-  createRailwayEnvironment,
-  createRailwayProject,
   createRailwayService,
+  createSelectionEnvironment,
+  createSelectionProject,
   testRailwayProjectId,
   testRailwayServiceId,
   testRailwayToken,
@@ -25,17 +26,13 @@ import {
 const {
   connectToRailwayMock,
   disconnectFromRailwayMock,
-  readEnvironmentsMock,
-  readProjectsMock,
-  readServicesMock,
+  readSelectionHierarchyMock,
   spinDownDeploymentMock,
   streamDeploymentEventsMock,
 } = vi.hoisted(() => ({
   connectToRailwayMock: vi.fn(),
   disconnectFromRailwayMock: vi.fn(),
-  readEnvironmentsMock: vi.fn(),
-  readProjectsMock: vi.fn(),
-  readServicesMock: vi.fn(),
+  readSelectionHierarchyMock: vi.fn(),
   spinDownDeploymentMock: vi.fn(),
   streamDeploymentEventsMock: vi.fn(),
 }))
@@ -52,9 +49,9 @@ vi.mock('@/deployment/stream-deployment-events', () => ({
 vi.mock('@/deployment/spin-down-deployment', () => ({
   spinDownDeployment: spinDownDeploymentMock,
 }))
-vi.mock('@/selection/read-environments', () => ({ readEnvironments: readEnvironmentsMock }))
-vi.mock('@/selection/read-projects', () => ({ readProjects: readProjectsMock }))
-vi.mock('@/selection/read-services', () => ({ readServices: readServicesMock }))
+vi.mock('@/selection/read-selection-hierarchy', () => ({
+  readSelectionHierarchy: readSelectionHierarchyMock,
+}))
 vi.stubGlobal('scrollTo', vi.fn())
 
 type SessionOperation = () => Promise<SessionState>
@@ -139,11 +136,9 @@ async function expectSearch(page: ReturnType<typeof renderTurntablePage>, search
 beforeEach(() => {
   connectToRailwayMock.mockReset()
   disconnectFromRailwayMock.mockReset()
-  readEnvironmentsMock.mockReset().mockResolvedValue([createRailwayEnvironment()])
-  readProjectsMock
+  readSelectionHierarchyMock
     .mockReset()
-    .mockResolvedValue([createRailwayProject(), createRailwayProject({ id: 'project-2' })])
-  readServicesMock.mockReset().mockResolvedValue([createRailwayService()])
+    .mockResolvedValue([createSelectionProject(), createSelectionProject({ id: 'project-2' })])
   spinDownDeploymentMock.mockReset().mockResolvedValue(true)
   streamDeploymentEventsMock
     .mockReset()
@@ -270,26 +265,33 @@ describe('Token form', () => {
 
 describe('project, environment, and service selection', () => {
   it('shows the loading state', async () => {
-    readProjectsMock.mockReturnValue(new Promise(() => undefined))
+    const hierarchy = Promise.withResolvers<readonly SelectionProject[]>()
+    readSelectionHierarchyMock.mockReturnValue(hierarchy.promise)
     renderTurntablePage({ sessionState: 'authenticated' })
+
     expect(await screen.findByRole('status', { name: 'Selection status' })).toHaveTextContent(
-      'Loading projects.',
+      'Loading choices.',
     )
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+
+    hierarchy.resolve([createSelectionProject()])
+    expect(await screen.findAllByRole('combobox')).toHaveLength(3)
   })
 
   it('groups names for display and stores IDs in the URL', async () => {
-    const project = createRailwayProject({ name: 'Beta' })
-    const environment = createRailwayEnvironment({ id: 'environment-2', name: 'Staging' })
+    const environment = createSelectionEnvironment({ id: 'environment-2', name: 'Staging' })
     const service = createRailwayService({ id: 'service-2', name: 'Worker' })
+    const project = createSelectionProject({
+      environments: [createSelectionEnvironment(), { ...environment, services: [service] }],
+      name: 'Beta',
+    })
     const workspace = { id: 'workspace-2', name: 'Zulu' }
-    readProjectsMock.mockResolvedValue([
-      createRailwayProject({ id: 'project-2', name: 'Alpha', workspace }),
-      createRailwayProject({ id: 'project-3', name: 'Beta' }),
-      createRailwayProject({ id: 'project-4', name: 'Aardvark' }),
+    readSelectionHierarchyMock.mockResolvedValue([
+      createSelectionProject({ id: 'project-2', name: 'Alpha', workspace }),
+      createSelectionProject({ id: 'project-3', name: 'Beta' }),
+      createSelectionProject({ id: 'project-4', name: 'Aardvark' }),
       project,
     ])
-    readEnvironmentsMock.mockResolvedValue([createRailwayEnvironment(), environment])
-    readServicesMock.mockResolvedValue([createRailwayService(), service])
     const page = renderTurntablePage({ sessionState: 'authenticated' })
     await selectOption('Project', project.id)
     await selectOption('Environment', environment.id)
@@ -313,12 +315,12 @@ describe('project, environment, and service selection', () => {
   })
 
   it('requires each choice and restores valid IDs after a reload', async () => {
-    const project = createRailwayProject()
-    const environment = createRailwayEnvironment()
+    const environment = createSelectionEnvironment()
     const service = createRailwayService()
-    readProjectsMock.mockResolvedValue([project])
-    readEnvironmentsMock.mockResolvedValue([environment])
-    readServicesMock.mockResolvedValue([service])
+    const project = createSelectionProject({
+      environments: [{ ...environment, services: [service] }],
+    })
+    readSelectionHierarchyMock.mockResolvedValue([project])
     const first = renderTurntablePage({ sessionState: 'authenticated' })
 
     const projectPicker = await screen.findByRole('combobox', { name: 'Project' })
@@ -352,10 +354,15 @@ describe('project, environment, and service selection', () => {
   })
 
   it('clears child choices when a parent changes', async () => {
-    const secondProject = createRailwayProject({ id: 'project-2' })
-    const secondEnvironment = createRailwayEnvironment({ id: 'environment-2' })
-    readProjectsMock.mockResolvedValue([createRailwayProject(), secondProject])
-    readEnvironmentsMock.mockResolvedValue([createRailwayEnvironment(), secondEnvironment])
+    const secondEnvironment = createSelectionEnvironment({ id: 'environment-2' })
+    const firstProject = createSelectionProject({
+      environments: [createSelectionEnvironment(), secondEnvironment],
+    })
+    const secondProject = createSelectionProject({
+      environments: [secondEnvironment],
+      id: 'project-2',
+    })
+    readSelectionHierarchyMock.mockResolvedValue([firstProject, secondProject])
     const page = renderTurntablePage({
       initialEntry: '/?projectId=project-1&environmentId=environment-1&serviceId=service-1',
       sessionState: 'authenticated',
@@ -378,11 +385,14 @@ describe('project, environment, and service selection', () => {
   })
 
   it.each([
-    ['Environment', [], '/?projectId=project-1'],
-    ['Service', [createRailwayEnvironment()], '/?projectId=project-1&environmentId=environment-1'],
-  ])('shows an empty %s picker after its parent resolves', async (label, environments, url) => {
-    readEnvironmentsMock.mockResolvedValue(environments)
-    readServicesMock.mockResolvedValue([])
+    ['Environment', createSelectionProject({ environments: [] }), '/?projectId=project-1'],
+    [
+      'Service',
+      createSelectionProject({ environments: [createSelectionEnvironment({ services: [] })] }),
+      '/?projectId=project-1&environmentId=environment-1',
+    ],
+  ])('shows an empty %s picker after its parent resolves', async (label, project, url) => {
+    readSelectionHierarchyMock.mockResolvedValue([project])
     renderTurntablePage({ initialEntry: url, sessionState: 'authenticated' })
 
     const picker = await screen.findByRole('combobox', { name: label })
@@ -396,21 +406,21 @@ describe('project, environment, and service selection', () => {
   ])('keeps a stale %s ID until the user replaces it', async (level, initialEntry) => {
     const { router } = renderTurntablePage({ initialEntry, sessionState: 'authenticated' })
 
-    const status = await screen.findByRole('status', { name: 'Selection status' })
     await waitFor(() =>
-      expect(status).toHaveTextContent(`selected ${level} is no longer available`),
+      expect(screen.getByRole('status', { name: 'Selection status' })).toHaveTextContent(
+        `selected ${level} is no longer available`,
+      ),
     )
     expect(router.state.location.href).toContain(`${level}Id=missing`)
   })
 
   it('shows and retries a safe error', async () => {
     const message = 'Railway could not load choices.'
-    readProjectsMock.mockRejectedValueOnce(new Error(message)).mockResolvedValueOnce([])
+    readSelectionHierarchyMock.mockRejectedValueOnce(new Error(message)).mockResolvedValueOnce([])
     renderTurntablePage({ sessionState: 'authenticated' })
 
-    const deploymentRegion = await screen.findByRole('region', { name: 'Deployment status' })
-    expect(await within(deploymentRegion).findByRole('alert')).toHaveTextContent(message)
-    fireEvent.click(within(deploymentRegion).getByRole('button', { name: 'Retry' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(message)
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(await screen.findByRole('combobox', { name: 'Project' })).toHaveDisplayValue(
       'No projects',
     )

@@ -66,13 +66,13 @@ Trade-off: `deploymentStop` stops a deployment, but it does not mark it removed.
 
 ### Selecting a service
 
-The application reads `apiToken { workspaces { id } }`. It then reads `projects(workspaceId)` for each workspace and follows Railway's cursor pages until it has every project. Each project carries `workspace { id name }`, so the screen shows the workspace as a label.
+The browser makes one server-function read for the complete selection hierarchy. The server reads `apiToken { workspaces { id } }`. It then reads projects, their environments, and each environment's service instances in one nested operation per workspace. It runs the workspace reads in parallel and follows every independent cursor before it returns. Each project carries `workspace { id name }`, so the screen shows the workspace as a label.
 
 The application never calls `me`. Measured on 2026-08-25: both an account token and a workspace token return their accessible workspaces through `apiToken` and return projects through `projects(workspaceId)`. A workspace token gets "Not Authorized" from `me`, so `me { workspaces }` cannot provide the shared path.
 
 Three pickers follow: project, environment, and service. Each picker stays visible. The user must choose each level. The application does not infer a choice, also when only one choice exists. This keeps the target under the user's control.
 
-The service list comes from `Environment.serviceInstances`. Each `ServiceInstance` carries `serviceId` and `serviceName`. `Project.services` cannot answer this, because the `Service` type holds no environment.
+The service list comes from `Environment.serviceInstances`. Each `ServiceInstance` carries `serviceId` and `serviceName`. `Project.services` cannot answer this, because the `Service` type holds no environment. The screen shows one skeleton while the hierarchy loads. It then shows all three pickers together. It never shows partial choices.
 
 The route holds the project ID, environment ID, and service ID. A reload keeps each valid explicit choice.
 
