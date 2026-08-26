@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
-import { formatDeploymentStatus } from '@/deployment/format-deployment-status'
 import { useReadCurrentDeployment } from '@/deployment/hooks/use-read-current-deployment'
 import type { DeploymentTarget } from '@/deployment/schema'
+import { formatDeploymentStatus } from '@/railway/deployment-status'
 
 function resolveDeploymentStatusText(deployment: ReturnType<typeof useReadCurrentDeployment>) {
   if (!deployment.data) {

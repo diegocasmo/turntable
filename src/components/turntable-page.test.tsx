@@ -266,6 +266,7 @@ describe('project, environment, and service selection', () => {
       projectId: project.id,
       serviceId: service.id,
     })
+    expect(screen.queryByRole('status', { name: 'Selection status' })).not.toBeInTheDocument()
     const groups = screen.getAllByRole('group')
     expect(groups.map((group) => group.getAttribute('label'))).toEqual([
       'Railway workspace',

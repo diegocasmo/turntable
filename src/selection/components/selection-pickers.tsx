@@ -32,6 +32,7 @@ export function SelectionPickers() {
         id="selection-status"
         aria-label="Selection status"
         role="status"
+        hidden={status === undefined}
         className="text-sm leading-6 text-[#c9c5b9]"
       >
         {status}
