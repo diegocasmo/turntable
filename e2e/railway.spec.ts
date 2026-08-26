@@ -23,7 +23,16 @@ test('a user can select the configured Railway service and see its status', asyn
       expect(new URL(page.url()).searchParams.has('token')).toBe(false)
 
       await page.getByRole('combobox', { name: 'Project' }).fill(railwayTargetNames.project)
-      await page.getByRole('option', { name: railwayTargetNames.project, exact: true }).click()
+      const projectOption = page.getByRole('option', {
+        name: railwayTargetNames.project,
+        exact: true,
+      })
+      await expect(projectOption).toBeVisible()
+      const openPickerResults = await new AxeBuilder({ page })
+        .withRules(['label-title-only'])
+        .analyze()
+      expect(openPickerResults.violations).toEqual([])
+      await projectOption.click()
       await page.getByRole('combobox', { name: 'Environment' }).fill(config.expectedEnvironmentName)
       await page.getByRole('option', { name: config.expectedEnvironmentName, exact: true }).click()
       await page.getByRole('combobox', { name: 'Service' }).fill(railwayTargetNames.service)

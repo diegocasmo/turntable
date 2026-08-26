@@ -19,7 +19,7 @@ export function SessionControls({ children }: Readonly<{ children?: ReactNode }>
 
       {children}
 
-      <div className="border-t border-[#706d60] pt-5">
+      <div className="border-t border-border pt-5">
         <Button
           type="button"
           variant="secondary"

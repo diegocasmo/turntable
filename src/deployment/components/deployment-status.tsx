@@ -23,8 +23,8 @@ function DeploymentStatusContent({ target }: DeploymentStatusProps) {
 
   if (failure) {
     return (
-      <div className="grid grid-cols-[1fr_auto] items-center gap-3 border-l-2 border-[#d97767] bg-[#2d201e] px-3">
-        <p role="alert" className="text-sm leading-6 text-[#f0b8ae]">
+      <div className="grid grid-cols-[1fr_auto] items-center gap-3 border-l-2 border-destructive bg-danger-surface px-3">
+        <p role="alert" className="text-sm leading-6 text-danger-foreground">
           {failure.message}
         </p>
         <Button type="button" variant="secondary" size="sm" onClick={failure.retry}>
@@ -37,11 +37,11 @@ function DeploymentStatusContent({ target }: DeploymentStatusProps) {
   let action: ReactNode
   let status: ReactNode
   if (target === undefined) {
-    status = <span className="text-sm text-[#c9c5b9]">Choose a service</span>
+    status = <span className="text-sm text-foreground-soft">Choose a service</span>
   } else if (deployment.isPending) {
-    status = <span className="text-sm text-[#c9c5b9]">Loading…</span>
+    status = <span className="text-sm text-foreground-soft">Loading…</span>
   } else if (deployment.data?.type === 'gone') {
-    status = <span className="text-sm text-[#f0b8ae]">Deployment unavailable</span>
+    status = <span className="text-sm text-danger-foreground">Deployment unavailable</span>
   } else if (deployment.data?.type === 'snapshot' || deployment.data?.type === 'status') {
     const current = deployment.data.data
     status = <StatusBadge status={current?.status ?? null} />
@@ -55,7 +55,7 @@ function DeploymentStatusContent({ target }: DeploymentStatusProps) {
 
   return (
     <div className="grid gap-2">
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#c9c5b9]">
+      <p className="font-mono text-xs uppercase tracking-[0.16em] text-foreground-soft">
         {deploymentStatusLabel}
       </p>
       <div className="grid min-h-9 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
@@ -70,7 +70,7 @@ function DeploymentStatusContent({ target }: DeploymentStatusProps) {
 
 export function DeploymentStatus(props: DeploymentStatusProps) {
   return (
-    <section aria-label={deploymentStatusLabel} className="border-t border-[#4d4e47]">
+    <section aria-label={deploymentStatusLabel} className="border-t border-border-subtle">
       <div className="grid py-3">
         <DeploymentStatusContent {...props} />
       </div>

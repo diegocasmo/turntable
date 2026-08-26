@@ -1,7 +1,9 @@
 'use client'
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
-import { CaretDownIcon, CheckIcon, XIcon } from '@phosphor-icons/react'
+import { CaretDownIcon } from '@phosphor-icons/react/CaretDown'
+import { CheckIcon } from '@phosphor-icons/react/Check'
+import { XIcon } from '@phosphor-icons/react/X'
 import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -182,6 +184,12 @@ function ComboboxEmpty({ className, ...props }: ComboboxPrimitive.Empty.Props) {
   )
 }
 
+function ComboboxStatus({ className, ...props }: ComboboxPrimitive.Status.Props) {
+  return (
+    <ComboboxPrimitive.Status data-slot="combobox-status" className={cn(className)} {...props} />
+  )
+}
+
 function ComboboxSeparator({ className, ...props }: ComboboxPrimitive.Separator.Props) {
   return (
     <ComboboxPrimitive.Separator
@@ -267,6 +275,7 @@ export {
   ComboboxLabel,
   ComboboxList,
   ComboboxSeparator,
+  ComboboxStatus,
   ComboboxTrigger,
   ComboboxValue,
   useComboboxAnchor,

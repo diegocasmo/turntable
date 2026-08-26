@@ -10,6 +10,7 @@ import {
   ComboboxItem,
   ComboboxLabel,
   ComboboxList,
+  ComboboxStatus,
 } from '@/components/ui/combobox'
 
 const maximumVisibleOptions = 20
@@ -93,7 +94,7 @@ function renderOption(option: PickerOption) {
     <ComboboxItem
       key={option.id}
       value={option}
-      className="data-highlighted:bg-[#d59c55] data-highlighted:text-[#141613]"
+      className="data-highlighted:bg-primary data-highlighted:text-primary-foreground"
     >
       {option.name}
     </ComboboxItem>
@@ -107,14 +108,16 @@ export function Picker({ groups, label, onSelect, options, selectedOption, state
   const visibleOptions = results.entries.map((entry) => entry.option)
   const visibleGroups = groupPickerEntries(results.entries)
   const inputId = `${label.toLowerCase()}-picker`
+  const labelId = `${inputId}-label`
   const resultStatusId = `${inputId}-results`
   const disabled = state.kind !== 'ready'
 
   return (
-    <div className="border-t border-[#4d4e47] pt-3">
+    <div className="border-t border-border-subtle pt-3">
       <label
+        id={labelId}
         htmlFor={inputId}
-        className="block font-mono text-xs uppercase tracking-[0.16em] text-[#c9c5b9]"
+        className="block font-mono text-xs uppercase tracking-[0.16em] text-foreground-soft"
       >
         {label}
       </label>
@@ -138,16 +141,17 @@ export function Picker({ groups, label, onSelect, options, selectedOption, state
         <ComboboxInput
           id={inputId}
           aria-describedby={`selection-status ${resultStatusId}`}
-          className="mt-2 w-full border-[#706d60] bg-[#242522] text-[#f4f0e6]"
+          aria-labelledby={labelId}
+          className="mt-2 w-full border-border bg-popover text-foreground"
           disabled={disabled}
           placeholder={resolvePlaceholder(state, label)}
           triggerLabel={`Show ${label.toLowerCase()} options`}
         />
-        <ComboboxContent className="border border-[#706d60] bg-[#242522] text-[#f4f0e6] shadow-[3px_3px_0_#090a08] ring-0">
+        <ComboboxContent className="border border-border bg-popover text-foreground shadow-[3px_3px_0_var(--shadow-color)] ring-0">
           <ComboboxEmpty
             aria-label={`${label} empty results`}
             role="note"
-            className="text-[#c9c5b9]"
+            className="text-foreground-soft"
           >
             No {label.toLowerCase()}s found.
           </ComboboxEmpty>
@@ -157,9 +161,9 @@ export function Picker({ groups, label, onSelect, options, selectedOption, state
                 <ComboboxGroup
                   key={group.id}
                   items={group.items}
-                  className="border-t border-[#4d4e47] first:border-t-0"
+                  className="border-t border-border-subtle first:border-t-0"
                 >
-                  <ComboboxLabel className="font-mono uppercase tracking-[0.12em] text-[#8f8c81]">
+                  <ComboboxLabel className="font-mono uppercase tracking-[0.12em] text-muted-foreground">
                     {group.name}
                   </ComboboxLabel>
                   <ComboboxCollection>{renderOption}</ComboboxCollection>
@@ -170,18 +174,12 @@ export function Picker({ groups, label, onSelect, options, selectedOption, state
             )}
           </ComboboxList>
         </ComboboxContent>
+        <ComboboxStatus id={resultStatusId} aria-label={`${label} results`} className="sr-only">
+          {state.kind === 'ready'
+            ? resolveResultStatus(label, query, results.entries.length, results.total)
+            : null}
+        </ComboboxStatus>
       </Combobox>
-      <p
-        id={resultStatusId}
-        aria-label={`${label} results`}
-        aria-live="polite"
-        role="status"
-        className="sr-only"
-      >
-        {state.kind === 'ready'
-          ? resolveResultStatus(label, query, results.entries.length, results.total)
-          : null}
-      </p>
     </div>
   )
 }

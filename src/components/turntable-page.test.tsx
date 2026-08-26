@@ -282,6 +282,7 @@ describe('project, environment, and service selection', () => {
 
     hierarchy.resolve([createSelectionProject()])
     expect(await screen.findAllByRole('combobox')).toHaveLength(3)
+    expect(screen.getByRole('group', { name: 'Choose a service' })).toBeVisible()
   })
 
   it('finds project names through their workspace group and stores IDs in the URL', async () => {

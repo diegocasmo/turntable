@@ -4,19 +4,20 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center rounded-none border bg-clip-padding font-mono text-xs font-semibold whitespace-nowrap uppercase tracking-[0.12em] shadow-[3px_3px_0_#090a08] transition-[background-color,border-color,color,box-shadow,transform] duration-100 outline-none select-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55] active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_#090a08] disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50 aria-invalid:border-[#d97767] aria-invalid:outline-[#d97767] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center rounded-none border bg-clip-padding font-mono text-xs font-semibold whitespace-nowrap uppercase tracking-[0.12em] shadow-[3px_3px_0_var(--shadow-color)] transition-[background-color,border-color,color,box-shadow,transform] duration-100 outline-none select-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_var(--shadow-color)] disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50 aria-invalid:border-destructive aria-invalid:outline-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         primary:
-          'border-[#d59c55] bg-[#d59c55] text-[#141613] hover:border-[#e5ad68] hover:bg-[#e5ad68]',
+          'border-primary bg-primary text-primary-foreground hover:border-primary-hover hover:bg-primary-hover',
         secondary:
-          'border-[#706d60] bg-[#242522] text-[#f4f0e6] hover:border-[#c9c5b9] hover:bg-[#30312d]',
-        ghost: 'border-transparent bg-transparent text-[#f4f0e6] shadow-none hover:bg-[#30312d]',
+          'border-border bg-secondary text-secondary-foreground hover:border-foreground-soft hover:bg-surface-hover',
+        ghost:
+          'border-transparent bg-transparent text-foreground shadow-none hover:bg-surface-hover',
         destructive:
-          'border-[#d97767] bg-[#242522] text-[#f0b8ae] hover:bg-[#2d201e] hover:text-[#f0b8ae]',
+          'border-destructive bg-secondary text-danger-foreground hover:bg-danger-surface hover:text-danger-foreground',
         destructiveConfirm:
-          'border-[#d97767] bg-[#d97767] text-[#141613] hover:border-[#f0b8ae] hover:bg-[#f0b8ae]',
+          'border-destructive bg-destructive text-destructive-foreground hover:border-danger-foreground hover:bg-danger-foreground',
       },
       size: {
         sm: "h-8 gap-1.5 px-2.5 [&_svg:not([class*='size-'])]:size-3.5",

@@ -1,4 +1,4 @@
-import { ArrowSquareOutIcon } from '@phosphor-icons/react'
+import { ArrowSquareOutIcon } from '@phosphor-icons/react/ArrowSquareOut'
 import { useForm } from '@tanstack/react-form'
 import { useHydrated } from '@tanstack/react-router'
 import type { SubmitEvent } from 'react'
@@ -29,16 +29,16 @@ export function TokenForm({ expired }: TokenFormProps) {
 
   return (
     <form aria-labelledby="connect-title" className="w-full" method="post" onSubmit={handleSubmit}>
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#8f8c81]">
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
         Step 01 / Connect
       </p>
       <h2 id="connect-title" className="mt-4 text-3xl leading-tight sm:text-4xl">
         Connect to Railway
       </h2>
-      <p className="mt-4 leading-7 text-[#c9c5b9]">
+      <p className="mt-4 leading-7 text-foreground-soft">
         Create a token on{' '}
         <a
-          className="text-[#e5ad68] underline underline-offset-4 hover:text-[#f4f0e6] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
+          className="text-warning underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
           href={railwayTokensUrl}
           rel="noreferrer"
           target="_blank"
@@ -60,7 +60,7 @@ export function TokenForm({ expired }: TokenFormProps) {
               <div className="mt-8 grid gap-3">
                 <Label
                   htmlFor="railway-token"
-                  className="uppercase tracking-[0.12em] text-[#c9c5b9]"
+                  className="uppercase tracking-[0.12em] text-foreground-soft"
                 >
                   Railway API token
                 </Label>
@@ -79,7 +79,7 @@ export function TokenForm({ expired }: TokenFormProps) {
                     session.reset()
                     field.handleChange(event.target.value)
                   }}
-                  className="h-12 border-[#706d60] bg-[#141613] px-4 text-base text-[#f4f0e6] focus-visible:border-[#d59c55] focus-visible:ring-[#d59c55]/40"
+                  className="h-12 border-border bg-background px-4 text-base text-foreground focus-visible:border-ring focus-visible:ring-ring/40"
                 />
               </div>
 
@@ -95,14 +95,14 @@ export function TokenForm({ expired }: TokenFormProps) {
 
               <div className="mt-4 min-h-12">
                 {validationError ? (
-                  <p id={errorId} role="alert" className="text-sm leading-6 text-[#f0b8ae]">
+                  <p id={errorId} role="alert" className="text-sm leading-6 text-danger-foreground">
                     {validationError.message}
                   </p>
                 ) : null}
                 {!validationError && session.error ? (
                   <p
                     role="alert"
-                    className="border-l-2 border-[#d97767] pl-3 text-sm leading-6 text-[#f0b8ae]"
+                    className="border-l-2 border-destructive pl-3 text-sm leading-6 text-danger-foreground"
                   >
                     {session.error.message}
                   </p>
@@ -110,13 +110,13 @@ export function TokenForm({ expired }: TokenFormProps) {
                 {!validationError && !session.error && expired ? (
                   <p
                     role="alert"
-                    className="border-l-2 border-[#e5ad68] pl-3 text-sm leading-6 text-[#f4d4a9]"
+                    className="border-l-2 border-warning pl-3 text-sm leading-6 text-warning-foreground"
                   >
                     Your session expired. Enter your Railway API token again.
                   </p>
                 ) : null}
                 {!validationError && !session.error && !expired && session.isPending ? (
-                  <p role="status" className="text-sm leading-6 text-[#c9c5b9]">
+                  <p role="status" className="text-sm leading-6 text-foreground-soft">
                     Railway is checking the token.
                   </p>
                 ) : null}
