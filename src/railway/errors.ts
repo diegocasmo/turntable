@@ -35,3 +35,17 @@ export class RailwayResponseError extends Error {
     super('Railway returned an invalid response.')
   }
 }
+
+export class RailwaySubscriptionError extends Error {
+  override readonly name = 'RailwaySubscriptionError'
+  constructor(
+    readonly code: number | undefined,
+    detail?: string,
+  ) {
+    const summary =
+      code === undefined
+        ? 'Railway subscription failed'
+        : `Railway subscription closed with code ${code}`
+    super(detail ? `${summary}: ${detail}` : `${summary}.`)
+  }
+}
