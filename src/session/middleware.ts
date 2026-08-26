@@ -1,6 +1,6 @@
 import { createMiddleware } from '@tanstack/react-start'
-import { readWithRailwaySession } from '@/selection/read-with-railway-session.server'
 import { loadConfigMiddleware } from '@/server-functions/middleware'
+import { readWithRailwaySession } from '@/session/read-with-railway-session.server'
 
 export const requireRailwaySessionMiddleware = createMiddleware({ type: 'function' })
   .middleware([loadConfigMiddleware])

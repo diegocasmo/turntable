@@ -50,73 +50,59 @@ jobs:
       - name: Test production server
         run: pnpm test:smoke
 
-  browser:
-    name: Browser
+  e2e:
+    name: E2E
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v6
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          cache: pnpm
-          node-version-file: .nvmrc
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install browsers
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
-
-      - name: Run browser tests
-        run: pnpm test:e2e
-
-  railway:
-    name: Railway
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
     concurrency:
       group: railway-ci-target
       cancel-in-progress: false
     env:
-      RUN_RAILWAY_TEST: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+      RUN_E2E: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
     steps:
       - name: Skip untrusted pull request
-        if: env.RUN_RAILWAY_TEST != 'true'
-        run: echo "The Railway check does not run for fork pull requests."
+        if: env.RUN_E2E != 'true'
+        run: echo "E2E does not run for fork pull requests."
 
       - name: Check out the repository
-        if: env.RUN_RAILWAY_TEST == 'true'
+        if: env.RUN_E2E == 'true'
         uses: actions/checkout@v6
 
       - name: Set up pnpm
-        if: env.RUN_RAILWAY_TEST == 'true'
+        if: env.RUN_E2E == 'true'
         uses: pnpm/action-setup@v6
 
       - name: Set up Node.js
-        if: env.RUN_RAILWAY_TEST == 'true'
+        if: env.RUN_E2E == 'true'
         uses: actions/setup-node@v6
         with:
           cache: pnpm
           node-version-file: .nvmrc
 
       - name: Install dependencies
-        if: env.RUN_RAILWAY_TEST == 'true'
+        if: env.RUN_E2E == 'true'
         run: pnpm install --frozen-lockfile
 
-      - name: Check the Railway target
-        if: env.RUN_RAILWAY_TEST == 'true'
-        run: pnpm test:railway
+      - name: Install browsers
+        if: env.RUN_E2E == 'true'
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      - name: Create session secret
+        if: env.RUN_E2E == 'true'
+        run: |
+          value="$(node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('base64'))")"
+          echo "::add-mask::$value"
+          echo "SESSION_SECRET=$value" >> "$GITHUB_ENV"
+
+      - name: Run E2E tests
+        if: env.RUN_E2E == 'true'
+        run: pnpm test:e2e
         env:
+          APP_ORIGIN: http://127.0.0.1:3000
           RAILWAY_API_URL: ${{ vars.RAILWAY_API_URL }}
           RAILWAY_TEST_ENVIRONMENT_ID: ${{ vars.RAILWAY_TEST_ENVIRONMENT_ID }}
           RAILWAY_TEST_PROJECT_ID: ${{ vars.RAILWAY_TEST_PROJECT_ID }}
           RAILWAY_TEST_SERVICE_ID: ${{ vars.RAILWAY_TEST_SERVICE_ID }}
           RAILWAY_TEST_TOKEN: ${{ secrets.RAILWAY_TEST_TOKEN }}
+          RAILWAY_WEBSOCKET_URL: wss://backboard.railway.com/graphql/v2

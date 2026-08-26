@@ -22,12 +22,14 @@ import {
 const {
   connectToRailwayMock,
   disconnectFromRailwayMock,
+  readCurrentDeploymentMock,
   readEnvironmentsMock,
   readProjectsMock,
   readServicesMock,
 } = vi.hoisted(() => ({
   connectToRailwayMock: vi.fn(),
   disconnectFromRailwayMock: vi.fn(),
+  readCurrentDeploymentMock: vi.fn(),
   readEnvironmentsMock: vi.fn(),
   readProjectsMock: vi.fn(),
   readServicesMock: vi.fn(),
@@ -38,6 +40,9 @@ vi.mock('@/session/connect-to-railway', () => ({
 }))
 vi.mock('@/session/disconnect-from-railway', () => ({
   disconnectFromRailway: disconnectFromRailwayMock,
+}))
+vi.mock('@/deployment/read-current-deployment', () => ({
+  readCurrentDeployment: readCurrentDeploymentMock,
 }))
 vi.mock('@/selection/read-environments', () => ({ readEnvironments: readEnvironmentsMock }))
 vi.mock('@/selection/read-projects', () => ({ readProjects: readProjectsMock }))
@@ -122,6 +127,7 @@ async function expectSearch(page: ReturnType<typeof renderTurntablePage>, search
 beforeEach(() => {
   connectToRailwayMock.mockReset()
   disconnectFromRailwayMock.mockReset()
+  readCurrentDeploymentMock.mockReset().mockResolvedValue(null)
   readEnvironmentsMock.mockReset().mockResolvedValue([createRailwayEnvironment()])
   readProjectsMock
     .mockReset()
@@ -138,6 +144,10 @@ describe('Token form', () => {
     expect(within(main).getByRole('heading', { level: 1, name: 'Turntable' })).toBeVisible()
     expect(within(main).getByLabelText('Railway API token')).toBeRequired()
     expect(within(main).getByRole('button', { name: 'Connect to Railway' })).toBeEnabled()
+    expect(within(main).getByRole('form', { name: 'Connect to Railway' })).toHaveAttribute(
+      'method',
+      'post',
+    )
     const railwayTokensLink = within(main).getByRole('link', {
       name: "Railway's token page (opens in a new tab)",
     })
@@ -256,6 +266,7 @@ describe('project, environment, and service selection', () => {
       projectId: project.id,
       serviceId: service.id,
     })
+    expect(screen.queryByRole('status', { name: 'Selection status' })).not.toBeInTheDocument()
     const groups = screen.getAllByRole('group')
     expect(groups.map((group) => group.getAttribute('label'))).toEqual([
       'Railway workspace',
@@ -326,6 +337,49 @@ describe('project, environment, and service selection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(await screen.findByRole('combobox', { name: 'Project' })).toHaveDisplayValue(
       'No projects',
+    )
+  })
+})
+
+describe('deployment status', () => {
+  const selectedTargetUrl = '/?projectId=project-1&environmentId=environment-1&serviceId=service-1'
+  const renderStatus = () =>
+    renderTurntablePage({ initialEntry: selectedTargetUrl, sessionState: 'authenticated' })
+
+  it.each([
+    [{ id: 'deployment-private-id', status: 'NEEDS_APPROVAL' }, 'Status: Needs approval.'],
+    [null, 'No deployment.'],
+  ])('shows the resolved deployment state', async (result, text) => {
+    readCurrentDeploymentMock.mockResolvedValue(result)
+    renderStatus()
+
+    const deploymentStatus = await screen.findByRole('status', { name: 'Deployment status' })
+    await waitFor(() => expect(deploymentStatus).toHaveTextContent(text))
+    expect(screen.queryByText('deployment-private-id')).not.toBeInTheDocument()
+  })
+
+  it('shows the loading state', async () => {
+    readCurrentDeploymentMock.mockReturnValueOnce(new Promise(() => undefined))
+    renderStatus()
+
+    expect(await screen.findByRole('status', { name: 'Deployment status' })).toHaveTextContent(
+      'Loading deployment.',
+    )
+  })
+
+  it('retries an error and maps an unknown status', async () => {
+    readCurrentDeploymentMock
+      .mockRejectedValueOnce(new Error('Railway could not load the deployment.'))
+      .mockResolvedValueOnce({ id: 'deployment-1', status: 'unknown' })
+    renderStatus()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Railway could not load the deployment.',
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Retry deployment status' }))
+
+    expect(await screen.findByRole('status', { name: 'Deployment status' })).toHaveTextContent(
+      'Status: Unknown.',
     )
   })
 })

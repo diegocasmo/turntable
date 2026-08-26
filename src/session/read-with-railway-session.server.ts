@@ -2,12 +2,12 @@ import { redirect } from '@tanstack/react-router'
 import { RailwayGraphQLError, RailwayRateLimitError } from '@/railway/errors'
 import { clearSessionCookie, InvalidSessionError, readSession } from '@/session/cookie.server'
 
-function createSelectionReadError(error: unknown) {
+function createRailwayReadError(error: unknown) {
   if (error instanceof RailwayGraphQLError || error instanceof RailwayRateLimitError) {
     return new Error(error.message)
   }
 
-  return new Error('Turntable could not load Railway choices. Try again.')
+  return new Error('Turntable could not load Railway data. Try again.')
 }
 
 function createConnectRedirect() {
@@ -31,6 +31,6 @@ export async function readWithRailwaySession<Value>(
       throw createConnectRedirect()
     }
 
-    throw createSelectionReadError(error)
+    throw createRailwayReadError(error)
   }
 }

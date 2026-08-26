@@ -34,13 +34,11 @@
   "include": [
     "dangerfile.mts",
     "e2e/**/*.ts",
-    "integration/**/*.ts",
     "playwright.config.ts",
     "playwright.smoke.config.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
     "vite.config.ts",
-    "vitest.config.ts",
-    "vitest.railway.config.ts"
+    "vitest.config.ts"
   ]
 }

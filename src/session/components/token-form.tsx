@@ -1,5 +1,6 @@
 import { ArrowSquareOutIcon } from '@phosphor-icons/react'
 import { useForm } from '@tanstack/react-form'
+import { useHydrated } from '@tanstack/react-router'
 import type { SubmitEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +14,7 @@ type TokenFormProps = Readonly<{
 }>
 
 export function TokenForm({ expired }: TokenFormProps) {
+  const hydrated = useHydrated()
   const session = useConnectSession()
   const form = useForm({
     defaultValues: { token: '' },
@@ -26,7 +28,7 @@ export function TokenForm({ expired }: TokenFormProps) {
   }
 
   return (
-    <form aria-labelledby="connect-title" className="w-full" onSubmit={handleSubmit}>
+    <form aria-labelledby="connect-title" className="w-full" method="post" onSubmit={handleSubmit}>
       <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#8f8c81]">
         Step 01 / Connect
       </p>
@@ -78,13 +80,12 @@ export function TokenForm({ expired }: TokenFormProps) {
               </Label>
               <Input
                 id="railway-token"
-                name={field.name}
                 type="password"
                 required
                 aria-describedby={validationError ? errorId : undefined}
                 aria-invalid={validationError ? true : undefined}
                 autoComplete="off"
-                disabled={session.isPending}
+                disabled={!hydrated || session.isPending}
                 spellCheck={false}
                 value={field.state.value}
                 onBlur={field.handleBlur}
@@ -106,7 +107,7 @@ export function TokenForm({ expired }: TokenFormProps) {
 
       <Button
         type="submit"
-        disabled={session.isPending}
+        disabled={!hydrated || session.isPending}
         className="mt-5 h-12 w-full bg-[#d59c55] px-5 font-mono text-xs uppercase tracking-[0.16em] text-[#141613] hover:bg-[#e5ad68] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
       >
         {session.isPending ? 'Connecting...' : 'Connect to Railway'}

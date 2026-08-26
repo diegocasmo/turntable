@@ -56,7 +56,7 @@ function resolveStatus(
   if (environment.isStale)
     return 'The selected environment is no longer available. Choose another environment.'
   if (service.isStale) return 'The selected service is no longer available. Choose another service.'
-  if (service.selectedOption) return `${service.selectedOption.name} is selected.`
+  if (service.selectedOption) return undefined
   if (environment.selectedOption) return 'Choose a service.'
   if (project.selectedOption) return 'Choose an environment.'
   return 'Choose a project.'
@@ -101,6 +101,14 @@ export function usePickerSelections() {
     environment,
     service,
   )
+  const deploymentTarget =
+    project.selectedOption && environment.selectedOption && service.selectedOption
+      ? {
+          environmentId: environment.selectedOption.id,
+          projectId: project.selectedOption.id,
+          serviceId: service.selectedOption.id,
+        }
+      : undefined
 
   return {
     project: {
@@ -129,6 +137,7 @@ export function usePickerSelections() {
       ),
     },
     failure,
+    deploymentTarget,
     searchWithDefaultOption,
     status,
   }

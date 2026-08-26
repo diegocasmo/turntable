@@ -43,12 +43,13 @@ pnpm test
 
 The normal test suite does not use Railway or a token.
 
-To run the read-only Railway check, add a Railway API token and the test target IDs to `.env`. The
-names are in `.env.example`.
+To run the end-to-end tests, add a Railway API token and the `turntable-e2e/local` target IDs to
+`.env`. [`.env.example`](./.env.example) lists the required names.
 
 ```sh
-pnpm test:railway
+pnpm test:e2e
 ```
 
-CI runs this check against the `ci` environment. It runs for branches in this repository, `main`,
-and manual requests. It does not give the token to fork pull requests.
+This command starts Turntable, uses the configured Railway target, and runs all browser tests. CI
+uses `turntable-e2e/ci`. It runs for branches in this repository, `main`, and manual requests. It
+does not run for fork pull requests, because they cannot receive the token.

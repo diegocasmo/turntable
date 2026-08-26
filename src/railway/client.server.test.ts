@@ -1,6 +1,6 @@
 import { print } from 'graphql'
 import { describe, expect, it, vi } from 'vitest'
-import { railwaySmokeQuery } from '@/gql/operations/railway-smoke'
+import { projectsQuery } from '@/gql/operations/projects'
 import { createRailwayClient } from '@/railway/client.server'
 import {
   RailwayGraphQLError,
@@ -9,27 +9,16 @@ import {
   RailwayResponseError,
 } from '@/railway/errors'
 import {
+  createRailwayPage,
   testRailwayApiUrl,
-  testRailwayEnvironmentId,
-  testRailwayProjectId,
   testRailwayToken,
+  testRailwayWorkspaceId,
 } from '@/test/railway'
 import { createJsonResponse } from '@/test/response'
 
-const query = print(railwaySmokeQuery)
-const variables = {
-  environmentId: testRailwayEnvironmentId,
-  projectId: testRailwayProjectId,
-}
-const validData = {
-  environment: {
-    id: testRailwayEnvironmentId,
-    name: 'Production',
-    projectId: testRailwayProjectId,
-    serviceInstances: { edges: [] },
-  },
-  project: { id: testRailwayProjectId, name: 'Turntable' },
-}
+const query = print(projectsQuery)
+const variables = { workspaceId: testRailwayWorkspaceId }
+const validData = { projects: createRailwayPage([]) }
 
 function setUpClient(response: Response) {
   const fetchRequest = vi.fn(async (_request: Request) => response)
@@ -44,7 +33,7 @@ function setUpClient(response: Response) {
 }
 
 function sendRequest(client: ReturnType<typeof createRailwayClient>) {
-  return client.request({ document: railwaySmokeQuery, token: testRailwayToken, variables })
+  return client.request({ document: projectsQuery, token: testRailwayToken, variables })
 }
 
 describe('Railway HTTP client', () => {
