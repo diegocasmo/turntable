@@ -23,21 +23,32 @@ export const deploymentStatusSchema = z.string().transform((value) => {
 })
 
 export type DeploymentStatus = z.infer<typeof deploymentStatusSchema>
-const deploymentStatusLabels: Record<DeploymentStatus, string> = {
-  BUILDING: 'Building',
-  CRASHED: 'Crashed',
-  DEPLOYING: 'Deploying',
-  FAILED: 'Failed',
-  INITIALIZING: 'Initializing',
-  NEEDS_APPROVAL: 'Needs approval',
-  QUEUED: 'Queued',
-  REMOVED: 'Removed',
-  REMOVING: 'Removing',
-  SKIPPED: 'Skipped',
-  SLEEPING: 'Sleeping',
-  SUCCESS: 'Success',
-  WAITING: 'Waiting',
-  unknown: 'Unknown',
+export type DeploymentStatusTone = 'danger' | 'neutral' | 'positive' | 'progress'
+type DeploymentStatusPresentation = Readonly<{
+  label: string
+  tone: DeploymentStatusTone
+}>
+
+const deploymentStatusPresentations: Record<DeploymentStatus, DeploymentStatusPresentation> = {
+  BUILDING: { label: 'Building', tone: 'progress' },
+  CRASHED: { label: 'Crashed', tone: 'danger' },
+  DEPLOYING: { label: 'Deploying', tone: 'progress' },
+  FAILED: { label: 'Failed', tone: 'danger' },
+  INITIALIZING: { label: 'Initializing', tone: 'progress' },
+  NEEDS_APPROVAL: { label: 'Needs approval', tone: 'progress' },
+  QUEUED: { label: 'Queued', tone: 'progress' },
+  REMOVED: { label: 'Removed', tone: 'neutral' },
+  REMOVING: { label: 'Removing', tone: 'progress' },
+  SKIPPED: { label: 'Skipped', tone: 'neutral' },
+  SLEEPING: { label: 'Sleeping', tone: 'neutral' },
+  SUCCESS: { label: 'Success', tone: 'positive' },
+  WAITING: { label: 'Waiting', tone: 'progress' },
+  unknown: { label: 'Unknown', tone: 'neutral' },
 }
 
-export const formatDeploymentStatus = (status: DeploymentStatus) => deploymentStatusLabels[status]
+export function readDeploymentStatusPresentation(status: DeploymentStatus) {
+  return deploymentStatusPresentations[status]
+}
+
+export const formatDeploymentStatus = (status: DeploymentStatus) =>
+  readDeploymentStatusPresentation(status).label
