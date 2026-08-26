@@ -1,7 +1,7 @@
 import { graphql } from 'gql.tada'
 
-export const railwaySmokeQuery = graphql(`
-  query RailwaySmoke($projectId: String!, $environmentId: String!) {
+export const railwayE2ETargetQuery = graphql(`
+  query RailwayE2ETarget($projectId: String!, $environmentId: String!) {
     project(id: $projectId) {
       id
       name

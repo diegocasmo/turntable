@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { loadRailwaySmokeConfig } from '@/railway/check-target.server'
+import { loadRailwayE2EConfig } from '@/railway/check-target.server'
 import { testRailwayEnvironmentId, testRailwayProjectId, testRailwayToken } from '@/test/railway'
 
 const validEnvironment = {
@@ -10,9 +10,9 @@ const validEnvironment = {
   RAILWAY_TEST_TOKEN: testRailwayToken,
 }
 
-describe('Railway smoke configuration', () => {
+describe('Railway E2E configuration', () => {
   it('reads every required value', () => {
-    expect(loadRailwaySmokeConfig(validEnvironment)).toEqual({
+    expect(loadRailwayE2EConfig(validEnvironment)).toEqual({
       apiUrl: validEnvironment.RAILWAY_API_URL,
       environmentId: validEnvironment.RAILWAY_TEST_ENVIRONMENT_ID,
       projectId: validEnvironment.RAILWAY_TEST_PROJECT_ID,
@@ -26,8 +26,8 @@ describe('Railway smoke configuration', () => {
     (name) => {
       const environment = { ...validEnvironment, [name]: undefined }
 
-      expect(() => loadRailwaySmokeConfig(environment)).toThrow(name)
-      expect(() => loadRailwaySmokeConfig(environment)).not.toThrow(
+      expect(() => loadRailwayE2EConfig(environment)).toThrow(name)
+      expect(() => loadRailwayE2EConfig(environment)).not.toThrow(
         validEnvironment.RAILWAY_TEST_TOKEN,
       )
     },
@@ -35,7 +35,7 @@ describe('Railway smoke configuration', () => {
 
   it('rejects an API host that could receive the token', () => {
     expect(() =>
-      loadRailwaySmokeConfig({
+      loadRailwayE2EConfig({
         ...validEnvironment,
         RAILWAY_API_URL: 'https://example.com/graphql/v2',
       }),

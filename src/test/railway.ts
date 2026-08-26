@@ -1,3 +1,4 @@
+import type { RailwayDeployment } from '@/gql/operations/deployment-identity'
 import type { ServiceOption } from '@/gql/operations/environment-services'
 import type { EnvironmentOption } from '@/gql/operations/project-environments'
 import type { ProjectOption, ProjectsConnection } from '@/gql/operations/projects'
@@ -40,6 +41,17 @@ export function createRailwayEnvironment(
 
 export function createRailwayService(overrides: Partial<ServiceOption> = {}): ServiceOption {
   return { id: testRailwayServiceId, name: 'Web', ...overrides }
+}
+
+export function createRailwayDeployment(
+  overrides: Partial<RailwayDeployment> = {},
+): RailwayDeployment {
+  return {
+    createdAt: '2026-08-25T12:00:00.000Z',
+    id: 'deployment-1',
+    status: 'SUCCESS',
+    ...overrides,
+  }
 }
 
 export function createRailwayResponse<Data>(data: Data) {

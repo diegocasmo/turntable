@@ -25,7 +25,6 @@
     "skills:load": "intent load",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:railway": "vitest run --config vitest.railway.config.ts",
     "test:smoke": "pnpm build && playwright test --config playwright.smoke.config.ts",
     "typecheck": "pnpm graphql:check && tsc --noEmit"
   },

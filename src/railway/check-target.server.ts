@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { railwaySmokeQuery } from '@/gql/operations/railway-smoke'
+import { railwayE2ETargetQuery } from '@/gql/operations/railway-e2e-target'
 import { createRailwayClient } from '@/railway/client.server'
 import { railwayHttpsUrlSchema } from '@/railway/url-schema'
 
-const smokeEnvironmentSchema = z.object({
+const e2eEnvironmentSchema = z.object({
   RAILWAY_API_URL: railwayHttpsUrlSchema,
   RAILWAY_TEST_ENVIRONMENT_ID: z.string().min(1),
   RAILWAY_TEST_PROJECT_ID: z.string().min(1),
@@ -13,12 +13,12 @@ const smokeEnvironmentSchema = z.object({
 
 type Environment = Readonly<Record<string, string | undefined>>
 
-export function loadRailwaySmokeConfig(environment: Environment = process.env) {
-  const result = smokeEnvironmentSchema.safeParse(environment)
+export function loadRailwayE2EConfig(environment: Environment = process.env) {
+  const result = e2eEnvironmentSchema.safeParse(environment)
 
   if (!result.success) {
     const names = [...new Set(result.error.issues.map((issue) => issue.path.join('.')))].sort()
-    throw new Error(`Invalid Railway smoke configuration: ${names.join(', ')}`)
+    throw new Error(`Invalid Railway E2E configuration: ${names.join(', ')}`)
   }
 
   return {
@@ -30,12 +30,12 @@ export function loadRailwaySmokeConfig(environment: Environment = process.env) {
   }
 }
 
-type RailwaySmokeConfig = ReturnType<typeof loadRailwaySmokeConfig>
+type RailwayE2EConfig = ReturnType<typeof loadRailwayE2EConfig>
 
-export async function checkRailwayTarget(config: RailwaySmokeConfig) {
+export async function checkRailwayTarget(config: RailwayE2EConfig) {
   const client = createRailwayClient({ apiUrl: config.apiUrl })
   const data = await client.request({
-    document: railwaySmokeQuery,
+    document: railwayE2ETargetQuery,
     token: config.token,
     variables: { environmentId: config.environmentId, projectId: config.projectId },
   })
@@ -44,15 +44,15 @@ export async function checkRailwayTarget(config: RailwaySmokeConfig) {
   )
 
   if (data.project.id !== config.projectId || data.environment.projectId !== config.projectId) {
-    throw new Error('The Railway smoke target does not match the configured project.')
+    throw new Error('The Railway E2E target does not match the configured project.')
   }
 
   if (data.environment.id !== config.environmentId) {
-    throw new Error('The Railway smoke target does not match the configured environment.')
+    throw new Error('The Railway E2E target does not match the configured environment.')
   }
 
   if (service === undefined) {
-    throw new Error('The Railway smoke target does not contain the configured service.')
+    throw new Error('The Railway E2E target does not contain the configured service.')
   }
 
   return {

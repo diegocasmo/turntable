@@ -101,6 +101,14 @@ export function usePickerSelections() {
     environment,
     service,
   )
+  const deploymentTarget =
+    project.selectedOption && environment.selectedOption && service.selectedOption
+      ? {
+          environmentId: environment.selectedOption.id,
+          projectId: project.selectedOption.id,
+          serviceId: service.selectedOption.id,
+        }
+      : undefined
 
   return {
     project: {
@@ -129,6 +137,7 @@ export function usePickerSelections() {
       ),
     },
     failure,
+    deploymentTarget,
     searchWithDefaultOption,
     status,
   }

@@ -1,11 +1,19 @@
 import { Navigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
+import { DeploymentStatus } from '@/deployment/components/deployment-status'
 import { Picker } from '@/selection/components/picker'
 import { usePickerSelections } from '@/selection/hooks/use-picker-selections'
 
 export function SelectionPickers() {
-  const { environment, failure, project, searchWithDefaultOption, service, status } =
-    usePickerSelections()
+  const {
+    deploymentTarget,
+    environment,
+    failure,
+    project,
+    searchWithDefaultOption,
+    service,
+    status,
+  } = usePickerSelections()
 
   return (
     <div className="mt-8 space-y-5">
@@ -19,6 +27,7 @@ export function SelectionPickers() {
       <Picker {...project} />
       <Picker {...environment} />
       <Picker {...service} />
+      {deploymentTarget ? <DeploymentStatus {...deploymentTarget} /> : null}
       <p
         id="selection-status"
         aria-label="Selection status"

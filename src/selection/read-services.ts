@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
-import { requireRailwaySessionMiddleware } from '@/selection/middleware'
 import { readRailwayServices } from '@/selection/read-services.server'
 import { readServicesInputSchema } from '@/selection/schema'
+import { requireRailwaySessionMiddleware } from '@/session/middleware'
 
 export const readServices = createServerFn({ method: 'GET' })
   .middleware([requireRailwaySessionMiddleware])

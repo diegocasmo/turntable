@@ -1,6 +1,6 @@
 import { print } from 'graphql'
 import { describe, expect, it, vi } from 'vitest'
-import { railwaySmokeQuery } from '@/gql/operations/railway-smoke'
+import { railwayE2ETargetQuery } from '@/gql/operations/railway-e2e-target'
 import { createRailwayClient } from '@/railway/client.server'
 import {
   RailwayGraphQLError,
@@ -16,7 +16,7 @@ import {
 } from '@/test/railway'
 import { createJsonResponse } from '@/test/response'
 
-const query = print(railwaySmokeQuery)
+const query = print(railwayE2ETargetQuery)
 const variables = {
   environmentId: testRailwayEnvironmentId,
   projectId: testRailwayProjectId,
@@ -44,7 +44,7 @@ function setUpClient(response: Response) {
 }
 
 function sendRequest(client: ReturnType<typeof createRailwayClient>) {
-  return client.request({ document: railwaySmokeQuery, token: testRailwayToken, variables })
+  return client.request({ document: railwayE2ETargetQuery, token: testRailwayToken, variables })
 }
 
 describe('Railway HTTP client', () => {

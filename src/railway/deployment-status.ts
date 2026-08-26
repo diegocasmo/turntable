@@ -21,3 +21,5 @@ export const deploymentStatusSchema = z.string().transform((value) => {
   const result = knownDeploymentStatusSchema.safeParse(value)
   return result.success ? result.data : unknownDeploymentStatus
 })
+
+export type DeploymentStatus = z.infer<typeof deploymentStatusSchema>
