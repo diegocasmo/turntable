@@ -1,94 +1,81 @@
 import type { ReactNode } from 'react'
-import { DeploymentActions } from '@/deployment/components/deployment-actions'
+import { DeploymentActions } from '@/deployment/components/spin-down-control'
 import { StatusBadge } from '@/deployment/components/status-badge'
 import { useStreamDeploymentEvents } from '@/deployment/hooks/use-stream-deployment-events'
 import type { DeploymentTarget } from '@/deployment/schema'
 
-type DeploymentStatusProps = Readonly<{ target: DeploymentTarget | undefined }>
-type DeploymentPanelProps = Readonly<{
-  action: ReactNode
-  status: ReactNode
+type DeploymentStatusProps = Readonly<{
+  loading?: boolean
+  target: DeploymentTarget | undefined
 }>
 
 const deploymentStatusLabel = 'Deployment status'
 
-function DeploymentPanel({ action, status }: DeploymentPanelProps) {
+export function DeploymentStatusSkeleton() {
+  return <DeploymentStatus loading target={undefined} />
+}
+
+export function DeploymentStatus({ loading = false, target }: DeploymentStatusProps) {
+  const deployment = useStreamDeploymentEvents(target)
+  const failure = deployment.error && !deployment.isFetching ? deployment.error : null
+  const transitioning = deployment.transition !== undefined
+  const showSkeleton =
+    loading ||
+    (target !== undefined && failure === null && deployment.data === undefined && !transitioning)
+  const event = deployment.data
+  const hasDeployment = event?.type === 'snapshot' || event?.type === 'status'
+  const current = hasDeployment ? event.data : null
+  let action: ReactNode = (
+    <DeploymentActions
+      busy={transitioning}
+      deploymentId={failure === null && current?.status === 'SUCCESS' ? current.id : undefined}
+      onDeploymentCreated={deployment.watchDeployment}
+      onRefresh={deployment.refresh}
+      refreshLabel={failure ? 'Reconnect' : 'Refresh'}
+      target={target}
+    />
+  )
+  let status: ReactNode = <StatusBadge status={current?.status ?? null} />
+  if (target === undefined) status = 'Choose a service'
+  if (event?.type === 'gone') {
+    status = <span className="text-sm text-destructive">Deployment unavailable</span>
+  }
+  if (deployment.transition === 'reconnect') status = 'Reconnecting…'
+  if (deployment.transition === 'refresh') status = 'Refreshing…'
+  if (deployment.transition === 'spin-up') status = 'Starting deployment…'
+  if (failure) {
+    status = (
+      <span className="w-full overflow-auto border-l-2 border-destructive bg-destructive/15 px-3 text-sm leading-6 text-destructive">
+        {failure.message}
+      </span>
+    )
+  }
+  if (showSkeleton) {
+    action = <span className="h-8 w-28 bg-muted" />
+    status = (
+      <>
+        <span className="sr-only">Loading…</span>
+        <span aria-hidden="true" className="h-5 w-28 bg-muted" />
+      </>
+    )
+  }
+
   return (
-    <section aria-label={deploymentStatusLabel} className="h-[97px] border-t border-[#4d4e47]">
+    <section aria-label={deploymentStatusLabel} className="h-[97px] border-t border-muted">
       <div className="grid h-full grid-rows-[2rem_2rem] gap-2 py-3">
         <div className="grid grid-cols-[minmax(0,1fr)_7rem] items-center gap-2">
-          <p className="truncate font-mono text-xs uppercase tracking-[0.16em] text-[#c9c5b9]">
+          <p className="truncate font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground">
             {deploymentStatusLabel}
           </p>
           {action}
         </div>
         <div
-          aria-label={deploymentStatusLabel}
-          aria-live="polite"
           className="flex min-w-0 items-center overflow-auto"
-          role="status"
+          role={failure && !showSkeleton ? 'alert' : 'status'}
         >
           {status}
         </div>
       </div>
     </section>
-  )
-}
-
-export function DeploymentStatusSkeleton() {
-  return (
-    <DeploymentPanel
-      action={<span className="h-8 w-28 bg-[#4d4e47]" />}
-      status={
-        <>
-          <span className="sr-only">Loading…</span>
-          <span aria-hidden="true" className="h-5 w-28 bg-[#4d4e47]" />
-        </>
-      }
-    />
-  )
-}
-
-export function DeploymentStatus({ target }: DeploymentStatusProps) {
-  const deployment = useStreamDeploymentEvents(target)
-  const failure = deployment.error && !deployment.isFetching ? deployment.error : null
-  if (target !== undefined && failure === null && deployment.data === undefined) {
-    return <DeploymentStatusSkeleton />
-  }
-  const event = deployment.data
-  const hasDeployment = event?.type === 'snapshot' || event?.type === 'status'
-  const current = hasDeployment ? event.data : null
-  let status: ReactNode = <StatusBadge status={current?.status ?? null} />
-  if (target === undefined) status = 'Choose a service'
-  if (event?.type === 'gone') {
-    status = <span className="text-sm text-[#f0b8ae]">Deployment unavailable</span>
-  }
-  if (failure) {
-    status = (
-      <span
-        className="w-full overflow-auto border-l-2 border-[#d97767] bg-[#2d201e] px-3 text-sm leading-6 text-[#f0b8ae]"
-        role="alert"
-      >
-        {failure.message}
-      </span>
-    )
-  }
-
-  return (
-    <DeploymentPanel
-      action={
-        <DeploymentActions
-          busy={deployment.isTransitioning}
-          deploymentId={failure === null && current?.status === 'SUCCESS' ? current.id : undefined}
-          disabled={target === undefined || deployment.isTransitioning}
-          onDeploymentCreated={deployment.watchDeployment}
-          onRefresh={failure ? () => void deployment.refetch() : deployment.refresh}
-          refreshLabel={failure ? 'Reconnect' : 'Refresh'}
-          running={hasDeployment ? current !== null && !current.deploymentStopped : undefined}
-          target={target}
-        />
-      }
-      status={status}
-    />
   )
 }

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Button } from '@/components/ui/button'
+import { AsyncButton } from '@/components/ui/button'
 import { useDisconnectSession } from '@/session/hooks/use-disconnect-session'
 
 function resolveDisconnectLabel(isPending: boolean, hasError: boolean) {
@@ -19,19 +19,18 @@ export function SessionControls({ children }: Readonly<{ children?: ReactNode }>
 
       {children}
 
-      <div className="border-t border-[#706d60] pt-5">
-        <Button
+      <div className="border-t border-border pt-5">
+        <AsyncButton
           type="button"
           variant="secondary"
           size="lg"
-          disabled={disconnect.isPending}
-          focusableWhenDisabled={disconnect.isPending}
+          pending={disconnect.isPending}
           aria-describedby={disconnect.error ? 'sign-out-error' : undefined}
           onClick={() => disconnect.mutate({})}
           className="w-full"
         >
           {resolveDisconnectLabel(disconnect.isPending, disconnect.error !== null)}
-        </Button>
+        </AsyncButton>
         {disconnect.error ? (
           <p id="sign-out-error" role="alert" className="sr-only">
             {disconnect.error.message}

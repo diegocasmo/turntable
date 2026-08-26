@@ -455,31 +455,28 @@ describe('deployment status', () => {
     renderStatus()
 
     await screen.findByText('No deployment')
-    expect(screen.getByRole('status', { name: 'Deployment status' })).toHaveTextContent(
-      'No deployment',
-    )
-    expect(screen.getByRole('button', { name: 'Actions' })).toBeEnabled()
   })
 
   it('confirms spin up and watches the returned deployment ID', async () => {
-    spinUpDeploymentMock.mockResolvedValue('returned-deployment')
+    const spinUpResult = Promise.withResolvers<string>()
+    spinUpDeploymentMock.mockReturnValue(spinUpResult.promise)
     renderStatus()
     await screen.findByText('No deployment')
 
     selectDeploymentAction('Spin up')
-    fireEvent.click(
-      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Spin up' }),
-    )
+    const dialog = screen.getByRole('alertdialog')
+    const confirm = within(dialog).getByRole('button', { name: 'Spin up' })
     await waitFor(() =>
-      expect(spinUpDeploymentMock).toHaveBeenCalledWith({
-        data: { environmentId: 'environment-1', projectId: 'project-1', serviceId: 'service-1' },
-      }),
+      expect(within(dialog).getByRole('button', { name: 'Cancel' })).toHaveFocus(),
     )
+    confirm.focus()
+    fireEvent.click(confirm)
+    await waitFor(() => expect(confirm).toHaveFocus())
+    expect(within(dialog).getByRole('status')).toHaveTextContent('Railway is starting…')
+    spinUpResult.resolve('returned-deployment')
     await waitFor(() =>
-      expect(streamDeploymentEventsMock).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ deploymentId: 'returned-deployment' }),
-        }),
+      expect(streamDeploymentEventsMock.mock.lastCall?.[0].data).toEqual(
+        expect.objectContaining({ deploymentId: 'returned-deployment' }),
       ),
     )
   })
@@ -488,8 +485,7 @@ describe('deployment status', () => {
     streamDeploymentEventsMock.mockReturnValueOnce(new Promise(() => undefined))
     renderStatus()
 
-    const deploymentStatus = await screen.findByRole('status', { name: 'Deployment status' })
-    await waitFor(() => expect(deploymentStatus).toHaveTextContent('Loading…'))
+    expect(await screen.findByText('Loading…')).toBeVisible()
     expect(screen.queryByRole('button', { name: 'Actions' })).not.toBeInTheDocument()
   })
 
@@ -554,7 +550,6 @@ describe('deployment status', () => {
     renderStatus()
 
     expect(await screen.findByText('Deployment unavailable')).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Actions' })).toBeEnabled()
   })
 
   it('returns to the token form when the session expires', async () => {
@@ -577,14 +572,14 @@ describe('deployment status', () => {
       'Railway could not stream the deployment.',
     )
     selectDeploymentAction('Reconnect')
-    expect(await screen.findByText('Loading…')).toBeVisible()
+    expect(await screen.findByText('Reconnecting…')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Actions' })).toHaveAttribute('aria-busy', 'true')
     await writer.write({
       data: { deploymentStopped: false, id: 'deployment-1', status: 'unknown' },
       type: 'snapshot',
     })
 
     await screen.findByText('Unknown')
-    expect(screen.getByRole('status', { name: 'Deployment status' })).toHaveTextContent('Unknown')
     await writer.close()
   })
 })

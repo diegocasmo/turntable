@@ -13,26 +13,19 @@ import { useDisconnectSession } from '@/session/hooks/use-disconnect-session'
 type DeploymentWatchState = Readonly<{
   deploymentId?: string | undefined
   event?: DeploymentStreamEvent | undefined
-  transition?: 'refresh' | 'spin-up' | undefined
+  transition?: 'reconnect' | 'refresh' | 'spin-up' | undefined
 }>
 
-function reduceDeploymentEvents(
+const reduceDeploymentEvents = (
   current: DeploymentWatchState | undefined,
   event: DeploymentStreamEvent,
-): DeploymentWatchState | undefined {
-  return event.type === 'heartbeat' ? current : { event }
-}
+): DeploymentWatchState | undefined => (event.type === 'heartbeat' ? current : { event })
 
 export function useStreamDeploymentEvents(target: DeploymentTarget | undefined) {
   const disconnect = useDisconnectSession()
   const stream = useServerFn(streamDeploymentEvents)
   const queryClient = useQueryClient()
-  const queryKey = [
-    'deployment',
-    target?.projectId,
-    target?.environmentId,
-    target?.serviceId,
-  ] as const
+  const queryKey = ['deployment', target] as const
 
   const query = useQuery({
     queryFn:
@@ -67,20 +60,15 @@ export function useStreamDeploymentEvents(target: DeploymentTarget | undefined) 
     transition: NonNullable<DeploymentWatchState['transition']>,
     deploymentId?: string,
   ) => {
-    queryClient.setQueryData<DeploymentWatchState>(queryKey, (current) => ({
-      deploymentId,
-      event: current?.event,
-      transition,
-    }))
+    queryClient.setQueryData(queryKey, { deploymentId, event: query.data?.event, transition })
     void query.refetch()
   }
 
   return {
     ...query,
     data: query.data?.event,
-    isTransitioning: query.isFetching && query.data?.transition !== undefined,
     transition: query.isFetching ? query.data?.transition : undefined,
-    refresh: () => startTransition('refresh'),
+    refresh: () => startTransition(query.error ? 'reconnect' : 'refresh'),
     watchDeployment: (deploymentId: string) => startTransition('spin-up', deploymentId),
   }
 }
