@@ -28,9 +28,8 @@ test('a user can select the configured Railway service and see its status', asyn
   await page.getByRole('combobox', { name: 'Environment' }).selectOption(environmentId)
   await page.getByRole('combobox', { name: 'Service' }).selectOption(serviceId)
 
-  await expect(page.getByRole('status', { name: 'Deployment status' })).toHaveText(
-    `Status: ${expectedStatus}.`,
-  )
+  const deploymentStatus = page.getByRole('status', { name: 'Deployment status' })
+  await expect(deploymentStatus.getByText(expectedStatus, { exact: true })).toBeVisible()
   await expect
     .poll(() => [...new URL(page.url()).searchParams].sort())
     .toEqual(

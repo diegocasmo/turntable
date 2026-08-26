@@ -225,6 +225,21 @@ describe('Token form', () => {
     expect(queryClient.getQueryCache().getAll()).toHaveLength(0)
   })
 
+  it('shows a safe sign-out error', async () => {
+    const message = 'Railway could not sign out this browser.'
+    renderTurntablePage({
+      disconnect: () => Promise.reject(new Error(message)),
+      sessionState: 'authenticated',
+    })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign out this browser' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(message)
+    const retry = screen.getByRole('button', { name: 'Sign out failed. Try again' })
+    expect(retry).toBeEnabled()
+    expect(retry).toHaveAccessibleDescription(message)
+  })
+
   it('shows an expired session', async () => {
     renderTurntablePage({ sessionState: 'expired' })
 
@@ -333,8 +348,9 @@ describe('project, environment, and service selection', () => {
     readProjectsMock.mockRejectedValueOnce(new Error(message)).mockResolvedValueOnce([])
     renderTurntablePage({ sessionState: 'authenticated' })
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(message)
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    const deploymentRegion = await screen.findByRole('region', { name: 'Deployment status' })
+    expect(await within(deploymentRegion).findByRole('alert')).toHaveTextContent(message)
+    fireEvent.click(within(deploymentRegion).getByRole('button', { name: 'Retry' }))
     expect(await screen.findByRole('combobox', { name: 'Project' })).toHaveDisplayValue(
       'No projects',
     )
@@ -346,9 +362,17 @@ describe('deployment status', () => {
   const renderStatus = () =>
     renderTurntablePage({ initialEntry: selectedTargetUrl, sessionState: 'authenticated' })
 
+  it('shows the stable state before a service is selected', async () => {
+    renderTurntablePage({ sessionState: 'authenticated' })
+
+    const deploymentRegion = await screen.findByRole('region', { name: 'Deployment status' })
+    expect(within(deploymentRegion).getByText('Choose a service')).toBeVisible()
+    expect(readCurrentDeploymentMock).not.toHaveBeenCalled()
+  })
+
   it.each([
-    [{ id: 'deployment-private-id', status: 'NEEDS_APPROVAL' }, 'Status: Needs approval.'],
-    [null, 'No deployment.'],
+    [{ id: 'deployment-private-id', status: 'NEEDS_APPROVAL' }, 'Needs approval'],
+    [null, 'No deployment'],
   ])('shows the resolved deployment state', async (result, text) => {
     readCurrentDeploymentMock.mockResolvedValue(result)
     renderStatus()
@@ -362,9 +386,8 @@ describe('deployment status', () => {
     readCurrentDeploymentMock.mockReturnValueOnce(new Promise(() => undefined))
     renderStatus()
 
-    expect(await screen.findByRole('status', { name: 'Deployment status' })).toHaveTextContent(
-      'Loading deployment.',
-    )
+    const deploymentStatus = await screen.findByRole('status', { name: 'Deployment status' })
+    await waitFor(() => expect(deploymentStatus).toHaveTextContent('Loading deployment.'))
   })
 
   it('retries an error and maps an unknown status', async () => {
@@ -376,10 +399,11 @@ describe('deployment status', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Railway could not load the deployment.',
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Retry deployment status' }))
+    const deploymentRegion = screen.getByRole('region', { name: 'Deployment status' })
+    fireEvent.click(within(deploymentRegion).getByRole('button', { name: 'Retry' }))
 
     expect(await screen.findByRole('status', { name: 'Deployment status' })).toHaveTextContent(
-      'Status: Unknown.',
+      'Unknown',
     )
   })
 })

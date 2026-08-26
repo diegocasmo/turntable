@@ -50,74 +50,79 @@ export function TokenForm({ expired }: TokenFormProps) {
         .
       </p>
 
-      {expired ? (
-        <p
-          role="alert"
-          className="mt-6 border-l-2 border-[#e5ad68] bg-[#2b281f] px-4 py-3 text-sm leading-6 text-[#f4d4a9]"
-        >
-          Your session expired. Enter your Railway API token again.
-        </p>
-      ) : null}
-
-      {session.error ? (
-        <p
-          role="alert"
-          className="mt-6 border-l-2 border-[#d97767] bg-[#2d201e] px-4 py-3 text-sm leading-6 text-[#f0b8ae]"
-        >
-          {session.error.message}
-        </p>
-      ) : null}
-
       <form.Field name="token">
         {(field) => {
           const validationError = field.state.meta.errors[0]
           const errorId = `${field.name}-error`
 
           return (
-            <div className="mt-8 grid gap-3">
-              <Label htmlFor="railway-token" className="uppercase tracking-[0.12em] text-[#c9c5b9]">
-                Railway API token
-              </Label>
-              <Input
-                id="railway-token"
-                type="password"
-                required
-                aria-describedby={validationError ? errorId : undefined}
-                aria-invalid={validationError ? true : undefined}
-                autoComplete="off"
+            <>
+              <div className="mt-8 grid gap-3">
+                <Label
+                  htmlFor="railway-token"
+                  className="uppercase tracking-[0.12em] text-[#c9c5b9]"
+                >
+                  Railway API token
+                </Label>
+                <Input
+                  id="railway-token"
+                  type="password"
+                  required
+                  aria-describedby={validationError ? errorId : undefined}
+                  aria-invalid={validationError ? true : undefined}
+                  autoComplete="off"
+                  disabled={!hydrated || session.isPending}
+                  spellCheck={false}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(event) => {
+                    session.reset()
+                    field.handleChange(event.target.value)
+                  }}
+                  className="h-12 border-[#706d60] bg-[#141613] px-4 text-base text-[#f4f0e6] focus-visible:border-[#d59c55] focus-visible:ring-[#d59c55]/40"
+                />
+              </div>
+
+              <Button
+                type="submit"
                 disabled={!hydrated || session.isPending}
-                spellCheck={false}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(event) => {
-                  session.reset()
-                  field.handleChange(event.target.value)
-                }}
-                className="h-12 border-[#706d60] bg-[#141613] px-4 text-base text-[#f4f0e6] focus-visible:border-[#d59c55] focus-visible:ring-[#d59c55]/40"
-              />
-              {validationError ? (
-                <p id={errorId} role="alert" className="text-sm leading-6 text-[#f0b8ae]">
-                  {validationError.message}
-                </p>
-              ) : null}
-            </div>
+                className="mt-5 h-12 w-full bg-[#d59c55] px-5 font-mono text-xs uppercase tracking-[0.16em] text-[#141613] hover:bg-[#e5ad68] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
+              >
+                {session.isPending ? 'Connecting...' : 'Connect to Railway'}
+              </Button>
+
+              <div className="mt-4 min-h-12">
+                {validationError ? (
+                  <p id={errorId} role="alert" className="text-sm leading-6 text-[#f0b8ae]">
+                    {validationError.message}
+                  </p>
+                ) : null}
+                {!validationError && session.error ? (
+                  <p
+                    role="alert"
+                    className="border-l-2 border-[#d97767] pl-3 text-sm leading-6 text-[#f0b8ae]"
+                  >
+                    {session.error.message}
+                  </p>
+                ) : null}
+                {!validationError && !session.error && expired ? (
+                  <p
+                    role="alert"
+                    className="border-l-2 border-[#e5ad68] pl-3 text-sm leading-6 text-[#f4d4a9]"
+                  >
+                    Your session expired. Enter your Railway API token again.
+                  </p>
+                ) : null}
+                {!validationError && !session.error && !expired && session.isPending ? (
+                  <p role="status" className="text-sm leading-6 text-[#c9c5b9]">
+                    Railway is checking the token.
+                  </p>
+                ) : null}
+              </div>
+            </>
           )
         }}
       </form.Field>
-
-      <Button
-        type="submit"
-        disabled={!hydrated || session.isPending}
-        className="mt-5 h-12 w-full bg-[#d59c55] px-5 font-mono text-xs uppercase tracking-[0.16em] text-[#141613] hover:bg-[#e5ad68] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
-      >
-        {session.isPending ? 'Connecting...' : 'Connect to Railway'}
-      </Button>
-
-      {session.isPending ? (
-        <p role="status" className="mt-4 text-sm text-[#c9c5b9]">
-          Railway is checking the token.
-        </p>
-      ) : null}
     </form>
   )
 }
