@@ -1,6 +1,12 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
+declare global {
+  interface Window {
+    turntableCspViolations: string[]
+  }
+}
+
 test('the token route is accessible', async ({ page }) => {
   const browserErrors: string[] = []
   const recordBrowserError = (message: string) => {
@@ -16,6 +22,12 @@ test('the token route is accessible', async ({ page }) => {
 
   page.on('console', (message) => recordBrowserError(message.text()))
   page.on('pageerror', (error) => recordBrowserError(error.message))
+  await page.addInitScript(() => {
+    window.turntableCspViolations = []
+    document.addEventListener('securitypolicyviolation', (event) => {
+      window.turntableCspViolations.push(`${event.effectiveDirective}: ${event.blockedURI}`)
+    })
+  })
 
   const response = await page.goto('/')
   const rawHtml = (await response?.body())?.toString() ?? ''
@@ -28,6 +40,7 @@ test('the token route is accessible', async ({ page }) => {
   expect(nonce).toBeTruthy()
   expect(rawHtml).toContain(`nonce="${nonce}"`)
   expect(policy).toContain("frame-ancestors 'none'")
+  expect(policy).not.toContain("'unsafe-eval'")
   expect(response?.headers()['referrer-policy']).toBe('no-referrer')
   expect(response?.headers()['x-content-type-options']).toBe('nosniff')
 
@@ -38,9 +51,11 @@ test('the token route is accessible', async ({ page }) => {
   expect(nextNonce).not.toBe(nonce)
 
   const results = await new AxeBuilder({ page }).analyze()
+  const cspViolations = await page.evaluate(() => window.turntableCspViolations)
 
   expect(results.violations).toEqual([])
   expect(browserErrors).toEqual([])
+  expect(cspViolations).toEqual([])
 })
 
 test('the health check returns only ok', async ({ request }) => {

@@ -1,6 +1,6 @@
-import { z } from 'zod'
 import { RailwayGraphQLError, RailwayResponseError } from '@/railway/errors'
 import { redactToken } from '@/railway/token-redaction'
+import { z } from '@/zod'
 
 export const graphQLErrorSchema = z.object({ message: z.string() })
 
