@@ -29,13 +29,7 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
         <p role="alert" className="text-sm leading-6 text-[#f0b8ae]">
           {failure.message}
         </p>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="border-[#d97767] bg-transparent text-[#f0b8ae]"
-          onClick={failure.retry}
-        >
+        <Button type="button" variant="secondary" size="sm" onClick={failure.retry}>
           {failure.label}
         </Button>
       </div>
@@ -62,19 +56,16 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-      <div
-        aria-label={deploymentStatusLabel}
-        aria-live="polite"
-        role="status"
-        className="flex flex-wrap items-center gap-x-4 gap-y-2"
-      >
-        <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#c9c5b9]">
-          {deploymentStatusLabel}
-        </p>
-        {status}
+    <div className="grid gap-2">
+      <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#c9c5b9]">
+        {deploymentStatusLabel}
+      </p>
+      <div className="grid min-h-9 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <div aria-label={deploymentStatusLabel} aria-live="polite" role="status">
+          {status}
+        </div>
+        {action}
       </div>
-      {action}
     </div>
   )
 }
@@ -82,7 +73,7 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
 export function DeploymentStatus(props: DeploymentStatusProps) {
   return (
     <section aria-label={deploymentStatusLabel} className="border-t border-[#4d4e47]">
-      <div className="grid min-h-12 items-center">
+      <div className="grid py-3">
         <DeploymentStatusContent {...props} />
       </div>
     </section>

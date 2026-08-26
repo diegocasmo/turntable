@@ -178,7 +178,10 @@ describe('Token form', () => {
     await screen.findByLabelText('Railway API token')
     submitToken()
 
-    expect(await screen.findByRole('button', { name: 'Connecting...' })).toBeDisabled()
+    expect(await screen.findByRole('button', { name: 'Connecting...' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
     expect(screen.getByLabelText('Railway API token')).toBeDisabled()
     expect(screen.getByText('Railway is checking the token.')).toBeVisible()
   })

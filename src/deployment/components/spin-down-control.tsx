@@ -1,29 +1,15 @@
 import { AlertDialog } from '@base-ui/react/alert-dialog'
+import { CircleNotchIcon, PowerIcon } from '@phosphor-icons/react'
 import { buttonVariants } from '@/components/ui/button'
 import { useSpinDownDeployment } from '@/deployment/hooks/use-spin-down-deployment'
-import { cn } from '@/lib/utils'
 
 type SpinDownControlProps = Readonly<{
   deploymentId: string
 }>
 
-const actionClassName = 'px-3 font-mono uppercase tracking-[0.08em]'
-const outlineButtonClassName = buttonVariants({ size: 'sm', variant: 'outline' })
-const triggerClassName = cn(
-  outlineButtonClassName,
-  actionClassName,
-  'border-[#d97767] bg-transparent text-[#f0b8ae] hover:bg-[#2d201e] hover:text-[#f0b8ae]',
-)
-const cancelClassName = cn(
-  outlineButtonClassName,
-  actionClassName,
-  'border-[#706d60] bg-transparent text-[#c9c5b9] hover:border-[#c9c5b9] hover:bg-[#242522] hover:text-[#f4f0e6]',
-)
-const confirmClassName = cn(
-  outlineButtonClassName,
-  actionClassName,
-  'border-[#d97767] bg-[#d97767] text-[#141613] hover:bg-[#f0b8ae] hover:text-[#141613]',
-)
+const triggerClassName = buttonVariants({ variant: 'destructive' })
+const cancelClassName = buttonVariants({ variant: 'secondary' })
+const confirmClassName = buttonVariants({ variant: 'destructiveConfirm' })
 
 export function SpinDownControl({ deploymentId }: SpinDownControlProps) {
   const spinDown = useSpinDownDeployment()
@@ -32,11 +18,18 @@ export function SpinDownControl({ deploymentId }: SpinDownControlProps) {
     <div className="grid justify-items-end gap-2">
       <AlertDialog.Root onOpenChange={(open) => open && spinDown.reset()}>
         <AlertDialog.Trigger
+          aria-busy={spinDown.isPending || undefined}
           aria-describedby={spinDown.error ? 'spin-down-error' : undefined}
+          aria-label={spinDown.isPending ? 'Spinning down…' : undefined}
           className={triggerClassName}
           disabled={spinDown.isPending}
         >
-          {spinDown.isPending ? 'Spinning down…' : 'Spin down'}
+          {spinDown.isPending ? (
+            <CircleNotchIcon aria-hidden="true" className="animate-spin" weight="bold" />
+          ) : (
+            <PowerIcon aria-hidden="true" weight="bold" />
+          )}
+          Spin down
         </AlertDialog.Trigger>
         <AlertDialog.Portal>
           <AlertDialog.Backdrop className="fixed inset-0 z-40 min-h-dvh bg-[#090a08]/80 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0" />

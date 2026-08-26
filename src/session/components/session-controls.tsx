@@ -23,11 +23,13 @@ export function SessionControls({ children }: Readonly<{ children?: ReactNode }>
       <div className="border-t border-[#706d60] pt-5">
         <Button
           type="button"
-          variant="outline"
+          variant="secondary"
+          size="lg"
           disabled={disconnect.isPending}
+          focusableWhenDisabled={disconnect.isPending}
           aria-describedby={disconnect.error ? 'sign-out-error' : undefined}
           onClick={() => disconnect.mutate({})}
-          className="h-12 w-full border-[#d59c55] bg-transparent px-5 font-mono text-xs uppercase tracking-[0.16em] text-[#f4f0e6] hover:bg-[#d59c55] hover:text-[#141613] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
+          className="w-full"
         >
           {resolveDisconnectLabel(disconnect.isPending, disconnect.error !== null)}
         </Button>
