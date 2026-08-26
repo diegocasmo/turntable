@@ -40,8 +40,6 @@ test('a user can select the configured Railway service and see its status', asyn
         ['serviceId', serviceId],
       ].sort(),
     )
-
   const results = await new AxeBuilder({ page }).analyze()
-
   expect(results.violations).toEqual([])
 })

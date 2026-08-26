@@ -30,7 +30,9 @@ export default async function setUpRailwayE2E() {
     throw new Error('The Railway E2E target has no deployment.')
   }
 
-  Object.assign(process.env, config, {
-    RAILWAY_TEST_EXPECTED_STATUS: formatDeploymentStatus(deployment.status),
-  })
+  process.env.RAILWAY_TEST_ENVIRONMENT_ID = config.RAILWAY_TEST_ENVIRONMENT_ID
+  process.env.RAILWAY_TEST_EXPECTED_STATUS = formatDeploymentStatus(deployment.status)
+  process.env.RAILWAY_TEST_PROJECT_ID = config.RAILWAY_TEST_PROJECT_ID
+  process.env.RAILWAY_TEST_SERVICE_ID = config.RAILWAY_TEST_SERVICE_ID
+  process.env.RAILWAY_TEST_TOKEN = config.RAILWAY_TEST_TOKEN
 }
