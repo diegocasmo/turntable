@@ -17,9 +17,8 @@ function SelectionSkeleton() {
       <div className="border-t border-[#4d4e47]">
         <div className="grid gap-2 py-3">
           <div className="h-4 w-32 bg-[#4d4e47]" />
-          <div className="grid min-h-9 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <div className="flex min-h-9 items-center">
             <div className="h-6 w-24 bg-[#4d4e47]" />
-            <div className="h-9 w-28 border border-[#4d4e47] bg-[#242522]" />
           </div>
         </div>
       </div>
