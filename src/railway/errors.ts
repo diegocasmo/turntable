@@ -1,11 +1,13 @@
 export class RailwayGraphQLError extends Error {
   override readonly name = 'RailwayGraphQLError'
+  readonly isNotFound: boolean
   readonly isUnauthorized: boolean
   readonly messages: readonly string[]
 
   constructor(messages: readonly string[]) {
     super(messages.join('\n'))
     this.messages = [...messages]
+    this.isNotFound = messages.some((message) => message.toLowerCase().includes('not found'))
     this.isUnauthorized = messages.some((message) =>
       message.toLowerCase().includes('not authorized'),
     )
