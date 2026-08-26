@@ -85,7 +85,7 @@ export function SelectionPickers() {
       <section
         aria-busy={isInitialLoad || undefined}
         aria-labelledby="selection-title"
-        className="mt-6 grid gap-4"
+        className="mt-6 grid min-h-[24.5rem] content-start gap-4"
       >
         <h3 id="selection-title" className="text-2xl leading-tight">
           Choose a service
