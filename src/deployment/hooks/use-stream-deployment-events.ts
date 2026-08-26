@@ -23,15 +23,16 @@ function reduceDeploymentEvents(
   return event.type === 'heartbeat' ? current : { event }
 }
 
-function createDeploymentQueryKey(target: DeploymentTarget | undefined) {
-  return ['deployment', target?.projectId, target?.environmentId, target?.serviceId] as const
-}
-
 export function useStreamDeploymentEvents(target: DeploymentTarget | undefined) {
   const disconnect = useDisconnectSession()
   const stream = useServerFn(streamDeploymentEvents)
   const queryClient = useQueryClient()
-  const queryKey = createDeploymentQueryKey(target)
+  const queryKey = [
+    'deployment',
+    target?.projectId,
+    target?.environmentId,
+    target?.serviceId,
+  ] as const
 
   const query = useQuery({
     queryFn:

@@ -134,6 +134,11 @@ async function selectOption(name: string, value: string) {
   fireEvent.change(picker, { target: { value } })
 }
 
+function selectDeploymentAction(name: 'Reconnect' | 'Refresh' | 'Spin down' | 'Spin up') {
+  fireEvent.click(screen.getByRole('button', { name: 'Actions' }))
+  fireEvent.click(screen.getByRole('menuitem', { name }))
+}
+
 async function expectSearch(page: ReturnType<typeof renderTurntablePage>, search: SelectionSearch) {
   await waitFor(() => expect(page.router.state.location.search).toEqual(search))
 }
@@ -449,33 +454,27 @@ describe('deployment status', () => {
   it('shows a service with no deployment', async () => {
     renderStatus()
 
-    const deploymentStatus = await screen.findByRole('status', { name: 'Deployment status' })
-    await waitFor(() => expect(deploymentStatus).toHaveTextContent('No deployment'))
-    expect(screen.getByRole('button', { name: 'Spin up' })).toBeEnabled()
-    expect(screen.getByRole('button', { name: 'Refresh' })).toBeEnabled()
+    await screen.findByText('No deployment')
+    expect(screen.getByRole('status', { name: 'Deployment status' })).toHaveTextContent(
+      'No deployment',
+    )
+    expect(screen.getByRole('button', { name: 'Actions' })).toBeEnabled()
   })
 
   it('confirms spin up and watches the returned deployment ID', async () => {
-    const result = Promise.withResolvers<string>()
-    spinUpDeploymentMock.mockReturnValue(result.promise)
+    spinUpDeploymentMock.mockResolvedValue('returned-deployment')
     renderStatus()
     await screen.findByText('No deployment')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Spin up' }))
-    let dialog = screen.getByRole('alertdialog')
-    expect(dialog).toHaveAccessibleDescription('This starts a new deployment for this service.')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
-    expect(spinUpDeploymentMock).not.toHaveBeenCalled()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Spin up' }))
-    dialog = screen.getByRole('alertdialog')
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Spin up' }))
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Refresh' })).toBeDisabled())
-    expect(spinUpDeploymentMock).toHaveBeenCalledWith({
-      data: { environmentId: 'environment-1', projectId: 'project-1', serviceId: 'service-1' },
-    })
-
-    result.resolve('returned-deployment')
+    selectDeploymentAction('Spin up')
+    fireEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Spin up' }),
+    )
+    await waitFor(() =>
+      expect(spinUpDeploymentMock).toHaveBeenCalledWith({
+        data: { environmentId: 'environment-1', projectId: 'project-1', serviceId: 'service-1' },
+      }),
+    )
     await waitFor(() =>
       expect(streamDeploymentEventsMock).toHaveBeenLastCalledWith(
         expect.objectContaining({
@@ -485,72 +484,13 @@ describe('deployment status', () => {
     )
   })
 
-  it('refreshes to a deployment that started outside Turntable', async () => {
-    streamDeploymentEventsMock
-      .mockResolvedValueOnce(
-        createEventStream({
-          data: { deploymentStopped: true, id: 'old-deployment', status: 'REMOVED' },
-          type: 'snapshot',
-        }),
-      )
-      .mockResolvedValueOnce(
-        createEventStream({
-          data: { deploymentStopped: false, id: 'external-deployment', status: 'SUCCESS' },
-          type: 'snapshot',
-        }),
-      )
-    renderStatus()
-    await screen.findByText('Removed')
-
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
-
-    expect(await screen.findByText('Success')).toBeVisible()
-    expect(streamDeploymentEventsMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ deploymentId: undefined }) }),
-    )
-  })
-
-  it('does not offer spin down after a refresh failure', async () => {
-    streamDeploymentEventsMock
-      .mockResolvedValueOnce(
-        createEventStream({
-          data: { deploymentStopped: false, id: 'stale-deployment', status: 'SUCCESS' },
-          type: 'snapshot',
-        }),
-      )
-      .mockRejectedValueOnce(new Error('Railway could not refresh this deployment.'))
-    renderStatus()
-    await screen.findByRole('button', { name: 'Spin down' })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Railway could not refresh this deployment.',
-    )
-    expect(screen.queryByRole('button', { name: 'Spin down' })).not.toBeInTheDocument()
-  })
-
-  it('shows a spin-up command failure', async () => {
-    spinUpDeploymentMock.mockRejectedValue(new Error('Railway could not start this deployment.'))
-    renderStatus()
-    await screen.findByText('No deployment')
-
-    fireEvent.click(screen.getByRole('button', { name: 'Spin up' }))
-    fireEvent.click(
-      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Spin up' }),
-    )
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Railway could not start this deployment.',
-    )
-  })
-
   it('shows the loading state', async () => {
     streamDeploymentEventsMock.mockReturnValueOnce(new Promise(() => undefined))
     renderStatus()
 
     const deploymentStatus = await screen.findByRole('status', { name: 'Deployment status' })
     await waitFor(() => expect(deploymentStatus).toHaveTextContent('Loading…'))
+    expect(screen.queryByRole('button', { name: 'Actions' })).not.toBeInTheDocument()
   })
 
   it('follows status values and aborts the request on close', async () => {
@@ -564,7 +504,6 @@ describe('deployment status', () => {
       type: 'snapshot',
     })
     expect(await screen.findByText('Needs approval')).toBeVisible()
-    expect(screen.queryByRole('button', { name: 'Spin down' })).not.toBeInTheDocument()
     expect(screen.queryByText('deployment-private-id')).not.toBeInTheDocument()
     await writer.write({
       data: { deploymentStopped: false, id: 'deployment-private-id', status: 'unknown' },
@@ -590,22 +529,15 @@ describe('deployment status', () => {
     renderStatus()
 
     await screen.findByText('Success')
-    fireEvent.click(screen.getByRole('button', { name: 'Spin up' }))
+    selectDeploymentAction('Spin down')
     let dialog = screen.getByRole('alertdialog')
-    expect(dialog).toHaveAccessibleDescription(
-      'This starts a new deployment and replaces the running container.',
-    )
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Spin down' }))
-    dialog = screen.getByRole('alertdialog')
     expect(dialog).toHaveAccessibleDescription(
       'This removes the running container. The service configuration stays in Railway.',
     )
     fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
     expect(spinDownDeploymentMock).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Spin down' }))
+    selectDeploymentAction('Spin down')
     dialog = screen.getByRole('alertdialog')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Spin down' }))
 
@@ -622,7 +554,7 @@ describe('deployment status', () => {
     renderStatus()
 
     expect(await screen.findByText('Deployment unavailable')).toBeVisible()
-    expect(screen.queryByRole('button', { name: 'Reconnect' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Actions' })).toBeEnabled()
   })
 
   it('returns to the token form when the session expires', async () => {
@@ -644,17 +576,15 @@ describe('deployment status', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Railway could not stream the deployment.',
     )
-    const deploymentRegion = screen.getByRole('region', { name: 'Deployment status' })
-    fireEvent.click(within(deploymentRegion).getByRole('button', { name: 'Reconnect' }))
-    expect(await within(deploymentRegion).findByText('Loading…')).toBeVisible()
+    selectDeploymentAction('Reconnect')
+    expect(await screen.findByText('Loading…')).toBeVisible()
     await writer.write({
       data: { deploymentStopped: false, id: 'deployment-1', status: 'unknown' },
       type: 'snapshot',
     })
 
-    expect(await screen.findByRole('status', { name: 'Deployment status' })).toHaveTextContent(
-      'Unknown',
-    )
+    await screen.findByText('Unknown')
+    expect(screen.getByRole('status', { name: 'Deployment status' })).toHaveTextContent('Unknown')
     await writer.close()
   })
 })

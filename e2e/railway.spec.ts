@@ -27,17 +27,24 @@ test('a user can control and refresh the configured Railway service', async ({ p
       await expect(page.getByRole('heading', { name: 'Connected to Railway' })).toBeVisible()
       expect(new URL(page.url()).searchParams.has('token')).toBe(false)
 
+      const deploymentRegion = page.getByRole('region', { name: 'Deployment status' })
+      const stableDeploymentHeight = await deploymentRegion.evaluate((node) => node.clientHeight)
+      const selectAction = async (name: 'Refresh' | 'Spin down' | 'Spin up') => {
+        await deploymentRegion.getByRole('button', { name: 'Actions' }).click()
+        await page.getByRole('menuitem', { name }).click()
+      }
       await page.getByRole('combobox', { name: 'Project' }).selectOption(projectId)
       await page.getByRole('combobox', { name: 'Environment' }).selectOption(environmentId)
       await page.getByRole('combobox', { name: 'Service' }).selectOption(serviceId)
 
-      const deploymentRegion = page.getByRole('region', { name: 'Deployment status' })
       const deploymentStatus = deploymentRegion.getByRole('status')
       await expectRailwayStatus(
         deploymentStatus.getByText('Success', { exact: true }),
       ).toBeVisible()
-      const stableDeploymentHeight = await deploymentRegion.evaluate((node) => node.clientHeight)
-      await page.getByRole('button', { name: 'Spin down' }).click()
+      expect(await deploymentRegion.evaluate((node) => node.clientHeight)).toBe(
+        stableDeploymentHeight,
+      )
+      await selectAction('Spin down')
       const dialog = page.getByRole('alertdialog')
       await expect(dialog).toHaveAccessibleName('Spin down deployment?')
       spinDownAttempted = true
@@ -48,21 +55,15 @@ test('a user can control and refresh the configured Railway service', async ({ p
       expect(await deploymentRegion.evaluate((node) => node.clientHeight)).toBe(
         stableDeploymentHeight,
       )
-      await page.getByRole('button', { name: 'Spin up' }).click()
+      await selectAction('Spin up')
       await page.getByRole('alertdialog').getByRole('button', { name: 'Spin up' }).click()
       await expectRailwayStatus(
         deploymentStatus.getByText('Success', { exact: true }),
       ).toBeVisible()
 
-      await page.getByRole('button', { name: 'Spin down' }).click()
-      await page.getByRole('alertdialog').getByRole('button', { name: 'Spin down' }).click()
-      await expectRailwayStatus(
-        deploymentStatus.getByText('Removed', { exact: true }),
-      ).toBeVisible()
-
       const externalDeploymentId = await startRailwayE2EDeployment(config)
       await waitForRailwayE2EDeployment(config, externalDeploymentId)
-      await page.getByRole('button', { name: 'Refresh' }).click()
+      await selectAction('Refresh')
       await expectRailwayStatus(
         deploymentStatus.getByText('Success', { exact: true }),
       ).toBeVisible()

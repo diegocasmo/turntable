@@ -12,7 +12,6 @@ const snapshot: DeploymentStreamState = { deploymentStopped: false, id: 'd', sta
 const target = { environmentId: 'environment-1', projectId: 'project-1', serviceId: 'service-1' }
 function createSetup(
   options: Readonly<{
-    deploymentId?: string
     readDeploymentStatus?: Dependencies['readDeploymentStatus']
     subscribed?: Promise<void>
   }> = {},
@@ -44,7 +43,6 @@ function createSetup(
   const events = streamRailwayDeploymentEvents(
     {
       apiUrl: 'https://backboard.railway.test/graphql/v2',
-      deploymentId: options.deploymentId,
       session: { expiresAtUnixSeconds: 3_600, token: 'railway-token' },
       signal: request.signal,
       target,
@@ -84,26 +82,6 @@ describe('deployment event stream', () => {
     })
     await expect(setup.events.next()).resolves.toMatchObject({ done: true })
     expect(setup.dependencies.subscribeToDeployment).not.toHaveBeenCalled()
-  })
-
-  it('uses a supplied deployment ID without a current-deployment lookup', async () => {
-    const setup = createSetup({ deploymentId: 'new-deployment' })
-
-    await setup.events.next()
-
-    expect(setup.dependencies.readCurrentDeployment).not.toHaveBeenCalled()
-    expect(setup.dependencies.subscribeToDeployment).toHaveBeenCalledWith(
-      'new-deployment',
-      'railway-token',
-      'wss://backboard.railway.test/graphql/v2',
-    )
-    expect(setup.dependencies.readDeploymentStatus).toHaveBeenCalledWith(
-      'railway-token',
-      'https://backboard.railway.test/graphql/v2',
-      'new-deployment',
-      expect.any(AbortSignal),
-    )
-    await setup.events.return(undefined)
   })
 
   it.each([

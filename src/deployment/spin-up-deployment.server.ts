@@ -13,10 +13,7 @@ export async function spinUpRailwayDeployment(
   const result = await client.request({
     document: serviceInstanceDeployMutation,
     token,
-    variables: {
-      environmentId: target.environmentId,
-      serviceId: target.serviceId,
-    },
+    variables: { environmentId: target.environmentId, serviceId: target.serviceId },
   })
 
   return z.string().min(1).parse(result.serviceInstanceDeployV2)
