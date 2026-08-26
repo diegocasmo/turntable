@@ -86,7 +86,7 @@ export async function runWithRailwayE2ETarget<Value>(
   return run()
 }
 
-export async function restoreRailwayE2ETarget(config: RailwayE2EConfig) {
+export async function startRailwayE2EDeployment(config: RailwayE2EConfig) {
   const client = createRailwayClient({ apiUrl: config.apiUrl })
   const result = await client.request({
     document: serviceInstanceDeployMutation,
@@ -96,7 +96,10 @@ export async function restoreRailwayE2ETarget(config: RailwayE2EConfig) {
       serviceId: config.target.serviceId,
     },
   })
-  const deploymentId = z.string().min(1).parse(result.serviceInstanceDeployV2)
+  return z.string().min(1).parse(result.serviceInstanceDeployV2)
+}
+
+export async function waitForRailwayE2EDeployment(config: RailwayE2EConfig, deploymentId: string) {
   const subscription = subscribeToRailwayDeployment(deploymentId, config.token, config.webSocketUrl)
   const events = subscription.events[Symbol.asyncIterator]()
   let nextEvent = events.next()
@@ -118,4 +121,9 @@ export async function restoreRailwayE2ETarget(config: RailwayE2EConfig) {
   } finally {
     await subscription.close()
   }
+}
+
+export async function restoreRailwayE2ETarget(config: RailwayE2EConfig) {
+  const deploymentId = await startRailwayE2EDeployment(config)
+  await waitForRailwayE2EDeployment(config, deploymentId)
 }

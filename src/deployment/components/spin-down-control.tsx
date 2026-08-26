@@ -4,6 +4,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { useSpinDownDeployment } from '@/deployment/hooks/use-spin-down-deployment'
 
 type SpinDownControlProps = Readonly<{
+  disabled: boolean
   deploymentId: string
 }>
 
@@ -11,7 +12,7 @@ const triggerClassName = buttonVariants({ variant: 'destructive' })
 const cancelClassName = buttonVariants({ variant: 'secondary' })
 const confirmClassName = buttonVariants({ variant: 'destructiveConfirm' })
 
-export function SpinDownControl({ deploymentId }: SpinDownControlProps) {
+export function SpinDownControl({ deploymentId, disabled }: SpinDownControlProps) {
   const spinDown = useSpinDownDeployment()
 
   return (
@@ -22,7 +23,7 @@ export function SpinDownControl({ deploymentId }: SpinDownControlProps) {
           aria-describedby={spinDown.error ? 'spin-down-error' : undefined}
           aria-label={spinDown.isPending ? 'Spinning down…' : undefined}
           className={triggerClassName}
-          disabled={spinDown.isPending}
+          disabled={disabled || spinDown.isPending}
         >
           {spinDown.isPending ? (
             <CircleNotchIcon aria-hidden="true" className="animate-spin" weight="bold" />

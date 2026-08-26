@@ -1,9 +1,15 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-import { readRailwayE2EConfig, restoreRailwayE2ETarget, runWithRailwayE2ETarget } from './railway'
+import {
+  readRailwayE2EConfig,
+  restoreRailwayE2ETarget,
+  runWithRailwayE2ETarget,
+  startRailwayE2EDeployment,
+  waitForRailwayE2EDeployment,
+} from './railway'
 
-test('a user can select the configured Railway service and see its status', async ({ page }) => {
-  test.setTimeout(5 * 60 * 1_000)
+test('a user can control and refresh the configured Railway service', async ({ page }) => {
+  test.setTimeout(8 * 60 * 1_000)
   const config = readRailwayE2EConfig()
   const { environmentId, projectId, serviceId } = config.target
 
@@ -29,6 +35,24 @@ test('a user can select the configured Railway service and see its status', asyn
       spinDownAttempted = true
       await dialog.getByRole('button', { name: 'Spin down' }).click()
       await expect(deploymentStatus.getByText('Removed', { exact: true })).toBeVisible({
+        timeout: 2 * 60 * 1_000,
+      })
+      await page.getByRole('button', { name: 'Spin up' }).click()
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Spin up' }).click()
+      await expect(deploymentStatus.getByText('Success', { exact: true })).toBeVisible({
+        timeout: 2 * 60 * 1_000,
+      })
+
+      await page.getByRole('button', { name: 'Spin down' }).click()
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Spin down' }).click()
+      await expect(deploymentStatus.getByText('Removed', { exact: true })).toBeVisible({
+        timeout: 2 * 60 * 1_000,
+      })
+
+      const externalDeploymentId = await startRailwayE2EDeployment(config)
+      await waitForRailwayE2EDeployment(config, externalDeploymentId)
+      await page.getByRole('button', { name: 'Refresh' }).click()
+      await expect(deploymentStatus.getByText('Success', { exact: true })).toBeVisible({
         timeout: 2 * 60 * 1_000,
       })
       await expect

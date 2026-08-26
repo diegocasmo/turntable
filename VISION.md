@@ -272,7 +272,7 @@ Railway has 13 deployment statuses today. Turntable does not gate its actions on
 | Spin down | the status is exactly `SUCCESS` | `down.rs` filters to `SUCCESS` before `deploymentRemove` |
 | Spin up again | none from the deployment | `serviceInstanceDeployV2` needs no deployment |
 
-Turntable offers "spin up again" when the container is not running. That is a choice about clarity, not about safety: the mutation also works on a running container, and it then replaces it.
+Turntable offers "spin up again" for every selected service. The mutation works with no deployment. When a container runs, the confirmation warns that the new deployment replaces it.
 
 Both actions ask for confirmation first. Every destructive CLI command does the same, and it refuses to run without a confirmation or an explicit flag. See `down.rs`, `restart.rs`, and `redeploy.rs`.
 
@@ -280,7 +280,7 @@ The 13 statuses still have a job. One function maps a status to a badge colour a
 
 Two rules bound the policy:
 
-1. A command acts on the exact deployment ID shown by the live stream. Railway validates the deployment state and the token's access. Turntable does not resolve the service again.
+1. A spin-down command acts on the exact deployment ID shown by the live stream. A spin-up command acts on the selected service, and its returned deployment ID becomes the watched deployment.
 2. The server parses the full GraphQL response, including the `errors` array ([GraphQL specification](https://spec.graphql.org/September2025/#sec-Response)). It never retries a mutation by itself after an unclear answer, because a repeat of a destructive call can act twice.
 
 ### State ownership
