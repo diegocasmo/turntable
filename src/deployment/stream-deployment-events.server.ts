@@ -22,6 +22,7 @@ export class DeploymentStreamDeadlineError extends Error {
 
 type StreamDeploymentEventsInput = Readonly<{
   apiUrl: string
+  deploymentId?: string | undefined
   session: TurntableSession
   signal: AbortSignal
   target: DeploymentTarget
@@ -113,7 +114,14 @@ function readFailureEvent(error: unknown): DeploymentStreamEvent | null {
 }
 
 export async function* streamRailwayDeploymentEvents(
-  { apiUrl, session, signal: requestSignal, target, webSocketUrl }: StreamDeploymentEventsInput,
+  {
+    apiUrl,
+    deploymentId,
+    session,
+    signal: requestSignal,
+    target,
+    webSocketUrl,
+  }: StreamDeploymentEventsInput,
   dependencies: StreamDeploymentEventsDependencies = defaultDependencies,
 ): AsyncGenerator<DeploymentStreamEvent> {
   const sessionMilliseconds = Math.max(0, session.expiresAtUnixSeconds * 1_000 - Date.now())
@@ -121,10 +129,13 @@ export async function* streamRailwayDeploymentEvents(
   let subscription: ReturnType<typeof subscribeToRailwayDeployment> | undefined
 
   try {
-    const deployment = await Promise.race([
-      dependencies.readCurrentDeployment(session.token, apiUrl, target, lifetime.signal),
-      lifetime.ended,
-    ])
+    const deployment =
+      deploymentId === undefined
+        ? await Promise.race([
+            dependencies.readCurrentDeployment(session.token, apiUrl, target, lifetime.signal),
+            lifetime.ended,
+          ])
+        : { id: deploymentId }
     if (deployment === null) {
       yield { data: null, type: 'snapshot' }
       return

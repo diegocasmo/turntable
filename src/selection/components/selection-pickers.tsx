@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { DeploymentStatus } from '@/deployment/components/deployment-status'
+import {
+  DeploymentStatus,
+  DeploymentStatusSkeleton,
+} from '@/deployment/components/deployment-status'
 import { Picker } from '@/selection/components/picker'
 import { usePickerSelections } from '@/selection/hooks/use-picker-selections'
 import { useReadSelectionHierarchy } from '@/selection/hooks/use-read-selection-hierarchy'
@@ -14,14 +17,7 @@ function SelectionSkeleton() {
           <div className="mt-2 h-8 w-full border border-border-subtle bg-popover" />
         </div>
       ))}
-      <div className="border-t border-border-subtle">
-        <div className="grid gap-2 py-3">
-          <div className="h-4 w-32 bg-muted" />
-          <div className="flex min-h-9 items-center">
-            <div className="h-6 w-24 bg-muted" />
-          </div>
-        </div>
-      </div>
+      <DeploymentStatusSkeleton />
     </div>
   )
 }

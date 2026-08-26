@@ -2,7 +2,7 @@ import { ArrowSquareOutIcon } from '@phosphor-icons/react/ArrowSquareOut'
 import { useForm } from '@tanstack/react-form'
 import { useHydrated } from '@tanstack/react-router'
 import type { SubmitEvent } from 'react'
-import { Button } from '@/components/ui/button'
+import { AsyncButton } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { railwayTokensUrl } from '@/railway/urls'
@@ -83,15 +83,15 @@ export function TokenForm({ expired }: TokenFormProps) {
                 />
               </div>
 
-              <Button
+              <AsyncButton
                 type="submit"
-                disabled={!hydrated || session.isPending}
-                focusableWhenDisabled={session.isPending}
+                disabled={!hydrated}
+                pending={session.isPending}
                 size="lg"
                 className="mt-5 w-full"
               >
                 {session.isPending ? 'Connecting...' : 'Connect to Railway'}
-              </Button>
+              </AsyncButton>
 
               <div className="mt-4 min-h-12">
                 {validationError ? (

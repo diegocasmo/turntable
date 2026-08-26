@@ -28,12 +28,14 @@ const {
   disconnectFromRailwayMock,
   readSelectionHierarchyMock,
   spinDownDeploymentMock,
+  spinUpDeploymentMock,
   streamDeploymentEventsMock,
 } = vi.hoisted(() => ({
   connectToRailwayMock: vi.fn(),
   disconnectFromRailwayMock: vi.fn(),
   readSelectionHierarchyMock: vi.fn(),
   spinDownDeploymentMock: vi.fn(),
+  spinUpDeploymentMock: vi.fn(),
   streamDeploymentEventsMock: vi.fn(),
 }))
 
@@ -48,6 +50,9 @@ vi.mock('@/deployment/stream-deployment-events', () => ({
 }))
 vi.mock('@/deployment/spin-down-deployment', () => ({
   spinDownDeployment: spinDownDeploymentMock,
+}))
+vi.mock('@/deployment/spin-up-deployment', () => ({
+  spinUpDeployment: spinUpDeploymentMock,
 }))
 vi.mock('@/selection/read-selection-hierarchy', () => ({
   readSelectionHierarchy: readSelectionHierarchyMock,
@@ -135,6 +140,11 @@ async function selectOption(name: string, optionName: string) {
   fireEvent.click(await screen.findByRole('option', { name: optionName }))
 }
 
+function selectDeploymentAction(name: 'Reconnect' | 'Refresh' | 'Spin down' | 'Spin up') {
+  fireEvent.click(screen.getByRole('button', { name: 'Actions' }))
+  fireEvent.click(screen.getByRole('menuitem', { name }))
+}
+
 async function expectSearch(page: ReturnType<typeof renderTurntablePage>, search: SelectionSearch) {
   await waitFor(() => expect(page.router.state.location.search).toEqual(search))
 }
@@ -146,6 +156,7 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue([createSelectionProject(), createSelectionProject({ id: 'project-2' })])
   spinDownDeploymentMock.mockReset().mockResolvedValue(true)
+  spinUpDeploymentMock.mockReset().mockResolvedValue('new-deployment')
   streamDeploymentEventsMock
     .mockReset()
     .mockResolvedValue(createEventStream({ data: null, type: 'snapshot' }))
@@ -490,16 +501,39 @@ describe('deployment status', () => {
   it('shows a service with no deployment', async () => {
     renderStatus()
 
-    const deploymentStatus = await screen.findByRole('status', { name: 'Deployment status' })
-    await waitFor(() => expect(deploymentStatus).toHaveTextContent('No deployment'))
+    await screen.findByText('No deployment')
+  })
+
+  it('confirms spin up and watches the returned deployment ID', async () => {
+    const spinUpResult = Promise.withResolvers<string>()
+    spinUpDeploymentMock.mockReturnValue(spinUpResult.promise)
+    renderStatus()
+    await screen.findByText('No deployment')
+
+    selectDeploymentAction('Spin up')
+    const dialog = screen.getByRole('alertdialog')
+    const confirm = within(dialog).getByRole('button', { name: 'Spin up' })
+    await waitFor(() =>
+      expect(within(dialog).getByRole('button', { name: 'Cancel' })).toHaveFocus(),
+    )
+    confirm.focus()
+    fireEvent.click(confirm)
+    await waitFor(() => expect(confirm).toHaveFocus())
+    expect(within(dialog).getByRole('status')).toHaveTextContent('Railway is starting…')
+    spinUpResult.resolve('returned-deployment')
+    await waitFor(() =>
+      expect(streamDeploymentEventsMock.mock.lastCall?.[0].data).toEqual(
+        expect.objectContaining({ deploymentId: 'returned-deployment' }),
+      ),
+    )
   })
 
   it('shows the loading state', async () => {
     streamDeploymentEventsMock.mockReturnValueOnce(new Promise(() => undefined))
     renderStatus()
 
-    const deploymentStatus = await screen.findByRole('status', { name: 'Deployment status' })
-    await waitFor(() => expect(deploymentStatus).toHaveTextContent('Loading…'))
+    expect(await screen.findByText('Loading…')).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Actions' })).not.toBeInTheDocument()
   })
 
   it('follows status values and aborts the request on close', async () => {
@@ -513,7 +547,6 @@ describe('deployment status', () => {
       type: 'snapshot',
     })
     expect(await screen.findByText('Needs approval')).toBeVisible()
-    expect(screen.queryByRole('button', { name: 'Spin down' })).not.toBeInTheDocument()
     expect(screen.queryByText('deployment-private-id')).not.toBeInTheDocument()
     await writer.write({
       data: { deploymentStopped: false, id: 'deployment-private-id', status: 'unknown' },
@@ -538,7 +571,8 @@ describe('deployment status', () => {
     )
     renderStatus()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Spin down' }))
+    await screen.findByText('Success')
+    selectDeploymentAction('Spin down')
     let dialog = screen.getByRole('alertdialog')
     expect(dialog).toHaveAccessibleDescription(
       'This removes the running container. The service configuration stays in Railway.',
@@ -546,7 +580,7 @@ describe('deployment status', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
     expect(spinDownDeploymentMock).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Spin down' }))
+    selectDeploymentAction('Spin down')
     dialog = screen.getByRole('alertdialog')
     fireEvent.click(within(dialog).getByRole('button', { name: 'Spin down' }))
 
@@ -563,7 +597,6 @@ describe('deployment status', () => {
     renderStatus()
 
     expect(await screen.findByText('Deployment unavailable')).toBeVisible()
-    expect(screen.queryByRole('button', { name: 'Reconnect' })).not.toBeInTheDocument()
   })
 
   it('returns to the token form when the session expires', async () => {
@@ -580,22 +613,27 @@ describe('deployment status', () => {
     streamDeploymentEventsMock
       .mockRejectedValueOnce(new Error('Railway could not stream the deployment.'))
       .mockResolvedValueOnce(channel.readable)
+      .mockReturnValueOnce(new Promise(() => undefined))
     renderStatus()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Railway could not stream the deployment.',
     )
-    const deploymentRegion = screen.getByRole('region', { name: 'Deployment status' })
-    fireEvent.click(within(deploymentRegion).getByRole('button', { name: 'Reconnect' }))
-    expect(await within(deploymentRegion).findByText('Loading…')).toBeVisible()
+    selectDeploymentAction('Reconnect')
+    expect(await screen.findByText('Reconnecting…')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Actions' })).toHaveAttribute('aria-busy', 'true')
     await writer.write({
       data: { deploymentStopped: false, id: 'deployment-1', status: 'unknown' },
       type: 'snapshot',
     })
 
-    expect(await screen.findByRole('status', { name: 'Deployment status' })).toHaveTextContent(
-      'Unknown',
-    )
+    await screen.findByText('Unknown')
     await writer.close()
+    const deploymentStatus = within(
+      screen.getByRole('region', { name: 'Deployment status' }),
+    ).getByRole('status')
+    selectDeploymentAction('Refresh')
+    expect(within(deploymentStatus).getByText('Unknown')).toBeVisible()
+    expect(await within(deploymentStatus).findByText('Refreshing status.')).toHaveClass('sr-only')
   })
 })

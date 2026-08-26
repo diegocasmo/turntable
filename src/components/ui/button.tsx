@@ -1,5 +1,6 @@
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
 import { cva, type VariantProps } from 'class-variance-authority'
+import type { ComponentProps } from 'react'
 
 import { cn } from '@/lib/utils'
 
@@ -48,4 +49,15 @@ function Button({
   )
 }
 
-export { Button, buttonVariants }
+function AsyncButton({ pending, ...props }: ComponentProps<typeof Button> & { pending: boolean }) {
+  return (
+    <Button
+      {...props}
+      aria-busy={pending || undefined}
+      disabled={props.disabled || pending}
+      focusableWhenDisabled={pending}
+    />
+  )
+}
+
+export { AsyncButton, Button, buttonVariants }

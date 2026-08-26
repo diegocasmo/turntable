@@ -6,6 +6,7 @@ export function useSpinDownDeployment() {
   const requestSpinDown = useServerFn(spinDownDeployment)
 
   return useMutation({
+    mutationKey: ['deployment-lifecycle'],
     mutationFn: async (input: SpinDownDeploymentInput) => {
       const removed = await requestSpinDown({ data: input })
 
