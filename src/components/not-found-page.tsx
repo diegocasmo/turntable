@@ -1,3 +1,5 @@
+import { buttonVariants } from '@/components/ui/button'
+
 export function NotFoundPage() {
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#141613] px-6 py-16 text-[#f4f0e6]">
@@ -19,10 +21,7 @@ export function NotFoundPage() {
         <p className="mt-8 max-w-lg text-lg leading-8 text-[#c9c5b9]">
           This address does not point to a Turntable screen.
         </p>
-        <a
-          href="/"
-          className="mt-10 inline-flex border border-[#d59c55] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em] text-[#f4f0e6] hover:bg-[#d59c55] hover:text-[#141613] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
-        >
+        <a href="/" className={buttonVariants({ className: 'mt-10', variant: 'secondary' })}>
           Return to Turntable
         </a>
       </section>

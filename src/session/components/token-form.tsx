@@ -86,7 +86,9 @@ export function TokenForm({ expired }: TokenFormProps) {
               <Button
                 type="submit"
                 disabled={!hydrated || session.isPending}
-                className="mt-5 h-12 w-full bg-[#d59c55] px-5 font-mono text-xs uppercase tracking-[0.16em] text-[#141613] hover:bg-[#e5ad68] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d59c55]"
+                focusableWhenDisabled={session.isPending}
+                size="lg"
+                className="mt-5 w-full"
               >
                 {session.isPending ? 'Connecting...' : 'Connect to Railway'}
               </Button>

@@ -11,7 +11,6 @@ const testEnvironment = loadEnv('development', process.cwd(), [
 const testOrigin = readConfig(testEnvironment).appOrigin
 
 export default defineConfig({
-  globalSetup: './e2e/setup.ts',
   testDir: './e2e',
   testIgnore: 'production-smoke.spec.ts',
   forbidOnly: Boolean(process.env.CI),

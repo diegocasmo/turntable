@@ -7,12 +7,7 @@ export function SelectionPickers() {
 
   return (
     <div className="mt-6 grid gap-4">
-      <div>
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#8f8c81]">
-          Project / Environment / Service
-        </p>
-        <h3 className="mt-2 text-2xl leading-tight">Choose a service</h3>
-      </div>
+      <h3 className="text-2xl leading-tight">Choose a service</h3>
       <Picker {...project} />
       <Picker {...environment} />
       <Picker {...service} />
