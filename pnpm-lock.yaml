@@ -35,6 +35,9 @@ importers:
       clsx:
         specifier: 2.1.1
         version: 2.1.1
+      fuzzysort:
+        specifier: 3.1.0
+        version: 3.1.0
       graphql:
         specifier: 16.14.2
         version: 16.14.2
