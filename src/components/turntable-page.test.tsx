@@ -10,6 +10,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TurntablePage } from '@/components/turntable-page'
+import type { DeploymentStreamEvent } from '@/deployment/event-stream'
 import { type SelectionSearch, selectionSearchSchema } from '@/selection/schema'
 import { maximumSessionTokenByteLength, type SessionState } from '@/session/schema'
 import {
@@ -24,17 +25,17 @@ import {
 const {
   connectToRailwayMock,
   disconnectFromRailwayMock,
-  readCurrentDeploymentMock,
   readEnvironmentsMock,
   readProjectsMock,
   readServicesMock,
+  streamDeploymentEventsMock,
 } = vi.hoisted(() => ({
   connectToRailwayMock: vi.fn(),
   disconnectFromRailwayMock: vi.fn(),
-  readCurrentDeploymentMock: vi.fn(),
   readEnvironmentsMock: vi.fn(),
   readProjectsMock: vi.fn(),
   readServicesMock: vi.fn(),
+  streamDeploymentEventsMock: vi.fn(),
 }))
 
 vi.mock('@/session/connect-to-railway', () => ({
@@ -43,8 +44,8 @@ vi.mock('@/session/connect-to-railway', () => ({
 vi.mock('@/session/disconnect-from-railway', () => ({
   disconnectFromRailway: disconnectFromRailwayMock,
 }))
-vi.mock('@/deployment/read-current-deployment', () => ({
-  readCurrentDeployment: readCurrentDeploymentMock,
+vi.mock('@/deployment/stream-deployment-events', () => ({
+  streamDeploymentEvents: streamDeploymentEventsMock,
 }))
 vi.mock('@/selection/read-environments', () => ({ readEnvironments: readEnvironmentsMock }))
 vi.mock('@/selection/read-projects', () => ({ readProjects: readProjectsMock }))
@@ -92,7 +93,7 @@ function renderTurntablePage(options: RenderOptions = {}) {
   }
 
   const queryClient = new QueryClient({
-    defaultOptions: { mutations: { retry: false } },
+    defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
   })
   const router = createRouter({
     history: createMemoryHistory({ initialEntries: [options.initialEntry ?? '/'] }),
@@ -116,6 +117,10 @@ function submitToken(token = testRailwayToken) {
   fireEvent.submit(screen.getByRole('form', { name: 'Connect to Railway' }))
 }
 
+async function* createEventStream(...events: DeploymentStreamEvent[]) {
+  yield* events
+}
+
 async function selectOption(name: string, value: string) {
   const picker = await screen.findByRole('combobox', { name })
   await waitFor(() => expect(picker).toBeEnabled())
@@ -129,12 +134,14 @@ async function expectSearch(page: ReturnType<typeof renderTurntablePage>, search
 beforeEach(() => {
   connectToRailwayMock.mockReset()
   disconnectFromRailwayMock.mockReset()
-  readCurrentDeploymentMock.mockReset().mockResolvedValue(null)
   readEnvironmentsMock.mockReset().mockResolvedValue([createRailwayEnvironment()])
   readProjectsMock
     .mockReset()
     .mockResolvedValue([createRailwayProject(), createRailwayProject({ id: 'project-2' })])
   readServicesMock.mockReset().mockResolvedValue([createRailwayService()])
+  streamDeploymentEventsMock
+    .mockReset()
+    .mockResolvedValue(createEventStream({ data: null, type: 'snapshot' }))
 })
 
 describe('Token form', () => {
@@ -411,43 +418,86 @@ describe('deployment status', () => {
 
     const deploymentRegion = await screen.findByRole('region', { name: 'Deployment status' })
     expect(within(deploymentRegion).getByText('Choose a service')).toBeVisible()
-    expect(readCurrentDeploymentMock).not.toHaveBeenCalled()
+    expect(streamDeploymentEventsMock).not.toHaveBeenCalled()
   })
 
-  it.each([
-    [{ id: 'deployment-private-id', status: 'NEEDS_APPROVAL' }, 'Needs approval'],
-    [null, 'No deployment'],
-  ])('shows the resolved deployment state', async (result, text) => {
-    readCurrentDeploymentMock.mockResolvedValue(result)
+  it('shows a service with no deployment', async () => {
     renderStatus()
 
     const deploymentStatus = await screen.findByRole('status', { name: 'Deployment status' })
-    await waitFor(() => expect(deploymentStatus).toHaveTextContent(text))
-    expect(screen.queryByText('deployment-private-id')).not.toBeInTheDocument()
+    await waitFor(() => expect(deploymentStatus).toHaveTextContent('No deployment'))
   })
 
   it('shows the loading state', async () => {
-    readCurrentDeploymentMock.mockReturnValueOnce(new Promise(() => undefined))
+    streamDeploymentEventsMock.mockReturnValueOnce(new Promise(() => undefined))
     renderStatus()
 
     const deploymentStatus = await screen.findByRole('status', { name: 'Deployment status' })
-    await waitFor(() => expect(deploymentStatus).toHaveTextContent('Loading deployment.'))
+    await waitFor(() => expect(deploymentStatus).toHaveTextContent('Loading…'))
   })
 
-  it('retries an error and maps an unknown status', async () => {
-    readCurrentDeploymentMock
-      .mockRejectedValueOnce(new Error('Railway could not load the deployment.'))
-      .mockResolvedValueOnce({ id: 'deployment-1', status: 'unknown' })
+  it('follows status values and aborts the request on close', async () => {
+    const channel = new TransformStream<DeploymentStreamEvent>()
+    const writer = channel.writable.getWriter()
+    streamDeploymentEventsMock.mockResolvedValue(channel.readable)
+    const page = renderStatus()
+
+    await writer.write({
+      data: { deploymentStopped: false, id: 'deployment-private-id', status: 'NEEDS_APPROVAL' },
+      type: 'snapshot',
+    })
+    expect(await screen.findByText('Needs approval')).toBeVisible()
+    expect(screen.queryByText('deployment-private-id')).not.toBeInTheDocument()
+    await writer.write({
+      data: { deploymentStopped: false, id: 'deployment-private-id', status: 'unknown' },
+      type: 'status',
+    })
+    expect(await screen.findByText('Unknown')).toBeVisible()
+    const signal = streamDeploymentEventsMock.mock.calls[0]?.[0].signal
+
+    page.unmount()
+    await waitFor(() => expect(signal?.aborted).toBe(true))
+    await writer.close()
+  })
+
+  it('shows a terminal unavailable deployment', async () => {
+    streamDeploymentEventsMock.mockResolvedValue(createEventStream({ type: 'gone' }))
+    renderStatus()
+
+    expect(await screen.findByText('Deployment unavailable')).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Reconnect' })).not.toBeInTheDocument()
+  })
+
+  it('returns to the token form when the session expires', async () => {
+    streamDeploymentEventsMock.mockResolvedValue(createEventStream({ type: 'session-expired' }))
+    renderStatus()
+
+    expect(await screen.findByLabelText('Railway API token')).toBeVisible()
+    expect(disconnectFromRailwayMock.mock.calls[0]?.[0]).toEqual({})
+  })
+
+  it('reconnects after a stream failure', async () => {
+    const channel = new TransformStream<DeploymentStreamEvent>()
+    const writer = channel.writable.getWriter()
+    streamDeploymentEventsMock
+      .mockRejectedValueOnce(new Error('Railway could not stream the deployment.'))
+      .mockResolvedValueOnce(channel.readable)
     renderStatus()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Railway could not load the deployment.',
+      'Railway could not stream the deployment.',
     )
     const deploymentRegion = screen.getByRole('region', { name: 'Deployment status' })
-    fireEvent.click(within(deploymentRegion).getByRole('button', { name: 'Retry' }))
+    fireEvent.click(within(deploymentRegion).getByRole('button', { name: 'Reconnect' }))
+    expect(await within(deploymentRegion).findByText('Loading…')).toBeVisible()
+    await writer.write({
+      data: { deploymentStopped: false, id: 'deployment-1', status: 'unknown' },
+      type: 'snapshot',
+    })
 
     expect(await screen.findByRole('status', { name: 'Deployment status' })).toHaveTextContent(
       'Unknown',
     )
+    await writer.close()
   })
 })

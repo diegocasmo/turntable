@@ -37,7 +37,6 @@ describe('Railway deployment identity', () => {
 
     await expect(readCurrent(fetchRequest, configLikeTarget)).resolves.toEqual({
       id: deployment.id,
-      status: deployment.status,
     })
     const request = fetchRequest.mock.calls[0]?.[0]
     await expect(request?.clone().text()).resolves.not.toContain(testRailwayToken)
@@ -52,34 +51,20 @@ describe('Railway deployment identity', () => {
     const newest = createRailwayDeployment({
       createdAt: '2026-08-25T12:00:00.000Z',
       id: 'deployment-newest',
-      status: 'FAILED',
     })
     const fetchRequest = createRailwayFetch(
       createRailwayPage([middle, oldest], { endCursor: 'next-page', hasNextPage: true }),
       createRailwayPage([newest]),
     )
 
-    await expect(readCurrent(fetchRequest)).resolves.toEqual({
-      id: newest.id,
-      status: newest.status,
-    })
+    await expect(readCurrent(fetchRequest)).resolves.toEqual({ id: newest.id })
     await expect(fetchRequest.mock.calls[1]?.[0].json()).resolves.toMatchObject({
       variables: { after: 'next-page' },
     })
   })
 
-  it.each([
-    ['no deployment', [], null],
-    [
-      'a removed newest deployment',
-      [
-        createRailwayDeployment({ createdAt: '2026-08-24T12:00:00.000Z' }),
-        createRailwayDeployment({ id: 'deployment-removed', status: 'REMOVED' }),
-      ],
-      { id: 'deployment-removed', status: 'REMOVED' },
-    ],
-  ])('handles %s', async (_name, deployments, expected) => {
-    const fetchRequest = createRailwayFetch(createRailwayPage(deployments))
-    await expect(readCurrent(fetchRequest)).resolves.toEqual(expected)
+  it('returns null when the service has no deployment', async () => {
+    const fetchRequest = createRailwayFetch(createRailwayPage([]))
+    await expect(readCurrent(fetchRequest)).resolves.toBeNull()
   })
 })

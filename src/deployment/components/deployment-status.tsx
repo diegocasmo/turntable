@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/deployment/components/status-badge'
-import { useReadCurrentDeployment } from '@/deployment/hooks/use-read-current-deployment'
+import { useStreamDeploymentEvents } from '@/deployment/hooks/use-stream-deployment-events'
 import type { DeploymentTarget } from '@/deployment/schema'
 
 type DeploymentStatusProps = Readonly<{
@@ -12,12 +12,15 @@ type DeploymentStatusProps = Readonly<{
 const deploymentStatusLabel = 'Deployment status'
 
 function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusProps) {
-  const deployment = useReadCurrentDeployment(target)
+  const deployment = useStreamDeploymentEvents(target)
   const failure =
-    selectionFailure ??
-    (deployment.error
-      ? { message: deployment.error.message, retry: () => void deployment.refetch() }
-      : undefined)
+    selectionFailure === undefined && deployment.error
+      ? {
+          label: 'Reconnect',
+          message: deployment.error.message,
+          retry: () => void deployment.refetch(),
+        }
+      : selectionFailure && { ...selectionFailure, label: 'Retry' }
 
   if (failure) {
     return (
@@ -32,7 +35,7 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
           className="border-[#d97767] bg-transparent text-[#f0b8ae]"
           onClick={failure.retry}
         >
-          Retry
+          {failure.label}
         </Button>
       </div>
     )
@@ -42,17 +45,13 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
   if (target === undefined) {
     status = <span className="text-sm text-[#c9c5b9]">Choose a service</span>
   } else if (deployment.isPending) {
-    status = (
-      <>
-        <span className="sr-only">Loading deployment.</span>
-        <span
-          aria-hidden="true"
-          className="block h-5 w-28 bg-[#4d4e47] motion-safe:animate-pulse"
-        />
-      </>
-    )
+    status = <span className="text-sm text-[#c9c5b9]">Loading…</span>
+  } else if (deployment.data?.type === 'gone') {
+    status = <span className="text-sm text-[#f0b8ae]">Deployment unavailable</span>
+  } else if (deployment.data?.type === 'snapshot' || deployment.data?.type === 'status') {
+    status = <StatusBadge status={deployment.data.data?.status ?? null} />
   } else {
-    status = <StatusBadge status={deployment.data?.status ?? null} />
+    status = null
   }
 
   return (

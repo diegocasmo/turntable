@@ -1,7 +1,6 @@
 import { type DeploymentTarget, deploymentTargetSchema } from '@/deployment/schema'
 import { deploymentIdentityQuery } from '@/gql/operations/deployment-identity'
 import { createRailwayClient } from '@/railway/client.server'
-import { deploymentStatusSchema } from '@/railway/deployment-status'
 import {
   railwayConnectionPageSize,
   readAllConnectionNodes,
@@ -42,5 +41,5 @@ export async function readRailwayCurrentDeployment(
   })
   const current = [...deployments].sort(compareDeploymentCreatedAt)[0]
 
-  return current ? { id: current.id, status: deploymentStatusSchema.parse(current.status) } : null
+  return current ? { id: current.id } : null
 }
