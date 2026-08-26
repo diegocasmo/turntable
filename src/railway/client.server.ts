@@ -1,9 +1,9 @@
 import type { TadaDocumentNode } from 'gql.tada'
 import { type DocumentNode, print } from 'graphql'
-import { z } from 'zod'
 import { formatRequestLog } from '@/logging'
 import { RailwayHttpError, RailwayRateLimitError } from '@/railway/errors'
 import { readRailwayGraphQLData } from '@/railway/graphql-response'
+import { z } from '@/zod'
 
 type ErrorWriter = (line: string) => void
 type Fetch = (request: Request) => Promise<Response>

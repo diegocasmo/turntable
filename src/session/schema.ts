@@ -1,4 +1,4 @@
-import { z } from 'zod/mini'
+import { z } from '@/zod'
 
 export const maximumSessionTokenByteLength = 512
 export const invalidRailwayTokenMessage = `The Railway token must contain 1 to ${maximumSessionTokenByteLength} UTF-8 bytes.`

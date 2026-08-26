@@ -2,7 +2,6 @@ import { WebSocket as NodeWebSocket } from 'node:http'
 import type { TadaDocumentNode } from 'gql.tada'
 import { print } from 'graphql'
 import { createClient, MessageType, parseMessage } from 'graphql-ws/client'
-import { z } from 'zod'
 import {
   RailwayGraphQLError,
   RailwayResponseError,
@@ -10,6 +9,7 @@ import {
 } from '@/railway/errors'
 import { graphQLErrorSchema, readRailwayGraphQLData } from '@/railway/graphql-response'
 import { redactToken } from '@/railway/token-redaction'
+import { z } from '@/zod'
 
 type WebSocketOptions = Readonly<{
   headers?: HeadersInit

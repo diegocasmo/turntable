@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '@/zod'
 
 const railwayIdSchema = z.string().min(1)
 const optionalRailwayIdSchema = railwayIdSchema.optional().catch(undefined)

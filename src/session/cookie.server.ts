@@ -1,6 +1,6 @@
 import { clearSession, getSession, updateSession } from '@tanstack/react-start/server'
-import { z } from 'zod'
 import { invalidRailwayTokenMessage, railwayTokenSchema } from '@/session/schema'
+import { z } from '@/zod'
 
 export const sessionCookieName = '__Host-turntable'
 export const sessionLifetimeSeconds = 60 * 60
