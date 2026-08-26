@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { DeploymentStatus } from '@/deployment/components/deployment-status'
+import {
+  DeploymentStatus,
+  DeploymentStatusSkeleton,
+} from '@/deployment/components/deployment-status'
 import { Picker } from '@/selection/components/picker'
 import { usePickerSelections } from '@/selection/hooks/use-picker-selections'
 import { useReadSelectionHierarchy } from '@/selection/hooks/use-read-selection-hierarchy'
@@ -9,19 +12,12 @@ function SelectionSkeleton() {
   return (
     <div aria-hidden="true" className="grid gap-4 motion-safe:animate-pulse">
       {['w-16', 'w-24', 'w-14'].map((width) => (
-        <div key={width} className="border-t border-[#4d4e47] pt-3">
-          <div className={`h-4 ${width} bg-[#4d4e47]`} />
-          <div className="mt-2 h-8 w-full border border-[#4d4e47] bg-[#242522]" />
+        <div key={width} className="border-t border-muted pt-3">
+          <div className={`h-4 ${width} bg-muted`} />
+          <div className="mt-2 h-8 w-full border border-muted bg-secondary" />
         </div>
       ))}
-      <div className="border-t border-[#4d4e47]">
-        <div className="grid gap-2 py-3">
-          <div className="h-4 w-32 bg-[#4d4e47]" />
-          <div className="flex min-h-9 items-center">
-            <div className="h-6 w-24 bg-[#4d4e47]" />
-          </div>
-        </div>
-      </div>
+      <DeploymentStatusSkeleton />
     </div>
   )
 }
@@ -32,8 +28,8 @@ function SelectionFailure({ error, retry }: Readonly<{ error: Error; retry: () =
       <div className="invisible col-start-1 row-start-1">
         <SelectionSkeleton />
       </div>
-      <div className="col-start-1 row-start-1 grid grid-cols-[1fr_auto] items-center gap-3 self-center border-l-2 border-[#d97767] bg-[#2d201e] px-3 py-2">
-        <p role="alert" className="text-sm leading-6 text-[#f0b8ae]">
+      <div className="col-start-1 row-start-1 grid grid-cols-[1fr_auto] items-center gap-3 self-center border-l-2 border-destructive bg-destructive/15 px-3 py-2">
+        <p role="alert" className="text-sm leading-6 text-destructive">
           {error.message}
         </p>
         <Button type="button" variant="secondary" size="sm" onClick={retry}>

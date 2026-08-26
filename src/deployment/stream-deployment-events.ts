@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
-import { deploymentTargetSchema } from '@/deployment/schema'
+import { deploymentStreamInputSchema } from '@/deployment/schema'
 import {
   streamExpiredDeploymentSession,
   streamRailwayDeploymentEvents,
@@ -10,15 +10,17 @@ import { InvalidSessionError, readSession } from '@/session/cookie.server'
 
 export const streamDeploymentEvents = createServerFn({ method: 'GET' })
   .middleware([loadConfigMiddleware])
-  .validator(deploymentTargetSchema)
+  .validator(deploymentStreamInputSchema)
   .handler(async ({ context, data }) => {
     try {
       const session = await readSession(context.config.sessionSecret)
+      const { deploymentId, ...target } = data
       return streamRailwayDeploymentEvents({
         apiUrl: context.config.railwayApiUrl,
+        deploymentId,
         session,
         signal: getRequest().signal,
-        target: data,
+        target,
         webSocketUrl: context.config.railwayWebSocketUrl,
       })
     } catch (error) {

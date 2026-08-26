@@ -1,4 +1,4 @@
-import { CaretDownIcon } from '@phosphor-icons/react'
+import { CaretDownIcon } from '@phosphor-icons/react/CaretDown'
 import type * as React from 'react'
 import { cn } from '@/lib/utils'
 

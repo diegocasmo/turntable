@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import { spinDownRailwayDeployment } from '@/deployment/spin-down-deployment.server'
+import { spinUpRailwayDeployment } from '@/deployment/spin-up-deployment.server'
 import { RailwayGraphQLError } from '@/railway/errors'
 import { testRailwayApiUrl, testRailwayToken } from '@/test/railway'
 import { createJsonResponse } from '@/test/response'
 
 const deploymentId = 'deployment-to-remove'
+const target = { environmentId: 'environment-1', projectId: 'project-1', serviceId: 'service-1' }
 
 function createFetch(response: Response) {
   return vi.fn(async (_request: Request) => response)
@@ -39,5 +41,28 @@ describe('spin down Railway deployment', () => {
       spinDownRailwayDeployment(testRailwayToken, testRailwayApiUrl, deploymentId, fetchRequest),
     ).rejects.toBeInstanceOf(RailwayGraphQLError)
     expect(fetchRequest).toHaveBeenCalledOnce()
+  })
+})
+
+describe('spin up Railway deployment', () => {
+  it('returns and validates the new deployment ID', async () => {
+    const fetchRequest = createFetch(
+      createJsonResponse({ data: { serviceInstanceDeployV2: 'new-deployment' } }),
+    )
+
+    await expect(
+      spinUpRailwayDeployment(testRailwayToken, testRailwayApiUrl, target, fetchRequest),
+    ).resolves.toBe('new-deployment')
+    await expect(fetchRequest.mock.calls[0]?.[0].json()).resolves.toMatchObject({
+      variables: { environmentId: target.environmentId, serviceId: target.serviceId },
+    })
+    await expect(
+      spinUpRailwayDeployment(
+        testRailwayToken,
+        testRailwayApiUrl,
+        target,
+        createFetch(createJsonResponse({ data: { serviceInstanceDeployV2: '' } })),
+      ),
+    ).rejects.toThrow()
   })
 })

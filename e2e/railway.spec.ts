@@ -2,8 +2,10 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import { readRailwayE2EConfig, restoreRailwayE2ETarget, runWithRailwayE2ETarget } from './railway'
 
-test('a user can select the configured Railway service and see its status', async ({ page }) => {
-  test.setTimeout(5 * 60 * 1_000)
+const minute = 60_000
+const expectRailwayStatus = expect.configure({ timeout: 2 * minute })
+test.describe.configure({ timeout: 8 * minute })
+test('a user can control and refresh the configured Railway service', async ({ page }) => {
   const config = readRailwayE2EConfig()
   const { environmentId, projectId, serviceId } = config.target
 
@@ -17,20 +19,48 @@ test('a user can select the configured Railway service and see its status', asyn
       await expect(page.getByRole('heading', { name: 'Connected to Railway' })).toBeVisible()
       expect(new URL(page.url()).searchParams.has('token')).toBe(false)
 
+      const deploymentRegion = page.getByRole('region', { name: 'Deployment status' })
+      const readDeploymentHeight = () => deploymentRegion.evaluate((node) => node.clientHeight)
+      const stableDeploymentHeight = await readDeploymentHeight()
+      const expectStatus = (name: string) =>
+        expectRailwayStatus(deploymentRegion.getByRole('status').getByText(name, { exact: true }))
+      const selectAction = async (name: 'Refresh' | 'Spin down' | 'Spin up') => {
+        await deploymentRegion.getByRole('button', { name: 'Actions' }).click()
+        await page.getByRole('menuitem', { name }).click()
+      }
+      const expectNoAxeViolations = async () =>
+        expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
       await page.getByRole('combobox', { name: 'Project' }).selectOption(projectId)
       await page.getByRole('combobox', { name: 'Environment' }).selectOption(environmentId)
       await page.getByRole('combobox', { name: 'Service' }).selectOption(serviceId)
 
-      const deploymentStatus = page.getByRole('status', { name: 'Deployment status' })
-      await expect(deploymentStatus.getByText('Success', { exact: true })).toBeVisible()
-      await page.getByRole('button', { name: 'Spin down' }).click()
+      await expectStatus('Success').toBeVisible()
+      expect(await readDeploymentHeight()).toBe(stableDeploymentHeight)
+      const actions = deploymentRegion.getByRole('button', { name: 'Actions' })
+      await actions.focus()
+      await page.keyboard.press('Enter')
+      await expect(page.getByRole('menuitem', { name: 'Refresh' })).toBeFocused()
+      await expectNoAxeViolations()
+      await page.keyboard.press('End')
+      await page.keyboard.press('Enter')
       const dialog = page.getByRole('alertdialog')
+      await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused()
+      await expect(dialog).toHaveCSS('opacity', '1')
+      await expectNoAxeViolations()
+      await page.keyboard.press('Escape')
+      await expect(actions).toBeFocused()
+      await selectAction('Spin down')
       await expect(dialog).toHaveAccessibleName('Spin down deployment?')
       spinDownAttempted = true
       await dialog.getByRole('button', { name: 'Spin down' }).click()
-      await expect(deploymentStatus.getByText('Removed', { exact: true })).toBeVisible({
-        timeout: 2 * 60 * 1_000,
-      })
+      await expectStatus('Removed').toBeVisible()
+      expect(await readDeploymentHeight()).toBe(stableDeploymentHeight)
+      await selectAction('Spin up')
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Spin up' }).click()
+      await expectStatus('Success').toBeVisible()
+      await restoreRailwayE2ETarget(config)
+      await selectAction('Refresh')
+      await expectStatus('Success').toBeVisible()
       await expect
         .poll(() => [...new URL(page.url()).searchParams].sort())
         .toEqual(
@@ -40,8 +70,6 @@ test('a user can select the configured Railway service and see its status', asyn
             ['serviceId', serviceId],
           ].sort(),
         )
-      const results = await new AxeBuilder({ page }).analyze()
-      expect(results.violations).toEqual([])
     } finally {
       if (spinDownAttempted) await restoreRailwayE2ETarget(config)
     }

@@ -47,8 +47,8 @@ export function Picker({ groups, label, onSelect, options, selectedOption, state
     )) ?? options?.map(renderOption)
 
   return (
-    <label htmlFor={label} className="block border-t border-[#4d4e47] pt-3">
-      <span className="block font-mono text-xs uppercase tracking-[0.16em] text-[#c9c5b9]">
+    <label htmlFor={label} className="block border-t border-muted pt-3">
+      <span className="block font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </span>
       <NativeSelect
