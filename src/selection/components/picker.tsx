@@ -21,11 +21,15 @@ export type PickerModel = Readonly<{
 
 function resolvePlaceholder(state: PickerState, label: string) {
   const noun = label.toLowerCase()
-  if (state.kind === 'blocked') return `Choose a ${state.parent} first`
+  const article = noun === 'environment' ? 'an' : 'a'
+  if (state.kind === 'blocked') {
+    const parentArticle = state.parent === 'environment' ? 'an' : 'a'
+    return `Choose ${parentArticle} ${state.parent} first`
+  }
   if (state.kind === 'loading') return `Loading ${noun}s...`
   if (state.kind === 'unavailable') return `${label}s unavailable`
   if (state.kind === 'empty') return `No ${noun}s`
-  return `Choose a ${noun}`
+  return `Choose ${article} ${noun}`
 }
 
 function renderOption(option: PickerOption) {

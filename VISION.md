@@ -70,14 +70,11 @@ The application reads `apiToken { workspaces { id } }`. It then reads `projects(
 
 The application never calls `me`. Measured on 2026-08-25: both an account token and a workspace token return their accessible workspaces through `apiToken` and return projects through `projects(workspaceId)`. A workspace token gets "Not Authorized" from `me`, so `me { workspaces }` cannot provide the shared path.
 
-Three pickers follow: project, environment, and service. Each picker stays visible. This keeps the selected target clear and lets the user change it. The application preselects the only choice at a level.
+Three pickers follow: project, environment, and service. Each picker stays visible. The user must choose each level. The application does not infer a choice, also when only one choice exists. This keeps the target under the user's control.
 
-Two details come from the schema:
+The service list comes from `Environment.serviceInstances`. Each `ServiceInstance` carries `serviceId` and `serviceName`. `Project.services` cannot answer this, because the `Service` type holds no environment.
 
-1. The environment picker preselects `Project.primaryEnvironmentId`. There is no field named `defaultEnvironment`.
-2. The service list comes from `Environment.serviceInstances`. Each `ServiceInstance` carries `serviceId` and `serviceName`. `Project.services` cannot answer this, because the `Service` type holds no environment.
-
-The route holds the project ID, environment ID, and service ID. A reload keeps the choice.
+The route holds the project ID, environment ID, and service ID. A reload keeps each valid explicit choice.
 
 ### Deployment identity
 

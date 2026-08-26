@@ -1,24 +1,12 @@
-import { Navigate } from '@tanstack/react-router'
 import { DeploymentStatus } from '@/deployment/components/deployment-status'
 import { Picker } from '@/selection/components/picker'
 import { usePickerSelections } from '@/selection/hooks/use-picker-selections'
 
 export function SelectionPickers() {
-  const {
-    deploymentTarget,
-    environment,
-    failure,
-    project,
-    searchWithDefaultOption,
-    service,
-    status,
-  } = usePickerSelections()
+  const { deploymentTarget, environment, failure, project, service, status } = usePickerSelections()
 
   return (
     <div className="mt-6 grid gap-4">
-      {searchWithDefaultOption && (
-        <Navigate to="/" search={searchWithDefaultOption} replace resetScroll={false} />
-      )}
       <div>
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#8f8c81]">
           Project / Environment / Service
