@@ -1,13 +1,13 @@
 import { z } from 'zod'
 import { RailwayGraphQLError, RailwayResponseError } from '@/railway/errors'
-import { redactRailwayToken } from '@/railway/token-redaction'
+import { redactToken } from '@/railway/token-redaction'
 
-export const railwayGraphQLErrorSchema = z.object({ message: z.string() })
+export const graphQLErrorSchema = z.object({ message: z.string() })
 
-const railwayGraphQLResponseSchema = z
+const graphQLResponseSchema = z
   .looseObject({
     data: z.record(z.string(), z.unknown()).nullable().optional(),
-    errors: z.array(railwayGraphQLErrorSchema).optional(),
+    errors: z.array(graphQLErrorSchema).optional(),
   })
   .refine(
     (value) =>
@@ -15,7 +15,7 @@ const railwayGraphQLResponseSchema = z
   )
 
 export function readRailwayGraphQLData<Result>(body: unknown, token: string): Result {
-  const result = railwayGraphQLResponseSchema.safeParse(body)
+  const result = graphQLResponseSchema.safeParse(body)
 
   if (!result.success) {
     throw new RailwayResponseError()
@@ -23,7 +23,7 @@ export function readRailwayGraphQLData<Result>(body: unknown, token: string): Re
 
   if (result.data.errors !== undefined && result.data.errors.length > 0) {
     throw new RailwayGraphQLError(
-      result.data.errors.map((error) => redactRailwayToken(error.message, token)),
+      result.data.errors.map((error) => redactToken(error.message, token)),
     )
   }
 

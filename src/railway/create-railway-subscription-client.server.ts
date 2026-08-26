@@ -8,8 +8,8 @@ import {
   RailwayResponseError,
   RailwaySubscriptionError,
 } from '@/railway/errors'
-import { railwayGraphQLErrorSchema, readRailwayGraphQLData } from '@/railway/graphql-response'
-import { redactRailwayToken } from '@/railway/token-redaction'
+import { graphQLErrorSchema, readRailwayGraphQLData } from '@/railway/graphql-response'
+import { redactToken } from '@/railway/token-redaction'
 
 type WebSocketOptions = Readonly<{
   headers?: HeadersInit
@@ -37,7 +37,7 @@ type RailwaySubscriptionRequest<Result, Variables extends Record<string, unknown
 
 const closeEventSchema = z.object({ code: z.number().int(), reason: z.string() })
 const errorEventSchema = z.object({ message: z.string() })
-const graphQLErrorListSchema = z.array(railwayGraphQLErrorSchema).min(1)
+const graphQLErrorListSchema = z.array(graphQLErrorSchema).min(1)
 
 function createAuthorizedWebSocket(
   WebSocketImplementation: RailwayWebSocketImplementation,
@@ -64,7 +64,7 @@ function readRailwaySubscriptionError(error: unknown, token: string) {
 
   if (graphQLErrors.success) {
     return new RailwayGraphQLError(
-      graphQLErrors.data.map((item) => redactRailwayToken(item.message, token)),
+      graphQLErrors.data.map((item) => redactToken(item.message, token)),
     )
   }
 
@@ -73,17 +73,14 @@ function readRailwaySubscriptionError(error: unknown, token: string) {
   if (closeEvent.success) {
     return new RailwaySubscriptionError(
       closeEvent.data.code,
-      redactRailwayToken(closeEvent.data.reason, token),
+      redactToken(closeEvent.data.reason, token),
     )
   }
 
   const errorEvent = errorEventSchema.safeParse(error)
 
   if (errorEvent.success) {
-    return new RailwaySubscriptionError(
-      undefined,
-      redactRailwayToken(errorEvent.data.message, token),
-    )
+    return new RailwaySubscriptionError(undefined, redactToken(errorEvent.data.message, token))
   }
 
   return new RailwaySubscriptionError(undefined)
