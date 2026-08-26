@@ -13,8 +13,7 @@ export function SessionControls({ children }: Readonly<{ children?: ReactNode }>
 
   return (
     <section aria-labelledby="connected-title" className="w-full">
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#8f8c81]">Session / Ready</p>
-      <h2 id="connected-title" className="mt-4 text-3xl leading-tight sm:text-4xl">
+      <h2 id="connected-title" className="text-3xl leading-tight sm:text-4xl">
         Connected to Railway
       </h2>
 
