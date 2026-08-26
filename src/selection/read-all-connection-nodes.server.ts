@@ -1,14 +1,20 @@
 import type { DeploymentsConnection } from '@/gql/operations/deployment-identity'
 import type { EnvironmentServicesConnection } from '@/gql/operations/environment-services'
 import type { ProjectEnvironmentsConnection } from '@/gql/operations/project-environments'
-import type { ProjectsConnection } from '@/gql/operations/projects'
+import type {
+  SelectionEnvironmentsConnection,
+  SelectionProjectsConnection,
+  SelectionServicesConnection,
+} from '@/gql/operations/projects'
 import { RailwayResponseError } from '@/railway/errors'
 
 export const railwayConnectionPageSize = 500
 
 type RailwayConnection =
   | DeploymentsConnection
-  | ProjectsConnection
+  | SelectionProjectsConnection
+  | SelectionEnvironmentsConnection
+  | SelectionServicesConnection
   | ProjectEnvironmentsConnection
   | EnvironmentServicesConnection
 

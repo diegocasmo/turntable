@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
-  createRailwayEnvironment,
-  createRailwayProject,
   createRailwayService,
+  createSelectionEnvironment,
+  createSelectionProject,
   testRailwayApiUrl,
   testRailwayToken,
 } from '@/test/railway'
@@ -25,14 +25,18 @@ describe('Railway E2E target guard', () => {
 
     await expect(
       runWithRailwayE2ETarget(config, runMutation, {
-        readEnvironments: vi.fn(async () => [
-          createRailwayEnvironment({ id: 'wrong-environment', name: 'production' }),
-        ]),
-        readProjects: vi.fn(async () => [
-          createRailwayProject({ id: 'wrong-project', name: 'personal' }),
-        ]),
-        readServices: vi.fn(async () => [
-          createRailwayService({ id: 'wrong-service', name: 'web' }),
+        readSelectionHierarchy: vi.fn(async () => [
+          createSelectionProject({
+            environments: [
+              createSelectionEnvironment({
+                id: 'wrong-environment',
+                name: 'production',
+                services: [createRailwayService({ id: 'wrong-service', name: 'web' })],
+              }),
+            ],
+            id: 'wrong-project',
+            name: 'personal',
+          }),
         ]),
       }),
     ).rejects.toThrow('The Railway E2E target is not turntable-e2e/local/target.')

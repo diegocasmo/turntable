@@ -8,10 +8,4 @@ export const selectionSearchSchema = z.object({
   serviceId: optionalRailwayIdSchema,
 })
 
-export const readEnvironmentsInputSchema = z.object({ projectId: railwayIdSchema })
-export const readServicesInputSchema = z.object({
-  environmentId: railwayIdSchema,
-  projectId: railwayIdSchema,
-})
-
 export type SelectionSearch = z.infer<typeof selectionSearchSchema>

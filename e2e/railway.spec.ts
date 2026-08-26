@@ -31,10 +31,12 @@ test('a user can control and refresh the configured Railway service', async ({ p
       await page.getByRole('combobox', { name: 'Environment' }).selectOption(environmentId)
       await page.getByRole('combobox', { name: 'Service' }).selectOption(serviceId)
 
-      const deploymentStatus = page.getByRole('status', { name: 'Deployment status' })
+      const deploymentRegion = page.getByRole('region', { name: 'Deployment status' })
+      const deploymentStatus = deploymentRegion.getByRole('status')
       await expectRailwayStatus(
         deploymentStatus.getByText('Success', { exact: true }),
       ).toBeVisible()
+      const stableDeploymentHeight = await deploymentRegion.evaluate((node) => node.clientHeight)
       await page.getByRole('button', { name: 'Spin down' }).click()
       const dialog = page.getByRole('alertdialog')
       await expect(dialog).toHaveAccessibleName('Spin down deployment?')
@@ -43,6 +45,9 @@ test('a user can control and refresh the configured Railway service', async ({ p
       await expectRailwayStatus(
         deploymentStatus.getByText('Removed', { exact: true }),
       ).toBeVisible()
+      expect(await deploymentRegion.evaluate((node) => node.clientHeight)).toBe(
+        stableDeploymentHeight,
+      )
       await page.getByRole('button', { name: 'Spin up' }).click()
       await page.getByRole('alertdialog').getByRole('button', { name: 'Spin up' }).click()
       await expectRailwayStatus(

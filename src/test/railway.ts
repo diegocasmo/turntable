@@ -1,7 +1,12 @@
 import type { RailwayDeployment } from '@/gql/operations/deployment-identity'
 import type { ServiceOption } from '@/gql/operations/environment-services'
-import type { EnvironmentOption } from '@/gql/operations/project-environments'
-import type { ProjectOption, ProjectsConnection } from '@/gql/operations/projects'
+import type {
+  EnvironmentOption,
+  ProjectOption,
+  SelectionEnvironment,
+  SelectionProject,
+  SelectionProjectsConnection,
+} from '@/gql/operations/projects'
 
 export const testRailwayApiUrl = 'https://backboard.railway.test/graphql/v2'
 export const testRailwayEnvironmentId = 'environment-1'
@@ -10,7 +15,7 @@ export const testRailwayServiceId = 'service-1'
 export const testRailwayToken = 'railway-token-that-must-not-leak'
 export const testRailwayWorkspaceId = 'workspace-1'
 
-type PageInfo = ProjectsConnection['pageInfo']
+type PageInfo = SelectionProjectsConnection['pageInfo']
 
 export function createRailwayEdge<Node>(node: Node) {
   return { node }
@@ -40,6 +45,26 @@ export function createRailwayEnvironment(
 
 export function createRailwayService(overrides: Partial<ServiceOption> = {}): ServiceOption {
   return { id: testRailwayServiceId, name: 'Web', ...overrides }
+}
+
+export function createSelectionEnvironment(
+  overrides: Partial<SelectionEnvironment> = {},
+): SelectionEnvironment {
+  return {
+    ...createRailwayEnvironment(),
+    services: [createRailwayService()],
+    ...overrides,
+  }
+}
+
+export function createSelectionProject(
+  overrides: Partial<SelectionProject> = {},
+): SelectionProject {
+  return {
+    ...createRailwayProject(),
+    environments: [createSelectionEnvironment()],
+    ...overrides,
+  }
 }
 
 export function createRailwayDeployment(

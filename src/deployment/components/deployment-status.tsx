@@ -10,20 +10,25 @@ import { useStreamDeploymentEvents } from '@/deployment/hooks/use-stream-deploym
 import type { DeploymentTarget } from '@/deployment/schema'
 
 type DeploymentStatusProps = Readonly<{
-  selectionFailure: Readonly<{ message: string; retry: () => void }> | undefined
   target: DeploymentTarget | undefined
 }>
 
 const deploymentStatusLabel = 'Deployment status'
 
-function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusProps) {
+function DeploymentStatusContent({ target }: DeploymentStatusProps) {
   const deployment = useStreamDeploymentEvents(target)
   const lifecycleMutationCount = useIsMutating({ mutationKey: deploymentLifecycleMutationKey })
-  const failure = selectionFailure && { ...selectionFailure, label: 'Retry' }
+  const failure = deployment.error
+    ? {
+        label: 'Reconnect',
+        message: deployment.error.message,
+        retry: () => void deployment.refetch(),
+      }
+    : undefined
 
   if (failure) {
     return (
-      <div className="grid grid-cols-[1fr_auto] items-center gap-3 border-l-2 border-[#d97767] bg-[#2d201e] px-3">
+      <div className="grid min-h-[7.25rem] grid-cols-[1fr_auto] items-center gap-3 border-l-2 border-[#d97767] bg-[#2d201e] px-3 sm:min-h-[4.5rem]">
         <p role="alert" className="text-sm leading-6 text-[#f0b8ae]">
           {failure.message}
         </p>
@@ -44,12 +49,6 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
     (deployment.isTransitioning && deployment.data === undefined)
   ) {
     status = <span className="text-sm text-[#c9c5b9]">Loading…</span>
-  } else if (deployment.error) {
-    status = (
-      <p role="alert" className="text-sm leading-6 text-[#f0b8ae]">
-        {deployment.error.message}
-      </p>
-    )
   } else if (deployment.data?.type === 'gone') {
     status = <span className="text-sm text-[#f0b8ae]">Deployment unavailable</span>
   } else if (deployment.data?.type === 'snapshot' || deployment.data?.type === 'status') {
@@ -111,7 +110,7 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
       <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#c9c5b9]">
         {deploymentStatusLabel}
       </p>
-      <div className="grid min-h-9 gap-3">
+      <div className="grid min-h-[7.25rem] content-start gap-3 sm:min-h-[4.5rem]">
         <div aria-label={deploymentStatusLabel} aria-live="polite" role="status">
           {status}
         </div>
