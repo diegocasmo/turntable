@@ -4,9 +4,7 @@ import { readRailwayE2EConfig, restoreRailwayE2ETarget, runWithRailwayE2ETarget 
 
 const minute = 60_000
 const expectRailwayStatus = expect.configure({ timeout: 2 * minute })
-
 test.describe.configure({ timeout: 8 * minute })
-
 test('a user can control and refresh the configured Railway service', async ({ page }) => {
   const config = readRailwayE2EConfig()
   const { environmentId, projectId, serviceId } = config.target
@@ -22,7 +20,8 @@ test('a user can control and refresh the configured Railway service', async ({ p
       expect(new URL(page.url()).searchParams.has('token')).toBe(false)
 
       const deploymentRegion = page.getByRole('region', { name: 'Deployment status' })
-      const stableDeploymentHeight = await deploymentRegion.evaluate((node) => node.clientHeight)
+      const readDeploymentHeight = () => deploymentRegion.evaluate((node) => node.clientHeight)
+      const stableDeploymentHeight = await readDeploymentHeight()
       const expectStatus = (name: string) =>
         expectRailwayStatus(deploymentRegion.getByRole('status').getByText(name, { exact: true }))
       const selectAction = async (name: 'Refresh' | 'Spin down' | 'Spin up') => {
@@ -36,10 +35,7 @@ test('a user can control and refresh the configured Railway service', async ({ p
       await page.getByRole('combobox', { name: 'Service' }).selectOption(serviceId)
 
       await expectStatus('Success').toBeVisible()
-      expect(await deploymentRegion.evaluate((node) => node.clientHeight)).toBe(
-        stableDeploymentHeight,
-      )
-
+      expect(await readDeploymentHeight()).toBe(stableDeploymentHeight)
       const actions = deploymentRegion.getByRole('button', { name: 'Actions' })
       await actions.focus()
       await page.keyboard.press('Enter')
@@ -53,19 +49,15 @@ test('a user can control and refresh the configured Railway service', async ({ p
       await expectNoAxeViolations()
       await page.keyboard.press('Escape')
       await expect(actions).toBeFocused()
-
       await selectAction('Spin down')
       await expect(dialog).toHaveAccessibleName('Spin down deployment?')
       spinDownAttempted = true
       await dialog.getByRole('button', { name: 'Spin down' }).click()
       await expectStatus('Removed').toBeVisible()
-      expect(await deploymentRegion.evaluate((node) => node.clientHeight)).toBe(
-        stableDeploymentHeight,
-      )
+      expect(await readDeploymentHeight()).toBe(stableDeploymentHeight)
       await selectAction('Spin up')
       await page.getByRole('alertdialog').getByRole('button', { name: 'Spin up' }).click()
       await expectStatus('Success').toBeVisible()
-
       await restoreRailwayE2ETarget(config)
       await selectAction('Refresh')
       await expectStatus('Success').toBeVisible()

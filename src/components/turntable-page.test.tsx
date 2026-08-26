@@ -566,6 +566,7 @@ describe('deployment status', () => {
     streamDeploymentEventsMock
       .mockRejectedValueOnce(new Error('Railway could not stream the deployment.'))
       .mockResolvedValueOnce(channel.readable)
+      .mockReturnValueOnce(new Promise(() => undefined))
     renderStatus()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -581,5 +582,11 @@ describe('deployment status', () => {
 
     await screen.findByText('Unknown')
     await writer.close()
+    const deploymentStatus = within(
+      screen.getByRole('region', { name: 'Deployment status' }),
+    ).getByRole('status')
+    selectDeploymentAction('Refresh')
+    expect(within(deploymentStatus).getByText('Unknown')).toBeVisible()
+    expect(await within(deploymentStatus).findByText('Refreshing status.')).toHaveClass('sr-only')
   })
 })

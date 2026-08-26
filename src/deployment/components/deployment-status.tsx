@@ -25,6 +25,7 @@ export function DeploymentStatus({ loading = false, target }: DeploymentStatusPr
   const event = deployment.data
   const hasDeployment = event?.type === 'snapshot' || event?.type === 'status'
   const current = hasDeployment ? event.data : null
+  const refreshAnnouncement = deployment.transition === 'refresh' ? 'Refreshing status.' : null
   let action: ReactNode = (
     <DeploymentActions
       busy={transitioning}
@@ -41,7 +42,6 @@ export function DeploymentStatus({ loading = false, target }: DeploymentStatusPr
     status = <span className="text-sm text-destructive">Deployment unavailable</span>
   }
   if (deployment.transition === 'reconnect') status = 'Reconnecting…'
-  if (deployment.transition === 'refresh') status = 'Refreshing…'
   if (deployment.transition === 'spin-up') status = 'Starting deployment…'
   if (failure) {
     status = (
@@ -74,6 +74,7 @@ export function DeploymentStatus({ loading = false, target }: DeploymentStatusPr
           role={failure && !showSkeleton ? 'alert' : 'status'}
         >
           {status}
+          <span className="sr-only">{refreshAnnouncement}</span>
         </div>
       </div>
     </section>
