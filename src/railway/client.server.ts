@@ -2,32 +2,8 @@ import type { TadaDocumentNode } from 'gql.tada'
 import { type DocumentNode, print } from 'graphql'
 import { z } from 'zod'
 import { formatRequestLog } from '@/logging'
-import {
-  RailwayGraphQLError,
-  RailwayHttpError,
-  RailwayRateLimitError,
-  RailwayResponseError,
-} from '@/railway/errors'
-
-const graphQLErrorSchema = z.object({ message: z.string() })
-const graphQLResponseSchema = z
-  .looseObject({
-    data: z.record(z.string(), z.unknown()).nullable().optional(),
-    errors: z.array(graphQLErrorSchema).optional(),
-  })
-  .refine(
-    (value) =>
-      Object.hasOwn(value, 'data') || (value.errors !== undefined && value.errors.length > 0),
-  )
-const graphQLBodyKind: 'graphql' = 'graphql'
-const otherBodyKind: 'other' = 'other'
-const railwayResponseBodySchema = z.union([
-  graphQLResponseSchema.transform((value) => ({
-    kind: graphQLBodyKind,
-    value,
-  })),
-  z.json().transform((value) => ({ kind: otherBodyKind, value })),
-])
+import { RailwayHttpError, RailwayRateLimitError } from '@/railway/errors'
+import { readRailwayGraphQLData } from '@/railway/graphql-response'
 
 type ErrorWriter = (line: string) => void
 type Fetch = (request: Request) => Promise<Response>
@@ -51,10 +27,6 @@ function readRetryAfterSeconds(value: string | null) {
 
   const seconds = Number(value)
   return Number.isSafeInteger(seconds) ? seconds : undefined
-}
-
-function redactRailwayToken(message: string, token: string) {
-  return message.replaceAll(token, '[REDACTED]')
 }
 
 function createRequest(
@@ -87,7 +59,7 @@ function decodeResponseBody(text: string): unknown {
 
 async function readResponseBody(response: Response) {
   const text = await response.text()
-  return railwayResponseBodySchema.parse(decodeResponseBody(text))
+  return z.json().parse(decodeResponseBody(text))
 }
 
 export function createRailwayClient({
@@ -112,21 +84,7 @@ export function createRailwayClient({
         throw new RailwayHttpError(response.status)
       }
 
-      if (body.kind !== graphQLBodyKind) {
-        throw new RailwayResponseError()
-      }
-
-      if (body.value.errors !== undefined && body.value.errors.length > 0) {
-        throw new RailwayGraphQLError(
-          body.value.errors.map((error) => redactRailwayToken(error.message, input.token)),
-        )
-      }
-
-      if (body.value.data === undefined || body.value.data === null) {
-        throw new RailwayResponseError()
-      }
-
-      return body.value.data as Result
+      return readRailwayGraphQLData<Result>(body, input.token)
     },
   }
 }
