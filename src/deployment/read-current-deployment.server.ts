@@ -24,12 +24,14 @@ export async function readRailwayCurrentDeployment(
   apiUrl: string,
   target: DeploymentTarget,
   fetchRequest: FetchRequest = globalThis.fetch,
+  signal?: AbortSignal,
 ) {
   const client = createRailwayClient({ apiUrl, fetch: fetchRequest })
   const input = deploymentTargetSchema.parse(target)
   const readPage = (after: string | null = null) =>
     client.request({
       document: deploymentIdentityQuery,
+      signal,
       token,
       variables: { after, first: railwayConnectionPageSize, input },
     })

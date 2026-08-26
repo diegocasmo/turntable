@@ -1,7 +1,7 @@
 import { WebSocket as NodeWebSocket } from 'node:http'
 import type { TadaDocumentNode } from 'gql.tada'
 import { print } from 'graphql'
-import { type Client, createClient } from 'graphql-ws/client'
+import { createClient, MessageType, parseMessage } from 'graphql-ws/client'
 import { z } from 'zod'
 import {
   RailwayGraphQLError,
@@ -17,7 +17,12 @@ type WebSocketOptions = Readonly<{
 }>
 
 export type RailwayWebSocketImplementation = {
-  new (url: string | URL, protocols?: string | string[] | WebSocketOptions): object
+  new (
+    url: string | URL,
+    protocols?: string | string[] | WebSocketOptions,
+  ): {
+    send(data: string): void
+  }
   readonly CLOSED: number
   readonly CLOSING: number
   readonly CONNECTING: number
@@ -39,14 +44,28 @@ const closeEventSchema = z.object({ code: z.number().int(), reason: z.string() }
 const errorEventSchema = z.object({ message: z.string() })
 const graphQLErrorListSchema = z.array(graphQLErrorSchema).min(1)
 
+function createSubscriptionStart() {
+  return Promise.withResolvers<void>()
+}
+
+type SubscriptionStart = ReturnType<typeof createSubscriptionStart>
+
 function createAuthorizedWebSocket(
   WebSocketImplementation: RailwayWebSocketImplementation,
   token: string,
+  subscriptionStarts: SubscriptionStart[],
 ) {
   return class AuthorizedWebSocket extends WebSocketImplementation {
     constructor(url: string | URL, protocols?: string | string[]) {
       const headers = { authorization: `Bearer ${token}` }
       super(url, protocols === undefined ? { headers } : { headers, protocols })
+    }
+
+    override send(data: string) {
+      super.send(data)
+      if (parseMessage(data).type === MessageType.Subscribe) {
+        subscriptionStarts.shift()?.resolve()
+      }
     }
   }
 }
@@ -86,22 +105,27 @@ function readRailwaySubscriptionError(error: unknown, token: string) {
   return new RailwaySubscriptionError(undefined)
 }
 
-async function* iterateRailwaySubscription<Result, Variables extends Record<string, unknown>>(
-  client: Client,
+async function* iterateRailwaySubscription<Result>(
+  results: AsyncIterable<unknown>,
   token: string,
-  input: RailwaySubscriptionRequest<Result, Variables>,
+  start: SubscriptionStart,
+  subscriptionStarts: SubscriptionStart[],
 ) {
-  try {
-    const results = client.iterate<unknown>({
-      query: print(input.document),
-      variables: input.variables,
-    })
+  subscriptionStarts.push(start)
 
+  try {
     for await (const result of results) {
       yield readRailwayGraphQLData<Result>(result, token)
     }
+
+    start.reject(new RailwaySubscriptionError(undefined))
   } catch (error) {
-    throw readRailwaySubscriptionError(error, token)
+    const railwayError = readRailwaySubscriptionError(error, token)
+    start.reject(railwayError)
+    throw railwayError
+  } finally {
+    const index = subscriptionStarts.indexOf(start)
+    if (index !== -1) subscriptionStarts.splice(index, 1)
   }
 }
 
@@ -110,11 +134,12 @@ export function createRailwaySubscriptionClient({
   webSocketImplementation = NodeWebSocket,
   webSocketUrl,
 }: RailwaySubscriptionClientOptions) {
+  const subscriptionStarts: SubscriptionStart[] = []
   const client = createClient({
     lazy: true,
     retryAttempts: 0,
     url: webSocketUrl,
-    webSocketImpl: createAuthorizedWebSocket(webSocketImplementation, token),
+    webSocketImpl: createAuthorizedWebSocket(webSocketImplementation, token, subscriptionStarts),
   })
 
   return {
@@ -128,7 +153,16 @@ export function createRailwaySubscriptionClient({
     subscribe<Result, Variables extends Record<string, unknown>>(
       input: RailwaySubscriptionRequest<Result, Variables>,
     ) {
-      return iterateRailwaySubscription(client, token, input)
+      const start = createSubscriptionStart()
+      const results = client.iterate<unknown>({
+        query: print(input.document),
+        variables: input.variables,
+      })
+
+      return {
+        events: iterateRailwaySubscription<Result>(results, token, start, subscriptionStarts),
+        subscribed: start.promise,
+      }
     },
   }
 }

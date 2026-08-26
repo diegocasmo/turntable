@@ -1,4 +1,4 @@
-import { graphql } from 'gql.tada'
+import { graphql, type ResultOf } from 'gql.tada'
 
 export const deploymentStatusSubscription = graphql(`
   subscription DeploymentStatus($deploymentId: String!) {
@@ -9,3 +9,6 @@ export const deploymentStatusSubscription = graphql(`
     }
   }
 `)
+
+export type RailwayDeploymentStatus = ResultOf<typeof deploymentStatusSubscription>['deployment']
+export type RailwayDeploymentStatusResult = ResultOf<typeof deploymentStatusSubscription>

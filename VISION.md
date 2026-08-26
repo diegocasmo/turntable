@@ -195,53 +195,53 @@ The session cookie alone is not a full defense. The application also does this:
 4. The upstream API address is configuration. Production and tests that call Railway accept Railway's own address only. Reason: a wrong value sends every user's token to another host, and the screen shows no symptom.
 5. An expired or invalid session returns the expired session state to the application. The application then shows the token form. The event stream answers differently, and "Browser transport" explains why.
 
-### Browser transport: Server-Sent Events
+### Browser transport: a streamed server function
 
 The server must speak WebSocket to Railway. That leg is fixed. The browser leg is a choice.
 
-Decision: one Server-Sent Events (SSE) stream per screen. Commands use TanStack Start server functions.
+Decision: one [TanStack Start streamed server function](https://tanstack.com/start/latest/docs/framework/react/guide/streaming-data-from-server-functions) per screen. It returns a typed async iterable. Commands use normal server functions.
 
-Why: the data flow is one-directional. `EventSource` is in every browser, and it reconnects by itself ([HTML specification](https://html.spec.whatwg.org/multipage/server-sent-events.html)). A WebSocket client must implement its own reconnect loop.
+TanStack Start owns the browser RPC, value serialization, and request cancellation. Turntable does not own an SSE format, parser, response headers, or raw route.
 
-Each stream starts with a recovery contract:
+Each stream starts with this recovery contract:
 
-1. The server subscribes upstream first. It holds the arriving events in a buffer.
-2. Then it reads one snapshot of the deployment. It sends the snapshot as the first event.
-3. Then it drains the buffer. It applies every buffered event in arrival order. Later events follow in arrival order too. The last event wins.
+1. The server starts the Railway subscription.
+2. It waits until `graphql-ws` sends the `Subscribe` message.
+3. It reads one deployment snapshot and sends it first.
+4. It then reads queued subscription values in arrival order. Later values follow in arrival order. The last value wins.
 
-Step 1 closes the gap where a change happens between the snapshot and the subscription. Arrival order is enough, and two measurements say why:
+This order closes the gap where a change happens between the snapshot and the subscription. `graphql-ws` owns the pending value queue ([version 6.2.1 source](https://github.com/enisdenjo/graphql-ws/blob/v6.2.1/src/client.ts)). Turntable does not add a second buffer.
+
+Two measurements explain why the snapshot is necessary and why arrival order is enough:
 
 1. Railway pushes only when the status changes.
 2. Railway does not replay the current state to a new subscriber. A subscribe to a stable deployment produced nothing for 8 seconds.
 
-So a pushed event can never carry a state older than the snapshot, and the snapshot is needed because no replay arrives.
+There is no timestamp to compare. Measured: `statusUpdatedAt` is null on every subscription payload, although the query path fills it. Railway's own CLI asks only for `id`, `status`, and `deploymentStopped`.
 
-There is no timestamp to compare. Measured: `statusUpdatedAt` is null on every subscription payload, although the query path fills it. Railway's own CLI does not ask for it either. Its whole status subscription is `id`, `status`, and `deploymentStopped`.
+The upstream `graphql-ws` client owns the WebSocket protocol and its payload queue. Turntable sets `retryAttempts` to 0. This leaves one retry owner in the browser.
 
-The upstream client makes no retry of its own. `graphql-ws` retries five times by default ([client options](https://the-guild.dev/graphql/ws/docs/client/interfaces/ClientOptions)). Turntable sets `retryAttempts` to 0, so one reconnect loop exists in the whole system.
+The stream sends these typed values:
 
-Once a stream is open, the route always answers 200. `EventSource` cannot read a status code: a non-200 answer fails the connection, fires an opaque error, and never reconnects. So the route reports every failure as a named event instead:
-
-| Event | Meaning | The client then |
+| Type | Meaning | The client then |
 | --- | --- | --- |
 | `snapshot` | the current state | renders it |
 | `status` | a status change | renders it |
-| `disconnected` | a retryable failure | lets the browser reconnect |
-| `session-expired` | the session ended | closes the stream, shows the token form |
-| `gone` | the service or deployment is unreachable | closes the stream, shows the gone state |
+| `heartbeat` | the response is still active | makes no state change |
+| `session-expired` | the session ended | shows the token form |
+| `gone` | the deployment is unreachable | shows the gone state |
 
-The client calls `close()` on a terminal event. Without that call the browser reconnects, the server fails again at once, and the loop never ends.
+An unexpected failure throws. The client uses TanStack Query `streamedQuery`. It does not set `retry` or `retryDelay`, so it gets the [Query default](https://tanstack.com/query/latest/docs/framework/react/guides/query-retries): three retries with exponential delay. After the last retry, the screen shows an error with a reconnect control.
 
-The client owns the retry budget, and it copies the CLI's policy in [`deployment.rs`](https://github.com/railwayapp/cli/blob/3efce83e618a158b16de8eed3a9e1f4f2e585d80/src/controllers/deployment.rs): a delay from 1 second, multiplied by 1.5, capped at 8 seconds, and 12 attempts. A stream that stays up for 30 seconds resets the count. After the last attempt the screen shows an error with a reconnect control. The browser's own default is a fixed 3-second retry with no cap. That default turns one broken upstream into a permanent drain on the user's rate limit.
+The stream sends a heartbeat value every 30 seconds. It throws at 14 minutes or sends `session-expired` at the session expiry, whichever comes first. The 14-minute error uses the same Query retry. Railway closes an idle HTTP response after five minutes and any HTTP response after 15 minutes ([streaming guide](https://docs.railway.com/guides/sse-vs-websockets)).
 
-The stream also sends a comment every 30 seconds. It closes at the earlier of 14 minutes and the session expiry. Railway needs traffic every five minutes and ends a request at 15 minutes ([SSE guide](https://docs.railway.com/guides/sse-vs-websockets)).
-
-Recovery needs no replay, because every connection begins with a snapshot. The server sends no `id` field, and it ignores `Last-Event-ID`.
+Recovery needs no replay because every call begins with a snapshot.
 
 Alternatives considered:
 
-- WebSocket passthrough: it needs custom server wiring, and no feature needs a second direction. Rejected.
-- [graphql-sse](https://the-guild.dev/graphql/sse): the same wire with a protocol library on both ends. It is the upgrade path if the subscription types grow.
+- Raw SSE adds a wire format, parser, route, and retry policy that TanStack Start already supplies. Rejected.
+- [GraphQL over SSE](https://the-guild.dev/graphql/sse) needs a local GraphQL execution layer. Turntable only bridges one Railway subscription. Rejected.
+- WebSocket passthrough avoids the HTTP deadline. It adds browser reconnect and server upgrade wiring, and this flow needs no second direction. Rejected.
 
 ### Two users, one service
 
@@ -290,19 +290,19 @@ Two rules bound the policy:
 
 TanStack Query owns server state and asynchronous action state. Mutations give `isPending` and `error` states for the buttons, and the action policy gives the enabled state. TanStack Form owns form values and field errors. The token form and its server function use the same zod input schema. Components only render these states. No component contains `useEffect`. No other state library exists in the project.
 
-The data layer wraps one `EventSource` as an `AsyncIterable`, and TanStack Query's [`streamedQuery`](https://tanstack.com/query/latest/docs/reference/streamedQuery) consumes it. Query starts the stream with the first subscriber, and it ends the stream through its `AbortSignal` with the last.
+The data layer passes the server function's async iterable to TanStack Query's [`streamedQuery`](https://tanstack.com/query/latest/docs/reference/streamedQuery). Query starts the stream with the first subscriber. It ends the request through the server function's `AbortSignal` with the last subscriber.
 
-The stream query sets `staleTime: Infinity` and `retry: false`. It refetches on no event: not on mount, not on focus, and not on network reconnect. The reconnect logic in "Browser transport" is the only recovery path, so a second one would fight it.
+The stream query sets `staleTime: Infinity`. It does not set `retry` or `retryDelay`. An unexpected failure therefore uses the Query defaults in "Browser transport". A terminal stream value ends successfully and does not retry.
 
 The status reducer replaces the snapshot on each event, because the default reducer appends. TanStack marks `streamedQuery` experimental. The pinned version contains that risk.
 
 ### Framework: TanStack Start
 
-The application needs four things from a framework: typed server functions for internal reads and commands, a raw server route for the event stream, cookie handling, and a page that updates often in the browser. The initial session state loads on the server. A reload therefore keeps a valid session without exposing the stored token to browser JavaScript.
+The application needs four things from a framework: typed server functions for reads, commands, and streams, cookie handling, and a page that updates often in the browser. The initial session state loads on the server. A reload therefore keeps a valid session without exposing the stored token to browser JavaScript.
 
 Decision: [TanStack Start](https://tanstack.com/start/latest), pinned to one exact version. TanStack labels Start a release candidate. The pinned version never changes during the project.
 
-The framework wins on three points. Its [server functions](https://tanstack.com/start/latest/docs/framework/react/guide/server-functions) provide typed internal calls and zod input validation. Its raw server routes return standard `Response` objects for protocols such as SSE. It supports the nonce path that the security policy above needs.
+The framework wins on three points. Its [server functions](https://tanstack.com/start/latest/docs/framework/react/guide/server-functions) provide typed internal calls, zod input validation, and streamed return values. Its session API owns the encrypted cookie format. It supports the nonce path that the security policy above needs.
 
 [Nitro](https://nitro.build) is the production adapter for Railway. The [TanStack Start hosting guide](https://tanstack.com/start/latest/docs/framework/react/guide/hosting) tells Railway applications to use Nitro and gives the Vite plugin setup. `package.json` is the source for the pinned version and the production start command.
 

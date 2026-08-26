@@ -16,6 +16,7 @@ type RailwayClientOptions = Readonly<{
 
 type RailwayRequest<Result, Variables> = Readonly<{
   document: TadaDocumentNode<Result, Variables>
+  signal?: AbortSignal | undefined
   token: string
   variables: NoInfer<Variables>
 }>
@@ -34,6 +35,7 @@ function createRequest(
   document: DocumentNode,
   token: string,
   variables: unknown | undefined,
+  signal: AbortSignal | undefined,
 ) {
   const body =
     variables === undefined ? { query: print(document) } : { query: print(document), variables }
@@ -45,6 +47,7 @@ function createRequest(
       'content-type': 'application/json',
     },
     method: 'POST',
+    signal: signal ?? null,
   })
 }
 
@@ -69,7 +72,13 @@ export function createRailwayClient({
 }: RailwayClientOptions) {
   return {
     async request<Result, Variables>(input: RailwayRequest<Result, Variables>): Promise<Result> {
-      const request = createRequest(apiUrl, input.document, input.token, input.variables)
+      const request = createRequest(
+        apiUrl,
+        input.document,
+        input.token,
+        input.variables,
+        input.signal,
+      )
       const response = await fetchRequest(request)
       const body = await readResponseBody(response)
 

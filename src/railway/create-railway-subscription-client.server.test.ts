@@ -116,7 +116,7 @@ async function waitForSubscribe(socket: ControlledWebSocket) {
 
 async function startSubscription(client: ReturnType<typeof createTestClient>) {
   const subscription = subscribeToDeployment(client)
-  const next = subscription.next()
+  const next = subscription.events.next()
   const socket = readSocket()
   await acknowledgeConnection(socket)
   const request = await waitForSubscribe(socket)
@@ -128,6 +128,28 @@ beforeEach(() => {
 })
 
 describe('Railway subscription client', () => {
+  it('resolves readiness after it sends the subscription', async () => {
+    const client = createTestClient()
+    const subscription = subscribeToDeployment(client)
+    const next = subscription.events.next()
+    const socket = readSocket()
+    let subscribed = false
+    void subscription.subscribed.then(() => {
+      subscribed = true
+    })
+
+    await vi.waitFor(() =>
+      expect(readSentMessages(socket)).toContainEqual({ type: MessageType.ConnectionInit }),
+    )
+    expect(subscribed).toBe(false)
+    socket.receive({ type: MessageType.ConnectionAck })
+    await waitForSubscribe(socket)
+    await expect(subscription.subscribed).resolves.toBeUndefined()
+
+    await client.close()
+    await expect(next).resolves.toEqual({ done: true, value: undefined })
+  })
+
   it('sends the authorization header and yields controlled status events', async () => {
     const client = createTestClient()
     const { next, request, socket, subscription } = await startSubscription(client)
@@ -140,7 +162,7 @@ describe('Railway subscription client', () => {
       done: false,
       value: { deployment: createDeploymentStatus() },
     })
-    const crashed = subscription.next()
+    const crashed = subscription.events.next()
     socket.receive({
       id: request.id,
       payload: { data: { deployment: createDeploymentStatus('CRASHED') } },
@@ -158,7 +180,7 @@ describe('Railway subscription client', () => {
       query: print(deploymentStatusSubscription),
       variables: { deploymentId: 'deployment-1' },
     })
-    const done = subscription.next()
+    const done = subscription.events.next()
     await client.close()
     expect(socket.closeCalls).toEqual([{ code: 1000, reason: 'Normal Closure' }])
     await expect(done).resolves.toEqual({ done: true, value: undefined })
