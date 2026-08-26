@@ -16,6 +16,8 @@ import {
   createRailwayEnvironment,
   createRailwayProject,
   createRailwayService,
+  testRailwayProjectId,
+  testRailwayServiceId,
   testRailwayToken,
 } from '@/test/railway'
 
@@ -294,17 +296,32 @@ describe('project, environment, and service selection', () => {
     ).toEqual(['project-4', 'project-1', 'project-3'])
   })
 
-  it('preselects stable IDs and restores them after a reload', async () => {
+  it('requires each choice and restores valid IDs after a reload', async () => {
     const project = createRailwayProject()
     const environment = createRailwayEnvironment()
     const service = createRailwayService()
     readProjectsMock.mockResolvedValue([project])
-    readEnvironmentsMock.mockResolvedValue([
-      environment,
-      createRailwayEnvironment({ id: 'environment-2' }),
-    ])
+    readEnvironmentsMock.mockResolvedValue([environment])
     readServicesMock.mockResolvedValue([service])
     const first = renderTurntablePage({ sessionState: 'authenticated' })
+
+    const projectPicker = await screen.findByRole('combobox', { name: 'Project' })
+    await waitFor(() => expect(projectPicker).toBeEnabled())
+    expect(projectPicker).toHaveDisplayValue('Choose a project')
+
+    await selectOption('Project', project.id)
+    const environmentPicker = screen.getByRole('combobox', { name: 'Environment' })
+    await waitFor(() => expect(environmentPicker).toBeEnabled())
+    expect(environmentPicker).toHaveDisplayValue('Choose an environment')
+    await expectSearch(first, { projectId: project.id })
+
+    await selectOption('Environment', environment.id)
+    const servicePicker = screen.getByRole('combobox', { name: 'Service' })
+    await waitFor(() => expect(servicePicker).toBeEnabled())
+    expect(servicePicker).toHaveDisplayValue('Choose a service')
+    await expectSearch(first, { environmentId: environment.id, projectId: project.id })
+
+    await selectOption('Service', service.id)
     await expectSearch(first, {
       environmentId: environment.id,
       projectId: project.id,
@@ -313,17 +330,44 @@ describe('project, environment, and service selection', () => {
     const url = first.router.state.location.href
     first.unmount()
     renderTurntablePage({ initialEntry: url, sessionState: 'authenticated' })
-    const servicePicker = await screen.findByRole('combobox', { name: 'Service' })
-    await waitFor(() => expect(servicePicker).toHaveValue(service.id))
+    await waitFor(() =>
+      expect(screen.getByRole('combobox', { name: 'Service' })).toHaveValue(service.id),
+    )
+  })
+
+  it('clears child choices when a parent changes', async () => {
+    const secondProject = createRailwayProject({ id: 'project-2' })
+    const secondEnvironment = createRailwayEnvironment({ id: 'environment-2' })
+    readProjectsMock.mockResolvedValue([createRailwayProject(), secondProject])
+    readEnvironmentsMock.mockResolvedValue([createRailwayEnvironment(), secondEnvironment])
+    const page = renderTurntablePage({
+      initialEntry: '/?projectId=project-1&environmentId=environment-1&serviceId=service-1',
+      sessionState: 'authenticated',
+    })
+
+    await selectOption('Environment', secondEnvironment.id)
+    await expectSearch(page, {
+      environmentId: secondEnvironment.id,
+      projectId: testRailwayProjectId,
+    })
+    await selectOption('Service', testRailwayServiceId)
+    await expectSearch(page, {
+      environmentId: secondEnvironment.id,
+      projectId: testRailwayProjectId,
+      serviceId: testRailwayServiceId,
+    })
+
+    await selectOption('Project', secondProject.id)
+    await expectSearch(page, { projectId: secondProject.id })
   })
 
   it.each([
-    ['Environment', []],
-    ['Service', [createRailwayEnvironment()]],
-  ])('shows an empty %s picker after its parent resolves', async (label, environments) => {
+    ['Environment', [], '/?projectId=project-1'],
+    ['Service', [createRailwayEnvironment()], '/?projectId=project-1&environmentId=environment-1'],
+  ])('shows an empty %s picker after its parent resolves', async (label, environments, url) => {
     readEnvironmentsMock.mockResolvedValue(environments)
     readServicesMock.mockResolvedValue([])
-    renderTurntablePage({ initialEntry: '/?projectId=project-1', sessionState: 'authenticated' })
+    renderTurntablePage({ initialEntry: url, sessionState: 'authenticated' })
 
     const picker = await screen.findByRole('combobox', { name: label })
     await waitFor(() => expect(picker).toHaveDisplayValue(`No ${label.toLowerCase()}s`))

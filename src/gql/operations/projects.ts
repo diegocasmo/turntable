@@ -7,7 +7,6 @@ export const projectsQuery = graphql(`
         node {
           id
           name
-          primaryEnvironmentId
           workspace {
             id
             name
