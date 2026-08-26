@@ -8,11 +8,10 @@ import {
   waitForRailwayE2EDeployment,
 } from './railway'
 
-const railwayStatusTimeoutMilliseconds = 120_000
-const railwayTestTimeoutMilliseconds = 480_000
-const expectRailwayStatus = expect.configure({ timeout: railwayStatusTimeoutMilliseconds })
+const millisecondsPerMinute = 60_000
+const expectRailwayStatus = expect.configure({ timeout: 2 * millisecondsPerMinute })
 
-test.describe.configure({ timeout: railwayTestTimeoutMilliseconds })
+test.describe.configure({ timeout: 8 * millisecondsPerMinute })
 
 test('a user can control and refresh the configured Railway service', async ({ page }) => {
   const config = readRailwayE2EConfig()

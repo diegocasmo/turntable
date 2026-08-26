@@ -70,7 +70,7 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
     const refreshLabel = deployment.error ? 'Reconnect' : 'Refresh'
     const refreshPending = deployment.transition === 'refresh'
     action = (
-      <div className="flex flex-wrap gap-2 sm:justify-end">
+      <div className="grid grid-cols-2 items-start gap-2 sm:grid-cols-[repeat(3,max-content)]">
         <Button
           type="button"
           variant="secondary"
@@ -93,9 +93,15 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
           running={running}
           target={target}
         />
-        {current?.status === 'SUCCESS' ? (
-          <SpinDownControl key={current.id} deploymentId={current.id} disabled={actionsDisabled} />
-        ) : null}
+        <div className="min-h-9">
+          {current?.status === 'SUCCESS' ? (
+            <SpinDownControl
+              key={current.id}
+              deploymentId={current.id}
+              disabled={actionsDisabled}
+            />
+          ) : null}
+        </div>
       </div>
     )
   }
@@ -105,7 +111,7 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
       <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#c9c5b9]">
         {deploymentStatusLabel}
       </p>
-      <div className="grid min-h-9 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+      <div className="grid min-h-9 gap-3">
         <div aria-label={deploymentStatusLabel} aria-live="polite" role="status">
           {status}
         </div>
