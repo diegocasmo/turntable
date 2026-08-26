@@ -5,7 +5,6 @@ import { useReadEnvironments } from '@/selection/hooks/use-read-environments'
 import { useReadProjects } from '@/selection/hooks/use-read-projects'
 import { useReadServices } from '@/selection/hooks/use-read-services'
 import { resolvePickerSelection } from '@/selection/resolve-picker-selection'
-import type { SelectionSearch } from '@/selection/schema'
 
 function compareOptions(left: PickerOption, right: PickerOption) {
   return left.name.localeCompare(right.name) || left.id.localeCompare(right.id)
@@ -62,28 +61,13 @@ function resolveStatus(
   return 'Choose a project.'
 }
 
-function resolveSearchWithDefaultOption(
-  search: SelectionSearch,
-  project: ReturnType<typeof resolvePickerSelection>,
-  environment: ReturnType<typeof resolvePickerSelection>,
-  service: ReturnType<typeof resolvePickerSelection>,
-) {
-  if (project.defaultOption) return { ...search, projectId: project.defaultOption.id }
-  if (environment.defaultOption) return { ...search, environmentId: environment.defaultOption.id }
-  if (service.defaultOption) return { ...search, serviceId: service.defaultOption.id }
-}
-
 export function usePickerSelections() {
   const search = useSearch({ from: '/' })
   const navigate = useNavigate({ from: '/' })
   const projectsQuery = useReadProjects()
   const project = resolvePickerSelection(projectsQuery.data, search.projectId)
   const environmentsQuery = useReadEnvironments(project.selectedOption?.id)
-  const environment = resolvePickerSelection(
-    environmentsQuery.data,
-    search.environmentId,
-    project.selectedOption?.primaryEnvironmentId ?? undefined,
-  )
+  const environment = resolvePickerSelection(environmentsQuery.data, search.environmentId)
   const servicesQuery = useReadServices(project.selectedOption?.id, environment.selectedOption?.id)
   const service = resolvePickerSelection(servicesQuery.data, search.serviceId)
   const failedQuery = [projectsQuery, environmentsQuery, servicesQuery].find(({ error }) => error)
@@ -95,12 +79,6 @@ export function usePickerSelections() {
     environment: environmentsQuery.isPending,
     service: servicesQuery.isPending,
   })
-  const searchWithDefaultOption = resolveSearchWithDefaultOption(
-    search,
-    project,
-    environment,
-    service,
-  )
   const deploymentTarget =
     project.selectedOption && environment.selectedOption && service.selectedOption
       ? {
@@ -138,7 +116,6 @@ export function usePickerSelections() {
     },
     failure,
     deploymentTarget,
-    searchWithDefaultOption,
     status,
   }
 }

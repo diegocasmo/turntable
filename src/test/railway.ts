@@ -27,7 +27,6 @@ export function createRailwayProject(overrides: Partial<ProjectOption> = {}): Pr
   return {
     id: testRailwayProjectId,
     name: 'Turntable',
-    primaryEnvironmentId: testRailwayEnvironmentId,
     workspace: { id: testRailwayWorkspaceId, name: 'Railway workspace' },
     ...overrides,
   }
