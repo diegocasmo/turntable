@@ -12,6 +12,7 @@ const buttonVariants = cva(
           'border-[#d59c55] bg-[#d59c55] text-[#141613] hover:border-[#e5ad68] hover:bg-[#e5ad68]',
         secondary:
           'border-[#706d60] bg-[#242522] text-[#f4f0e6] hover:border-[#c9c5b9] hover:bg-[#30312d]',
+        ghost: 'border-transparent bg-transparent text-[#f4f0e6] shadow-none hover:bg-[#30312d]',
         destructive:
           'border-[#d97767] bg-[#242522] text-[#f0b8ae] hover:bg-[#2d201e] hover:text-[#f0b8ae]',
         destructiveConfirm:
@@ -21,6 +22,7 @@ const buttonVariants = cva(
         sm: "h-8 gap-1.5 px-2.5 [&_svg:not([class*='size-'])]:size-3.5",
         default: 'h-9 gap-2 px-3',
         lg: 'h-12 gap-2 px-5',
+        'icon-xs': "size-6 gap-0 px-0 [&_svg:not([class*='size-'])]:size-3",
       },
     },
     defaultVariants: {
