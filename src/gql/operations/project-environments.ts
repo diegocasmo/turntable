@@ -8,6 +8,18 @@ export const projectEnvironmentsQuery = graphql(`
           node {
             id
             name
+            serviceInstances(first: $first) {
+              edges {
+                node {
+                  id: serviceId
+                  name: serviceName
+                }
+              }
+              pageInfo {
+                endCursor
+                hasNextPage
+              }
+            }
           }
         }
         pageInfo {
@@ -22,4 +34,3 @@ export const projectEnvironmentsQuery = graphql(`
 export type ProjectEnvironmentsConnection = ResultOf<
   typeof projectEnvironmentsQuery
 >['project']['environments']
-export type EnvironmentOption = ProjectEnvironmentsConnection['edges'][number]['node']

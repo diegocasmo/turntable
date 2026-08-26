@@ -8,7 +8,7 @@ export type PickerOption = Readonly<{ id: string; name: string }>
 export type PickerGroup = PickerOption & Readonly<{ options: readonly PickerOption[] }>
 export type PickerState =
   | Readonly<{ kind: 'blocked'; parent: string }>
-  | Readonly<{ kind: 'empty' | 'loading' | 'ready' | 'unavailable' }>
+  | Readonly<{ kind: 'empty' | 'ready' }>
 
 export type PickerModel = Readonly<{
   groups?: readonly PickerGroup[]
@@ -26,8 +26,6 @@ function resolvePlaceholder(state: PickerState, label: string) {
     const parentArticle = state.parent === 'environment' ? 'an' : 'a'
     return `Choose ${parentArticle} ${state.parent} first`
   }
-  if (state.kind === 'loading') return `Loading ${noun}s...`
-  if (state.kind === 'unavailable') return `${label}s unavailable`
   if (state.kind === 'empty') return `No ${noun}s`
   return `Choose ${article} ${noun}`
 }
@@ -50,7 +48,9 @@ export function Picker({ groups, label, onSelect, options, selectedOption, state
 
   return (
     <label htmlFor={label} className="block border-t border-[#4d4e47] pt-3">
-      <span className="font-mono text-xs uppercase tracking-[0.16em] text-[#c9c5b9]">{label}</span>
+      <span className="block font-mono text-xs uppercase tracking-[0.16em] text-[#c9c5b9]">
+        {label}
+      </span>
       <NativeSelect
         id={label}
         aria-describedby="selection-status"

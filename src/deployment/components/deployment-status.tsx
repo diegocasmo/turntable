@@ -6,22 +6,20 @@ import { useStreamDeploymentEvents } from '@/deployment/hooks/use-stream-deploym
 import type { DeploymentTarget } from '@/deployment/schema'
 
 type DeploymentStatusProps = Readonly<{
-  selectionFailure: Readonly<{ message: string; retry: () => void }> | undefined
   target: DeploymentTarget | undefined
 }>
 
 const deploymentStatusLabel = 'Deployment status'
 
-function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusProps) {
+function DeploymentStatusContent({ target }: DeploymentStatusProps) {
   const deployment = useStreamDeploymentEvents(target)
-  const failure =
-    selectionFailure === undefined && deployment.error
-      ? {
-          label: 'Reconnect',
-          message: deployment.error.message,
-          retry: () => void deployment.refetch(),
-        }
-      : selectionFailure && { ...selectionFailure, label: 'Retry' }
+  const failure = deployment.error
+    ? {
+        label: 'Reconnect',
+        message: deployment.error.message,
+        retry: () => void deployment.refetch(),
+      }
+    : undefined
 
   if (failure) {
     return (

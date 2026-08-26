@@ -4,9 +4,7 @@ import { subscribeToRailwayDeployment } from '@/deployment/stream-deployment-eve
 import { serviceInstanceDeployMutation } from '@/gql/operations/service-instance-deploy'
 import { createRailwayClient } from '@/railway/client.server'
 import { railwayHttpsUrlSchema, railwayWebSocketUrlSchema } from '@/railway/url-schema'
-import { readRailwayEnvironments } from '@/selection/read-environments.server'
-import { readRailwayProjects } from '@/selection/read-projects.server'
-import { readRailwayServices } from '@/selection/read-services.server'
+import { readRailwaySelectionHierarchy } from '@/selection/read-selection-hierarchy.server'
 import { z } from '@/zod'
 
 const environmentSchema = z.object({
@@ -46,20 +44,10 @@ export function readRailwayE2EConfig() {
 export type RailwayE2EConfig = ReturnType<typeof readRailwayE2EConfig>
 
 const defaultGuardDependencies = {
-  readEnvironments: readRailwayEnvironments,
-  readProjects: readRailwayProjects,
-  readServices: readRailwayServices,
+  readSelectionHierarchy: readRailwaySelectionHierarchy,
 }
 
 type GuardDependencies = Readonly<typeof defaultGuardDependencies>
-
-function includesOption(
-  options: readonly Readonly<{ id: string; name: string }>[],
-  id: string,
-  name: string,
-) {
-  return options.some((option) => option.id === id && option.name === name)
-}
 
 export async function runWithRailwayE2ETarget<Value>(
   config: RailwayE2EConfig,
@@ -67,15 +55,14 @@ export async function runWithRailwayE2ETarget<Value>(
   dependencies: GuardDependencies = defaultGuardDependencies,
 ) {
   const { apiUrl, expectedEnvironmentName, target, token } = config
-  const [projects, environments, services] = await Promise.all([
-    dependencies.readProjects(token, apiUrl),
-    dependencies.readEnvironments(token, apiUrl, target.projectId),
-    dependencies.readServices(token, apiUrl, target.projectId, target.environmentId),
-  ])
+  const projects = await dependencies.readSelectionHierarchy(token, apiUrl)
+  const project = projects.find(({ id }) => id === target.projectId)
+  const environment = project?.environments.find(({ id }) => id === target.environmentId)
+  const service = environment?.services.find(({ id }) => id === target.serviceId)
   const knownTarget =
-    includesOption(projects, target.projectId, targetNames.project) &&
-    includesOption(environments, target.environmentId, expectedEnvironmentName) &&
-    includesOption(services, target.serviceId, targetNames.service)
+    project?.name === targetNames.project &&
+    environment?.name === expectedEnvironmentName &&
+    service?.name === targetNames.service
 
   if (!knownTarget) {
     throw new Error(
