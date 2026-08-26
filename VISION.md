@@ -261,7 +261,7 @@ Two limits:
 
 The refresh control re-reads the newest deployment and moves the subscription. The CLI makes the same trade-off. It re-queries on demand, and it has no loop that waits for a new deployment ID.
 
-One rule holds in every case: a client never derives state from its own actions. A click sends a request. A failed mutation shows a toast. The stream reconciles the screen.
+One rule holds in every case: a client never derives state from its own actions. A click sends a request. A failed mutation shows an inline alert. The stream reconciles the screen.
 
 ### Action policy
 
@@ -280,7 +280,7 @@ The 13 statuses still have a job. One function maps a status to a badge colour a
 
 Two rules bound the policy:
 
-1. Every command server function resolves the current state again on the server, checks the gate, and compares the expected deployment ID. A stale screen cannot act. One command per service runs at a time, and the gate holds until the command returns.
+1. A command acts on the exact deployment ID shown by the live stream. Railway validates the deployment state and the token's access. Turntable does not resolve the service again.
 2. The server parses the full GraphQL response, including the `errors` array ([GraphQL specification](https://spec.graphql.org/September2025/#sec-Response)). It never retries a mutation by itself after an unclear answer, because a repeat of a destructive call can act twice.
 
 ### State ownership

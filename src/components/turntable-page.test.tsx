@@ -28,6 +28,7 @@ const {
   readEnvironmentsMock,
   readProjectsMock,
   readServicesMock,
+  spinDownDeploymentMock,
   streamDeploymentEventsMock,
 } = vi.hoisted(() => ({
   connectToRailwayMock: vi.fn(),
@@ -35,6 +36,7 @@ const {
   readEnvironmentsMock: vi.fn(),
   readProjectsMock: vi.fn(),
   readServicesMock: vi.fn(),
+  spinDownDeploymentMock: vi.fn(),
   streamDeploymentEventsMock: vi.fn(),
 }))
 
@@ -46,6 +48,9 @@ vi.mock('@/session/disconnect-from-railway', () => ({
 }))
 vi.mock('@/deployment/stream-deployment-events', () => ({
   streamDeploymentEvents: streamDeploymentEventsMock,
+}))
+vi.mock('@/deployment/spin-down-deployment', () => ({
+  spinDownDeployment: spinDownDeploymentMock,
 }))
 vi.mock('@/selection/read-environments', () => ({ readEnvironments: readEnvironmentsMock }))
 vi.mock('@/selection/read-projects', () => ({ readProjects: readProjectsMock }))
@@ -139,6 +144,7 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue([createRailwayProject(), createRailwayProject({ id: 'project-2' })])
   readServicesMock.mockReset().mockResolvedValue([createRailwayService()])
+  spinDownDeploymentMock.mockReset().mockResolvedValue(true)
   streamDeploymentEventsMock
     .mockReset()
     .mockResolvedValue(createEventStream({ data: null, type: 'snapshot' }))
@@ -447,6 +453,7 @@ describe('deployment status', () => {
       type: 'snapshot',
     })
     expect(await screen.findByText('Needs approval')).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Spin down' })).not.toBeInTheDocument()
     expect(screen.queryByText('deployment-private-id')).not.toBeInTheDocument()
     await writer.write({
       data: { deploymentStopped: false, id: 'deployment-private-id', status: 'unknown' },
@@ -458,6 +465,37 @@ describe('deployment status', () => {
     page.unmount()
     await waitFor(() => expect(signal?.aborted).toBe(true))
     await writer.close()
+  })
+
+  it('confirms the exact deployment and shows a command failure', async () => {
+    const deploymentId = 'deployment-private-id'
+    spinDownDeploymentMock.mockResolvedValue(false)
+    streamDeploymentEventsMock.mockResolvedValue(
+      createEventStream({
+        data: { deploymentStopped: false, id: deploymentId, status: 'SUCCESS' },
+        type: 'snapshot',
+      }),
+    )
+    renderStatus()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Spin down' }))
+    let dialog = screen.getByRole('alertdialog')
+    expect(dialog).toHaveAccessibleDescription(
+      'This removes the running container. The service configuration stays in Railway.',
+    )
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    expect(spinDownDeploymentMock).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Spin down' }))
+    dialog = screen.getByRole('alertdialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Spin down' }))
+
+    await waitFor(() =>
+      expect(spinDownDeploymentMock).toHaveBeenCalledWith({ data: { deploymentId } }),
+    )
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Railway did not remove this deployment. Try again.',
+    )
   })
 
   it('shows a terminal unavailable deployment', async () => {

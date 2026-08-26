@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
+import { SpinDownControl } from '@/deployment/components/spin-down-control'
 import { StatusBadge } from '@/deployment/components/status-badge'
 import { useStreamDeploymentEvents } from '@/deployment/hooks/use-stream-deployment-events'
 import type { DeploymentTarget } from '@/deployment/schema'
@@ -41,6 +42,7 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
     )
   }
 
+  let action: ReactNode
   let status: ReactNode
   if (target === undefined) {
     status = <span className="text-sm text-[#c9c5b9]">Choose a service</span>
@@ -49,17 +51,30 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
   } else if (deployment.data?.type === 'gone') {
     status = <span className="text-sm text-[#f0b8ae]">Deployment unavailable</span>
   } else if (deployment.data?.type === 'snapshot' || deployment.data?.type === 'status') {
-    status = <StatusBadge status={deployment.data.data?.status ?? null} />
+    const current = deployment.data.data
+    status = <StatusBadge status={current?.status ?? null} />
+    action =
+      current?.status === 'SUCCESS' ? (
+        <SpinDownControl key={current.id} deploymentId={current.id} />
+      ) : null
   } else {
     status = null
   }
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-      <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#c9c5b9]">
-        {deploymentStatusLabel}
-      </p>
-      {status}
+      <div
+        aria-label={deploymentStatusLabel}
+        aria-live="polite"
+        role="status"
+        className="flex flex-wrap items-center gap-x-4 gap-y-2"
+      >
+        <p className="font-mono text-xs uppercase tracking-[0.16em] text-[#c9c5b9]">
+          {deploymentStatusLabel}
+        </p>
+        {status}
+      </div>
+      {action}
     </div>
   )
 }
@@ -67,12 +82,7 @@ function DeploymentStatusContent({ selectionFailure, target }: DeploymentStatusP
 export function DeploymentStatus(props: DeploymentStatusProps) {
   return (
     <section aria-label={deploymentStatusLabel} className="border-t border-[#4d4e47]">
-      <div
-        aria-label={deploymentStatusLabel}
-        aria-live="polite"
-        role="status"
-        className="grid min-h-12 items-center"
-      >
+      <div className="grid min-h-12 items-center">
         <DeploymentStatusContent {...props} />
       </div>
     </section>

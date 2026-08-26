@@ -28,7 +28,11 @@ type StreamDeploymentEventsInput = Readonly<{
   webSocketUrl: string
 }>
 
-function subscribeToRailwayDeployment(deploymentId: string, token: string, webSocketUrl: string) {
+export function subscribeToRailwayDeployment(
+  deploymentId: string,
+  token: string,
+  webSocketUrl: string,
+) {
   const client = createRailwaySubscriptionClient({ token, webSocketUrl })
   const subscription = client.subscribe<RailwayDeploymentStatusResult, { deploymentId: string }>({
     document: deploymentStatusSubscription,
