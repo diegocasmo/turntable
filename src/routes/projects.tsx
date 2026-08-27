@@ -1,5 +1,10 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, useRouterState } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  type ErrorComponentProps,
+  Link,
+  useRouterState,
+} from '@tanstack/react-router'
 import { TurntablePage } from '@/components/turntable-page'
 import { EntityCard, primaryActionClassName } from '@/selection/components/entity-card-grid'
 import { SelectionListPage } from '@/selection/components/selection-list-page'
@@ -11,11 +16,31 @@ import { createProjectsQueryOptions } from '@/selection/query-options'
 import { loadProjectsRoute, refreshProjectsRoute } from '@/selection/route-loaders'
 import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
 
+const projectRouteBreadcrumbs = [
+  { kind: 'current', label: 'Project' },
+  { kind: 'disabled', label: 'Environment', description: 'Select a project first' },
+  { kind: 'disabled', label: 'Services', description: 'Select an environment first' },
+] as const
+
+function ProjectRoutePending() {
+  return <SelectionRoutePending breadcrumbs={projectRouteBreadcrumbs} title="Loading projects" />
+}
+
+function ProjectRouteError(props: ErrorComponentProps) {
+  return (
+    <SelectionRouteError
+      {...props}
+      breadcrumbs={projectRouteBreadcrumbs}
+      title="Could not load projects"
+    />
+  )
+}
+
 export const Route = createFileRoute('/projects')({
   validateSearch: entitySearchSchema,
   loader: ({ context }) => loadProjectsRoute(context),
-  pendingComponent: SelectionRoutePending,
-  errorComponent: SelectionRouteError,
+  pendingComponent: ProjectRoutePending,
+  errorComponent: ProjectRouteError,
   component: ProjectRoute,
 })
 
@@ -38,11 +63,7 @@ function AuthenticatedProjectRoute() {
   return (
     <TurntablePage sessionState="authenticated">
       <SelectionListPage
-        breadcrumbs={[
-          { kind: 'current', label: 'Project' },
-          { kind: 'disabled', label: 'Environment', description: 'Select a project first' },
-          { kind: 'disabled', label: 'Services', description: 'Select an environment first' },
-        ]}
+        breadcrumbs={projectRouteBreadcrumbs}
         emptyMessage="No projects are available."
         entities={projects.map((project) => ({
           ...project,

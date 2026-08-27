@@ -5,16 +5,20 @@ import {
   EntitySelectionPage,
   EntitySelectionSkeleton,
 } from '@/selection/components/entity-selection-page'
+import type { SelectionBreadcrumbStep } from '@/selection/components/selection-breadcrumbs'
 
-const loadingBreadcrumbs = [{ kind: 'current', label: 'Selection' }] as const
+type SelectionRouteStateProps = Readonly<{
+  breadcrumbs: readonly SelectionBreadcrumbStep[]
+  title: string
+}>
 
-export function SelectionRoutePending() {
+export function SelectionRoutePending({ breadcrumbs, title }: SelectionRouteStateProps) {
   return (
     <TurntablePage sessionState="authenticated">
       <EntitySelectionPage
-        breadcrumbs={loadingBreadcrumbs}
+        breadcrumbs={breadcrumbs}
         feedback="Loading choices."
-        title="Loading selection"
+        title={title}
       >
         <EntitySelectionSkeleton />
       </EntitySelectionPage>
@@ -22,10 +26,15 @@ export function SelectionRoutePending() {
   )
 }
 
-export function SelectionRouteError({ error, reset }: ErrorComponentProps) {
+export function SelectionRouteError({
+  breadcrumbs,
+  error,
+  reset,
+  title,
+}: ErrorComponentProps & SelectionRouteStateProps) {
   return (
     <TurntablePage sessionState="authenticated">
-      <EntitySelectionPage breadcrumbs={loadingBreadcrumbs} title="Could not load selection">
+      <EntitySelectionPage breadcrumbs={breadcrumbs} title={title}>
         <EntitySelectionFailure error={error} onRetry={reset} />
       </EntitySelectionPage>
     </TurntablePage>

@@ -1,5 +1,11 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, useRouter, useRouterState } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  type ErrorComponentProps,
+  Link,
+  useRouter,
+  useRouterState,
+} from '@tanstack/react-router'
 import { useState } from 'react'
 import { TurntablePage } from '@/components/turntable-page'
 import {
@@ -8,6 +14,7 @@ import {
 } from '@/deployment/components/service-actions'
 import { StatusBadge } from '@/deployment/components/status-badge'
 import { EntityCard } from '@/selection/components/entity-card-grid'
+import type { SelectionBreadcrumbStep } from '@/selection/components/selection-breadcrumbs'
 import { SelectionListPage } from '@/selection/components/selection-list-page'
 import {
   SelectionRouteError,
@@ -40,13 +47,64 @@ function checkServiceOperationIsVisible(
     : deploymentId === operation.deploymentId || deploymentId !== operation.previousDeploymentId
 }
 
+function readServiceRouteStateBreadcrumbs(projectId: string): readonly SelectionBreadcrumbStep[] {
+  return [
+    {
+      kind: 'link',
+      label: 'Project',
+      link: (
+        <Link activeOptions={{ exact: true }} activeProps={{}} search={{}} to="/projects">
+          Project
+        </Link>
+      ),
+    },
+    {
+      kind: 'link',
+      label: 'Environment',
+      link: (
+        <Link
+          activeOptions={{ exact: true }}
+          activeProps={{}}
+          params={{ projectId }}
+          search={{}}
+          to="/projects/$projectId/environments"
+        >
+          Environment
+        </Link>
+      ),
+    },
+    { kind: 'current', label: 'Services' },
+  ]
+}
+
+function ServiceRoutePending() {
+  const { projectId } = Route.useParams()
+  return (
+    <SelectionRoutePending
+      breadcrumbs={readServiceRouteStateBreadcrumbs(projectId)}
+      title="Loading services"
+    />
+  )
+}
+
+function ServiceRouteError(props: ErrorComponentProps) {
+  const { projectId } = Route.useParams()
+  return (
+    <SelectionRouteError
+      {...props}
+      breadcrumbs={readServiceRouteStateBreadcrumbs(projectId)}
+      title="Could not load services"
+    />
+  )
+}
+
 export const Route = createFileRoute('/projects_/$projectId/environments_/$environmentId/services')(
   {
     validateSearch: entitySearchSchema,
     loader: ({ context, params }) =>
       loadServicesRoute(context, params.projectId, params.environmentId),
-    pendingComponent: SelectionRoutePending,
-    errorComponent: SelectionRouteError,
+    pendingComponent: ServiceRoutePending,
+    errorComponent: ServiceRouteError,
     component: ServiceRoute,
   },
 )

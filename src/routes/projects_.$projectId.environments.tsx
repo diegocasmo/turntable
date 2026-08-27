@@ -1,5 +1,11 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, useRouter, useRouterState } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  type ErrorComponentProps,
+  Link,
+  useRouter,
+  useRouterState,
+} from '@tanstack/react-router'
 import { TurntablePage } from '@/components/turntable-page'
 import { EntityCard, primaryActionClassName } from '@/selection/components/entity-card-grid'
 import { SelectionListPage } from '@/selection/components/selection-list-page'
@@ -14,11 +20,44 @@ import {
 import { loadEnvironmentsRoute, refreshEnvironmentsRoute } from '@/selection/route-loaders'
 import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
 
+const environmentRouteStateBreadcrumbs = [
+  {
+    kind: 'link',
+    label: 'Project',
+    link: (
+      <Link activeOptions={{ exact: true }} activeProps={{}} search={{}} to="/projects">
+        Project
+      </Link>
+    ),
+  },
+  { kind: 'current', label: 'Environment' },
+  { kind: 'disabled', label: 'Services', description: 'Select an environment first' },
+] as const
+
+function EnvironmentRoutePending() {
+  return (
+    <SelectionRoutePending
+      breadcrumbs={environmentRouteStateBreadcrumbs}
+      title="Loading environments"
+    />
+  )
+}
+
+function EnvironmentRouteError(props: ErrorComponentProps) {
+  return (
+    <SelectionRouteError
+      {...props}
+      breadcrumbs={environmentRouteStateBreadcrumbs}
+      title="Could not load environments"
+    />
+  )
+}
+
 export const Route = createFileRoute('/projects_/$projectId/environments')({
   validateSearch: entitySearchSchema,
   loader: ({ context, params }) => loadEnvironmentsRoute(context, params.projectId),
-  pendingComponent: SelectionRoutePending,
-  errorComponent: SelectionRouteError,
+  pendingComponent: EnvironmentRoutePending,
+  errorComponent: EnvironmentRouteError,
   component: EnvironmentRoute,
 })
 
