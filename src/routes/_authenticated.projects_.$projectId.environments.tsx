@@ -6,8 +6,7 @@ import {
   SelectionRouteError,
   SelectionRoutePending,
 } from '@/selection/components/selection-route-state'
-import { findEntityById } from '@/selection/find-entity-by-id'
-import { createEnvironmentsQueryOptions, createProjectsQueryOptions } from '@/selection/queries'
+import { createEnvironmentsQueryOptions } from '@/selection/queries'
 import { loadEnvironmentsRoute, refreshEnvironmentsRoute } from '@/selection/route-loaders'
 import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
 
@@ -22,23 +21,21 @@ export const Route = createFileRoute('/_authenticated/projects_/$projectId/envir
 function EnvironmentRoute() {
   const { queryClient } = Route.useRouteContext()
   const { projectId } = Route.useParams()
-  const projects = useSuspenseQuery(createProjectsQueryOptions()).data
+  const { project } = Route.useLoaderData()
   const environments = useSuspenseQuery(createEnvironmentsQueryOptions(projectId)).data
   const navigate = Route.useNavigate()
   const router = useRouter()
   const { q = '' } = Route.useSearch()
   const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
-  const projectName = findEntityById(projects, projectId)?.name ?? projectId
-
   return (
     <SelectionListPage
       breadcrumbs={[
         {
           kind: 'link',
-          label: `Project: ${projectName}`,
+          label: `Project: ${project.name}`,
           link: (
             <Link activeOptions={{ exact: true }} activeProps={{}} search={{}} to="/projects">
-              Project: {projectName}
+              Project: {project.name}
             </Link>
           ),
         },
