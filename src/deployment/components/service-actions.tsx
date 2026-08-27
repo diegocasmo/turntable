@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import { SpinDownAction } from '@/deployment/components/spin-down-action'
 import { SpinUpAction } from '@/deployment/components/spin-up-action'
 import type { DeploymentTarget } from '@/deployment/schema'
@@ -25,7 +25,6 @@ export function ServiceActions({
   serviceName,
   target,
 }: ServiceActionsProps) {
-  const unavailableDescriptionId = useId()
   const [announcement, setAnnouncement] = useState('')
   const queryClient = useQueryClient()
   const deploymentId = deployment?.status === 'SUCCESS' ? deployment.id : null
@@ -66,13 +65,9 @@ export function ServiceActions({
         <SpinDownAction
           deploymentId={deploymentId}
           serviceName={serviceName}
-          unavailableDescriptionId={unavailableDescriptionId}
           onRequestAccepted={handleSpinDownAccepted}
         />
       </div>
-      <p id={unavailableDescriptionId} className="min-h-5 text-xs leading-5 text-foreground-soft">
-        {deploymentId ? '' : 'Spin down requires a successful deployment.'}
-      </p>
       <p aria-live="polite" className="sr-only" role="status">
         {announcement}
       </p>

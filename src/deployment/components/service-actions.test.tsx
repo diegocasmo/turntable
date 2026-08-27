@@ -59,12 +59,13 @@ describe('service card actions', () => {
     expect(screen.queryByRole('button', { name: 'Actions for Web' })).not.toBeInTheDocument()
   })
 
-  it('shows why spin down is unavailable without hiding the action', () => {
+  it('shows why spin down is unavailable from the disabled action', async () => {
     renderComponent({ deployment: null })
     const spinDown = screen.getByRole('button', { name: 'Spin down Web' })
     fireEvent.click(spinDown)
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
-    expect(screen.getByText('Spin down requires a successful deployment.')).toBeVisible()
+    fireEvent.focus(spinDown)
+    expect(await screen.findByText('Spin down requires a successful deployment.')).toBeVisible()
   })
 
   it('shows spin-up request progress in the confirmation button', async () => {
@@ -128,6 +129,6 @@ describe('service card actions', () => {
 
     const confirm = screen.getByRole('button', { name: 'Spin down Web' })
     expect(confirm).toBeDisabled()
-    expect(screen.getByText(/no successful deployment/)).toBeVisible()
+    expect(screen.getByText(/requires a successful deployment/)).toBeVisible()
   })
 })
