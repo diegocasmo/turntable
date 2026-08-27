@@ -1,4 +1,4 @@
-import { CircleNotchIcon } from '@phosphor-icons/react/CircleNotch'
+import { ArrowsClockwiseIcon } from '@phosphor-icons/react/ArrowsClockwise'
 import { HourglassSimpleIcon } from '@phosphor-icons/react/HourglassSimple'
 import { WarningIcon } from '@phosphor-icons/react/Warning'
 import { Badge } from '@/components/ui/badge'
@@ -33,7 +33,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
       role="status"
     >
       {presentation?.indicator === 'activity' ? (
-        <CircleNotchIcon aria-hidden="true" data-icon="inline-start" weight="bold" />
+        <ArrowsClockwiseIcon aria-hidden="true" data-icon="inline-start" weight="bold" />
       ) : null}
       {presentation?.indicator === 'waiting' ? (
         <HourglassSimpleIcon aria-hidden="true" data-icon="inline-start" weight="bold" />

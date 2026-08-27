@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { StatusBadge } from '@/deployment/components/status-badge'
 import type { DeploymentStatus } from '@/railway/deployment-status'
 
-vi.mock('@phosphor-icons/react/CircleNotch', () => ({
-  CircleNotchIcon: (props: ComponentProps<'svg'>) => (
+vi.mock('@phosphor-icons/react/ArrowsClockwise', () => ({
+  ArrowsClockwiseIcon: (props: ComponentProps<'svg'>) => (
     <svg {...props} data-status-indicator="activity" />
   ),
 }))
