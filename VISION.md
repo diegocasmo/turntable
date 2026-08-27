@@ -55,13 +55,14 @@ error. It does not prove that an entity is missing.
 
 ## Selection data
 
-Each route reads only the data that it shows:
+Each route reads the collection that it shows. A dependent route also reads only the selected
+parent records that it needs for path validation and breadcrumb names:
 
 | Route | Railway read |
 | --- | --- |
 | Projects | accessible workspaces, then projects in each workspace |
-| Environments | environments for one project |
-| Services | service instances for one project and environment |
+| Environments | selected project, then environments for that project |
+| Services | selected project and environment, then service instances for that environment |
 
 The project read uses `apiToken { workspaces { id } }`. This works for account and workspace tokens.
 A workspace token cannot use `me { workspaces }`.
@@ -70,17 +71,13 @@ The Services read asks each `ServiceInstance` for `latestDeployment { id status 
 deployment history. Railway returns `null` for `latestDeployment` after Spin down. Turntable then
 shows `No active deployment`. This is an active-service snapshot, not a deployment history view.
 
-All connection reads follow Railway pagination. Independent workspace project reads run in
-parallel. Query keys include the required parent IDs:
-
-```text
-selection / projects
-selection / environments / projectId
-selection / services / projectId / environmentId
-```
+All collection reads follow Railway pagination. Independent workspace project reads run in
+parallel. [The query-key registry](./src/query-keys.ts) includes each required parent ID.
 
 Route loaders use `ensureQueryData`. Route components use the same query options. This lets one
-request serve the loader and component. Browser Back can reuse a successful cached collection.
+request serve the loader and component. A loader first reuses a positive selected parent from a
+cached collection. A cold deep link reads the project or environment by ID instead of reading an
+unrelated parent collection. The loader returns the parent names for the breadcrumbs.
 
 Search filters the fetched collection in the browser with `fuzzysort`. It does not make another
 Railway request. The search input and cards do not keep a second copy of route state.
@@ -164,8 +161,8 @@ card shows its status and a stable action area. Spin up and Spin down are direct
 down is available only when the exact status allows it. There is no service Refresh action.
 
 The page-level Refresh action reads the visible collection again. Dependent pages first read their
-parents again. A successful read that no longer contains a selected parent returns the user to the
-nearest valid collection route. A failed read stays on the current route and shows the error.
+selected parent records again. A successful not-found result returns the user to the nearest valid
+collection route. A failed read stays on the current route and shows the error.
 
 Sign out is in the application header. The shell uses CSS to fill at least the dynamic viewport
 height. Content can grow and scroll when the card list is long.

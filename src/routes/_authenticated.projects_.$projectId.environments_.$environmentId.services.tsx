@@ -13,11 +13,7 @@ import {
   SelectionRoutePending,
 } from '@/selection/components/selection-route-state'
 import { findEntityById } from '@/selection/find-entity-by-id'
-import {
-  createEnvironmentsQueryOptions,
-  createProjectsQueryOptions,
-  createServicesQueryOptions,
-} from '@/selection/queries'
+import { createServicesQueryOptions } from '@/selection/queries'
 import { loadServicesRoute, refreshServicesRoute } from '@/selection/route-loaders'
 import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
 
@@ -53,10 +49,9 @@ export const Route = createFileRoute(
 
 function ServiceRoute() {
   const { queryClient } = Route.useRouteContext()
+  const { environment, project } = Route.useLoaderData()
   const { environmentId, projectId } = Route.useParams()
   const [pendingOperations, setPendingOperations] = useState<PendingServiceOperation[]>([])
-  const projects = useSuspenseQuery(createProjectsQueryOptions()).data
-  const environments = useSuspenseQuery(createEnvironmentsQueryOptions(projectId)).data
   const servicesQuery = useSuspenseQuery(
     createServicesQueryOptions(projectId, environmentId, pendingOperations.length > 0),
   )
@@ -71,24 +66,21 @@ function ServiceRoute() {
   const router = useRouter()
   const { q = '' } = Route.useSearch()
   const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
-  const projectName = findEntityById(projects, projectId)?.name ?? projectId
-  const environmentName = findEntityById(environments, environmentId)?.name ?? environmentId
-
   return (
     <SelectionListPage
       breadcrumbs={[
         {
           kind: 'link',
-          label: `Project: ${projectName}`,
+          label: `Project: ${project.name}`,
           link: (
             <Link activeOptions={{ exact: true }} activeProps={{}} search={{}} to="/projects">
-              Project: {projectName}
+              Project: {project.name}
             </Link>
           ),
         },
         {
           kind: 'link',
-          label: `Environment: ${environmentName}`,
+          label: `Environment: ${environment.name}`,
           link: (
             <Link
               activeOptions={{ exact: true }}
@@ -97,7 +89,7 @@ function ServiceRoute() {
               search={{}}
               to="/projects/$projectId/environments"
             >
-              Environment: {environmentName}
+              Environment: {environment.name}
             </Link>
           ),
         },

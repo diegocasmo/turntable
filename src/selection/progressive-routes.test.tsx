@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRailwayEnvironment, createRailwayProject } from '@/test/railway'
 import { renderRoutes } from '@/test/render-routes'
 
-const { readEnvironmentsMock, readProjectsMock } = vi.hoisted(() => ({
+const { readEnvironmentsMock, readProjectMock, readProjectsMock } = vi.hoisted(() => ({
   readEnvironmentsMock: vi.fn(),
+  readProjectMock: vi.fn(),
   readProjectsMock: vi.fn(),
 }))
 
@@ -19,10 +20,14 @@ vi.mock('@/routes/__root', async () => {
   }
 })
 vi.mock('@/selection/read-projects', () => ({ readProjects: readProjectsMock }))
+vi.mock('@/selection/read-project', () => ({ readProject: readProjectMock }))
 vi.mock('@/selection/read-environments', () => ({ readEnvironments: readEnvironmentsMock }))
 vi.stubGlobal('scrollTo', vi.fn())
 
 beforeEach(() => {
+  readProjectMock
+    .mockReset()
+    .mockResolvedValue(createRailwayProject({ id: 'project-worker', name: 'Worker' }))
   readProjectsMock
     .mockReset()
     .mockResolvedValue([
@@ -139,6 +144,7 @@ describe('progressive project and environment routes', () => {
 
     expect(await screen.findByRole('link', { name: 'Select Staging' })).toBeVisible()
     expect(page.router.state.location.href).toBe('/projects/project-worker/environments?q=stag')
-    expect(readProjectsMock).toHaveBeenCalledTimes(2)
+    expect(readProjectMock).toHaveBeenCalledTimes(2)
+    expect(readProjectsMock).not.toHaveBeenCalled()
   })
 })
