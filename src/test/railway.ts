@@ -1,12 +1,13 @@
+import { vi } from 'vitest'
 import type { RailwayDeployment } from '@/gql/operations/deployment-identity'
 import type { ServiceOption } from '@/gql/operations/environment-services'
+import type { SelectionEnvironment, SelectionProject } from '@/gql/operations/projects'
+import type { EnvironmentOption } from '@/gql/operations/selection-environments'
 import type {
-  EnvironmentOption,
   ProjectOption,
-  SelectionEnvironment,
-  SelectionProject,
   SelectionProjectsConnection,
-} from '@/gql/operations/projects'
+} from '@/gql/operations/selection-projects'
+import { createJsonResponse } from '@/test/response'
 
 export const testRailwayApiUrl = 'https://backboard.railway.test/graphql/v2'
 export const testRailwayEnvironmentId = 'environment-1'
@@ -44,7 +45,12 @@ export function createRailwayEnvironment(
 }
 
 export function createRailwayService(overrides: Partial<ServiceOption> = {}): ServiceOption {
-  return { id: testRailwayServiceId, name: 'Web', ...overrides }
+  return {
+    id: testRailwayServiceId,
+    latestDeployment: { id: 'deployment-1', status: 'SUCCESS' },
+    name: 'Web',
+    ...overrides,
+  }
 }
 
 export function createSelectionEnvironment(
@@ -70,13 +76,39 @@ export function createSelectionProject(
 export function createRailwayDeployment(
   overrides: Partial<RailwayDeployment> = {},
 ): RailwayDeployment {
-  return {
+  const deployment = {
     createdAt: '2026-08-25T12:00:00.000Z',
     id: 'deployment-1',
+    status: 'SUCCESS',
+  } satisfies { createdAt: string; id: string; status: 'SUCCESS' }
+
+  return {
+    ...deployment,
     ...overrides,
   }
 }
 
 export function createRailwayResponse<Data>(data: Data) {
   return { data }
+}
+
+export function createRailwayFetch(...bodies: readonly unknown[]) {
+  let responseIndex = 0
+
+  return vi.fn(async (_request: Request) => {
+    const body = bodies[responseIndex]
+    responseIndex += 1
+
+    if (body === undefined) {
+      throw new Error('The test did not provide a Railway response.')
+    }
+
+    return createJsonResponse(body)
+  })
+}
+
+export function createRailwayTokenContext(...workspaceIds: readonly string[]) {
+  return createRailwayResponse({
+    apiToken: { workspaces: workspaceIds.map((id) => ({ id })) },
+  })
 }

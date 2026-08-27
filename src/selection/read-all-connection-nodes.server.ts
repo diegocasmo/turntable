@@ -1,22 +1,14 @@
-import type { DeploymentsConnection } from '@/gql/operations/deployment-identity'
 import type { EnvironmentServicesConnection } from '@/gql/operations/environment-services'
-import type { ProjectEnvironmentsConnection } from '@/gql/operations/project-environments'
-import type {
-  SelectionEnvironmentsConnection,
-  SelectionProjectsConnection,
-  SelectionServicesConnection,
-} from '@/gql/operations/projects'
+import type { SelectionEnvironmentsConnection as ScopedSelectionEnvironmentsConnection } from '@/gql/operations/selection-environments'
+import type { SelectionProjectsConnection as ScopedSelectionProjectsConnection } from '@/gql/operations/selection-projects'
 import { RailwayResponseError } from '@/railway/errors'
 
 export const railwayConnectionPageSize = 500
 
 type RailwayConnection =
-  | DeploymentsConnection
-  | SelectionProjectsConnection
-  | SelectionEnvironmentsConnection
-  | SelectionServicesConnection
-  | ProjectEnvironmentsConnection
+  | ScopedSelectionEnvironmentsConnection
   | EnvironmentServicesConnection
+  | ScopedSelectionProjectsConnection
 
 type ConnectionNode<Connection extends RailwayConnection> = Connection['edges'][number]['node']
 

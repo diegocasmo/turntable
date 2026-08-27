@@ -13,6 +13,10 @@ export const environmentServicesQuery = graphql(`
           node {
             id: serviceId
             name: serviceName
+            latestDeployment {
+              id
+              status
+            }
           }
         }
         pageInfo {
