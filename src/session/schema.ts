@@ -18,7 +18,7 @@ export const railwayTokenSchema = z.string().check(
 export const sessionInputSchema = z.object({ token: railwayTokenSchema })
 
 function isProjectsPath(path: string) {
-  return /^\/projects(?:[/?#]|$)/u.test(path)
+  return /^\/projects(?:[/?]|$)/u.test(path)
 }
 
 export const connectSearchSchema = z.object({

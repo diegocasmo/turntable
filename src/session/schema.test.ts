@@ -14,6 +14,7 @@ describe('connect search', () => {
     ['a missing destination', undefined],
     ['an external destination', 'https://example.com'],
     ['a protocol-relative destination', '//example.com'],
+    ['a fragment destination', '/projects#services'],
     ['the public connection route', '/connect'],
   ])('uses Projects for %s', (_name, redirect) => {
     expect(connectSearchSchema.parse({ redirect })).toEqual({ redirect: '/projects' })
