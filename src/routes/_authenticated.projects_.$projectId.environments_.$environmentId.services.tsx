@@ -71,9 +71,8 @@ function ServiceRoute() {
   const router = useRouter()
   const { q = '' } = Route.useSearch()
   const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
-  const projectName = projects.find((project) => project.id === projectId)?.name ?? projectId
-  const environmentName =
-    environments.find((environment) => environment.id === environmentId)?.name ?? environmentId
+  const projectName = findEntityById(projects, projectId)?.name ?? projectId
+  const environmentName = findEntityById(environments, environmentId)?.name ?? environmentId
 
   return (
     <SelectionListPage

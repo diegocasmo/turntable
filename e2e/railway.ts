@@ -4,6 +4,7 @@ import { subscribeToRailwayDeployment } from '@/deployment/stream-deployment-eve
 import { serviceInstanceDeployMutation } from '@/gql/operations/service-instance-deploy'
 import { createRailwayClient } from '@/railway/client.server'
 import { railwayHttpsUrlSchema, railwayWebSocketUrlSchema } from '@/railway/url-schema'
+import { findEntityById } from '@/selection/find-entity-by-id'
 import { readRailwaySelectionHierarchy } from '@/selection/read-selection-hierarchy.server'
 import { z } from '@/zod'
 
@@ -56,9 +57,9 @@ export async function runWithRailwayE2ETarget<Value>(
 ) {
   const { apiUrl, expectedEnvironmentName, target, token } = config
   const projects = await dependencies.readSelectionHierarchy(token, apiUrl)
-  const project = projects.find(({ id }) => id === target.projectId)
-  const environment = project?.environments.find(({ id }) => id === target.environmentId)
-  const service = environment?.services.find(({ id }) => id === target.serviceId)
+  const project = findEntityById(projects, target.projectId)
+  const environment = findEntityById(project?.environments, target.environmentId)
+  const service = findEntityById(environment?.services, target.serviceId)
   const knownTarget =
     project?.name === railwayTargetNames.project &&
     environment?.name === expectedEnvironmentName &&
