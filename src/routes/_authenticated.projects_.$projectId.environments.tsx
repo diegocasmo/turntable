@@ -1,6 +1,13 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, useRouter, useRouterState } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  type ErrorComponentProps,
+  Link,
+  useRouter,
+  useRouterState,
+} from '@tanstack/react-router'
 import { EntityCard, primaryActionClassName } from '@/selection/components/entity-card-grid'
+import type { SelectionProgress } from '@/selection/components/selection-breadcrumbs'
 import { SelectionListPage } from '@/selection/components/selection-list-page'
 import {
   SelectionRouteError,
@@ -10,11 +17,32 @@ import { createEnvironmentsQueryOptions } from '@/selection/queries'
 import { loadEnvironmentsRoute, refreshEnvironmentsRoute } from '@/selection/route-loaders'
 import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
 
+const environmentRouteStateProgress: SelectionProgress = { step: 'environment' }
+
+function EnvironmentRoutePending() {
+  return (
+    <SelectionRoutePending
+      selectionProgress={environmentRouteStateProgress}
+      title="Loading environments"
+    />
+  )
+}
+
+function EnvironmentRouteError(props: ErrorComponentProps) {
+  return (
+    <SelectionRouteError
+      {...props}
+      selectionProgress={environmentRouteStateProgress}
+      title="Could not load environments"
+    />
+  )
+}
+
 export const Route = createFileRoute('/_authenticated/projects_/$projectId/environments')({
   validateSearch: entitySearchSchema,
   loader: ({ context, params }) => loadEnvironmentsRoute(context, params.projectId),
-  pendingComponent: SelectionRoutePending,
-  errorComponent: SelectionRouteError,
+  pendingComponent: EnvironmentRoutePending,
+  errorComponent: EnvironmentRouteError,
   component: EnvironmentRoute,
 })
 
@@ -29,24 +57,12 @@ function EnvironmentRoute() {
   const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
   return (
     <SelectionListPage
-      breadcrumbs={[
-        {
-          kind: 'link',
-          label: `Project: ${project.name}`,
-          link: (
-            <Link activeOptions={{ exact: true }} activeProps={{}} search={{}} to="/projects">
-              Project: {project.name}
-            </Link>
-          ),
-        },
-        { kind: 'current', label: 'Environment' },
-        { kind: 'disabled', label: 'Services', description: 'Select an environment first' },
-      ]}
       emptyMessage="No environments are available."
       entities={environments}
       label="Environment"
       notice={notice}
       query={q}
+      selectionProgress={{ projectName: project.name, step: 'environment' }}
       title="Choose an environment"
       onQueryChange={(query) =>
         void navigate({ replace: true, search: query === '' ? {} : { q: query } })

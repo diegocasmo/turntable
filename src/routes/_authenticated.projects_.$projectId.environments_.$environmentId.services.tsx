@@ -1,5 +1,10 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, useRouter, useRouterState } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  type ErrorComponentProps,
+  useRouter,
+  useRouterState,
+} from '@tanstack/react-router'
 import { useState } from 'react'
 import {
   type AcceptedServiceOperation,
@@ -36,14 +41,35 @@ function checkServiceOperationIsVisible(
     : deploymentId === operation.deploymentId || deploymentId !== operation.previousDeploymentId
 }
 
+function ServiceRoutePending() {
+  const { projectId } = Route.useParams()
+  return (
+    <SelectionRoutePending
+      selectionProgress={{ projectId, step: 'services' }}
+      title="Loading services"
+    />
+  )
+}
+
+function ServiceRouteError(props: ErrorComponentProps) {
+  const { projectId } = Route.useParams()
+  return (
+    <SelectionRouteError
+      {...props}
+      selectionProgress={{ projectId, step: 'services' }}
+      title="Could not load services"
+    />
+  )
+}
+
 export const Route = createFileRoute(
   '/_authenticated/projects_/$projectId/environments_/$environmentId/services',
 )({
   validateSearch: entitySearchSchema,
   loader: ({ context, params }) =>
     loadServicesRoute(context, params.projectId, params.environmentId),
-  pendingComponent: SelectionRoutePending,
-  errorComponent: SelectionRouteError,
+  pendingComponent: ServiceRoutePending,
+  errorComponent: ServiceRouteError,
   component: ServiceRoute,
 })
 
@@ -68,39 +94,18 @@ function ServiceRoute() {
   const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
   return (
     <SelectionListPage
-      breadcrumbs={[
-        {
-          kind: 'link',
-          label: `Project: ${project.name}`,
-          link: (
-            <Link activeOptions={{ exact: true }} activeProps={{}} search={{}} to="/projects">
-              Project: {project.name}
-            </Link>
-          ),
-        },
-        {
-          kind: 'link',
-          label: `Environment: ${environment.name}`,
-          link: (
-            <Link
-              activeOptions={{ exact: true }}
-              activeProps={{}}
-              params={{ projectId }}
-              search={{}}
-              to="/projects/$projectId/environments"
-            >
-              Environment: {environment.name}
-            </Link>
-          ),
-        },
-        { kind: 'current', label: 'Services' },
-      ]}
       dataError={servicesQuery.error}
       emptyMessage="No services are available."
       entities={services}
       label="Service"
       notice={notice}
       query={q}
+      selectionProgress={{
+        environmentName: environment.name,
+        projectId,
+        projectName: project.name,
+        step: 'services',
+      }}
       title="Services"
       onQueryChange={(query) =>
         void navigate({ replace: true, search: query === '' ? {} : { q: query } })

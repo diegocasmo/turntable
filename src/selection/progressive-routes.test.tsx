@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRailwayEnvironment, createRailwayProject } from '@/test/railway'
 import { renderRoutes } from '@/test/render-routes'
@@ -39,6 +39,37 @@ beforeEach(() => {
 })
 
 describe('progressive project and environment routes', () => {
+  it('keeps the Project flow visible while projects load', async () => {
+    const projects = Promise.withResolvers<ReturnType<typeof createRailwayProject>[]>()
+    readProjectsMock.mockReturnValueOnce(projects.promise)
+    renderRoutes('/projects')
+
+    expect(await screen.findByRole('heading', { name: 'Loading projects' })).toBeVisible()
+    const breadcrumbs = screen.getByRole('navigation', { name: 'Selection progress' })
+    expect(within(breadcrumbs).getByText('Project')).toBeVisible()
+    expect(within(breadcrumbs).getByRole('button', { name: 'Environment' })).toBeVisible()
+    expect(within(breadcrumbs).getByRole('button', { name: 'Services' })).toBeVisible()
+    expect(within(breadcrumbs).queryByText('Selection')).not.toBeInTheDocument()
+
+    projects.resolve([])
+  })
+
+  it('keeps Project navigation when environments fail to load', async () => {
+    readEnvironmentsMock.mockRejectedValueOnce(new Error('Railway could not load environments.'))
+    renderRoutes('/projects/project-worker/environments')
+
+    expect(
+      await screen.findByRole('heading', { name: 'Could not load environments' }),
+    ).toBeVisible()
+    const breadcrumbs = screen.getByRole('navigation', { name: 'Selection progress' })
+    expect(within(breadcrumbs).getByRole('link', { name: 'Project' })).toHaveAttribute(
+      'href',
+      '/projects',
+    )
+    expect(within(breadcrumbs).getByText('Environment')).toBeVisible()
+    expect(within(breadcrumbs).getByRole('button', { name: 'Services' })).toBeVisible()
+  })
+
   it('restores q and filters the visible cards', async () => {
     renderRoutes('/projects?q=wkr')
     const input = await screen.findByRole('searchbox', { name: 'Search projects' })

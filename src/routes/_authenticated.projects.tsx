@@ -1,6 +1,12 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, useRouterState } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  type ErrorComponentProps,
+  Link,
+  useRouterState,
+} from '@tanstack/react-router'
 import { EntityCard, primaryActionClassName } from '@/selection/components/entity-card-grid'
+import type { SelectionProgress } from '@/selection/components/selection-breadcrumbs'
 import { SelectionListPage } from '@/selection/components/selection-list-page'
 import {
   SelectionRouteError,
@@ -10,11 +16,29 @@ import { createProjectsQueryOptions } from '@/selection/queries'
 import { loadProjectsRoute, refreshProjectsRoute } from '@/selection/route-loaders'
 import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
 
+const projectSelectionProgress: SelectionProgress = { step: 'project' }
+
+function ProjectRoutePending() {
+  return (
+    <SelectionRoutePending selectionProgress={projectSelectionProgress} title="Loading projects" />
+  )
+}
+
+function ProjectRouteError(props: ErrorComponentProps) {
+  return (
+    <SelectionRouteError
+      {...props}
+      selectionProgress={projectSelectionProgress}
+      title="Could not load projects"
+    />
+  )
+}
+
 export const Route = createFileRoute('/_authenticated/projects')({
   validateSearch: entitySearchSchema,
   loader: ({ context }) => loadProjectsRoute(context),
-  pendingComponent: SelectionRoutePending,
-  errorComponent: SelectionRouteError,
+  pendingComponent: ProjectRoutePending,
+  errorComponent: ProjectRouteError,
   component: ProjectRoute,
 })
 
@@ -27,11 +51,6 @@ function ProjectRoute() {
 
   return (
     <SelectionListPage
-      breadcrumbs={[
-        { kind: 'current', label: 'Project' },
-        { kind: 'disabled', label: 'Environment', description: 'Select a project first' },
-        { kind: 'disabled', label: 'Services', description: 'Select an environment first' },
-      ]}
       emptyMessage="No projects are available."
       entities={projects.map((project) => ({
         ...project,
@@ -40,6 +59,7 @@ function ProjectRoute() {
       label="Project"
       notice={notice}
       query={q}
+      selectionProgress={projectSelectionProgress}
       title="Choose a project"
       onQueryChange={(query) =>
         void navigate({ replace: true, search: query === '' ? {} : { q: query } })

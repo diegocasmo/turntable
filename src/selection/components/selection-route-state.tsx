@@ -4,24 +4,33 @@ import {
   EntitySelectionPage,
   EntitySelectionSkeleton,
 } from '@/selection/components/entity-selection-page'
+import type { SelectionProgress } from '@/selection/components/selection-breadcrumbs'
 
-const loadingBreadcrumbs = [{ kind: 'current', label: 'Selection' }] as const
+type SelectionRouteStateProps = Readonly<{
+  selectionProgress: SelectionProgress
+  title: string
+}>
 
-export function SelectionRoutePending() {
+export function SelectionRoutePending({ selectionProgress, title }: SelectionRouteStateProps) {
   return (
     <EntitySelectionPage
-      breadcrumbs={loadingBreadcrumbs}
       feedback="Loading choices."
-      title="Loading selection"
+      selectionProgress={selectionProgress}
+      title={title}
     >
       <EntitySelectionSkeleton />
     </EntitySelectionPage>
   )
 }
 
-export function SelectionRouteError({ error, reset }: ErrorComponentProps) {
+export function SelectionRouteError({
+  error,
+  reset,
+  selectionProgress,
+  title,
+}: ErrorComponentProps & SelectionRouteStateProps) {
   return (
-    <EntitySelectionPage breadcrumbs={loadingBreadcrumbs} title="Could not load selection">
+    <EntitySelectionPage selectionProgress={selectionProgress} title={title}>
       <EntitySelectionFailure error={error} onRetry={reset} />
     </EntitySelectionPage>
   )

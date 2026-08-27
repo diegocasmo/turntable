@@ -2,18 +2,18 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { RefreshAction } from '@/selection/components/refresh-action'
 import {
-  type SelectionBreadcrumbStep,
   SelectionBreadcrumbs,
+  type SelectionProgress,
 } from '@/selection/components/selection-breadcrumbs'
 
 type EntitySelectionPageProps = Readonly<{
-  breadcrumbs: readonly SelectionBreadcrumbStep[]
   children: ReactNode
   feedback?: string
   feedbackKind?: 'alert' | 'status'
   onRefresh?: () => void
   refreshLabel?: string
   refreshPending?: boolean
+  selectionProgress: SelectionProgress
   title: string
 }>
 
@@ -24,18 +24,18 @@ function focusHeading(element: HTMLHeadingElement | null) {
 }
 
 export function EntitySelectionPage({
-  breadcrumbs,
   children,
   feedback,
   feedbackKind = 'status',
   onRefresh,
   refreshLabel,
   refreshPending = false,
+  selectionProgress,
   title,
 }: EntitySelectionPageProps) {
   return (
     <section aria-labelledby="selection-page-title" className="grid min-w-0 gap-6">
-      <SelectionBreadcrumbs steps={breadcrumbs} />
+      <SelectionBreadcrumbs progress={selectionProgress} />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary">

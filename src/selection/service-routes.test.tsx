@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createRailwayEnvironment,
@@ -98,6 +98,37 @@ beforeEach(() => {
 })
 
 describe('service collection route', () => {
+  it('keeps parent links visible while services load', async () => {
+    const services = Promise.withResolvers<ReturnType<typeof createService>[]>()
+    readServicesMock.mockReturnValueOnce(services.promise)
+    renderRoutes(servicesPath)
+
+    expect(await screen.findByRole('heading', { name: 'Loading services' })).toBeVisible()
+    const breadcrumbs = screen.getByRole('navigation', { name: 'Selection progress' })
+    expect(within(breadcrumbs).getByRole('link', { name: 'Project' })).toHaveAttribute(
+      'href',
+      '/projects',
+    )
+    expect(within(breadcrumbs).getByRole('link', { name: 'Environment' })).toHaveAttribute(
+      'href',
+      `/projects/${testRailwayProjectId}/environments`,
+    )
+    expect(within(breadcrumbs).getByText('Services')).toBeVisible()
+
+    services.resolve([])
+  })
+
+  it('keeps parent links visible when services fail to load', async () => {
+    readServicesMock.mockRejectedValueOnce(new Error('Railway could not load services.'))
+    renderRoutes(servicesPath)
+
+    expect(await screen.findByRole('heading', { name: 'Could not load services' })).toBeVisible()
+    const breadcrumbs = screen.getByRole('navigation', { name: 'Selection progress' })
+    expect(within(breadcrumbs).getByRole('link', { name: 'Project' })).toBeVisible()
+    expect(within(breadcrumbs).getByRole('link', { name: 'Environment' })).toBeVisible()
+    expect(within(breadcrumbs).getByText('Services')).toBeVisible()
+  })
+
   it('restores fuzzy search and renders non-navigating service cards', async () => {
     const listUrl = `${servicesPath}?q=wkr`
     renderRoutes(listUrl)

@@ -2,11 +2,10 @@ import { useMutation } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { EntitySearchSurfaces } from '@/selection/components/entity-search-surfaces'
 import { EntitySelectionPage } from '@/selection/components/entity-selection-page'
-import type { SelectionBreadcrumbStep } from '@/selection/components/selection-breadcrumbs'
+import type { SelectionProgress } from '@/selection/components/selection-breadcrumbs'
 import type { SelectionEntity } from '@/selection/filter-entities'
 
 type SelectionListPageProps<Entity extends SelectionEntity> = Readonly<{
-  breadcrumbs: readonly SelectionBreadcrumbStep[]
   dataError?: Error | null
   emptyMessage: string
   entities: readonly Entity[]
@@ -16,11 +15,11 @@ type SelectionListPageProps<Entity extends SelectionEntity> = Readonly<{
   onRefresh: () => Promise<void>
   query: string
   renderCard: (entity: Entity) => ReactNode
+  selectionProgress: SelectionProgress
   title: string
 }>
 
 export function SelectionListPage<Entity extends SelectionEntity>({
-  breadcrumbs,
   dataError,
   emptyMessage,
   entities,
@@ -30,6 +29,7 @@ export function SelectionListPage<Entity extends SelectionEntity>({
   onRefresh,
   query,
   renderCard,
+  selectionProgress,
   title,
 }: SelectionListPageProps<Entity>) {
   const refresh = useMutation({ mutationFn: onRefresh })
@@ -40,10 +40,10 @@ export function SelectionListPage<Entity extends SelectionEntity>({
 
   return (
     <EntitySelectionPage
-      breadcrumbs={breadcrumbs}
       feedbackKind={refresh.error || dataError ? 'alert' : 'status'}
       refreshLabel={`${label}s`}
       refreshPending={refresh.isPending}
+      selectionProgress={selectionProgress}
       title={title}
       onRefresh={() => {
         if (!refresh.isPending) refresh.mutate()

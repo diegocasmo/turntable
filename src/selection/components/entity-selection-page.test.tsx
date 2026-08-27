@@ -5,12 +5,9 @@ import {
   EntitySelectionFailure,
   EntitySelectionPage,
 } from '@/selection/components/entity-selection-page'
+import type { SelectionProgress } from '@/selection/components/selection-breadcrumbs'
 
-const breadcrumbs = [
-  { kind: 'current', label: 'Project' },
-  { description: 'Select a project first', kind: 'disabled', label: 'Environment' },
-  { description: 'Select an environment first', kind: 'disabled', label: 'Services' },
-] as const
+const selectionProgress: SelectionProgress = { step: 'project' }
 
 function renderComponent({
   children = <p>Page content</p>,
@@ -18,9 +15,9 @@ function renderComponent({
 }: Partial<ComponentProps<typeof EntitySelectionPage>> = {}) {
   return render(
     <EntitySelectionPage
-      breadcrumbs={breadcrumbs}
       refreshLabel="Projects"
       refreshPending={false}
+      selectionProgress={selectionProgress}
       title="Choose a project"
       onRefresh={vi.fn()}
       {...props}
@@ -49,9 +46,9 @@ describe('EntitySelectionPage', () => {
     expect(onRefresh).toHaveBeenCalledOnce()
     page.rerender(
       <EntitySelectionPage
-        breadcrumbs={breadcrumbs}
         refreshLabel="Projects"
         refreshPending
+        selectionProgress={selectionProgress}
         title="Choose a project"
         onRefresh={onRefresh}
       >
