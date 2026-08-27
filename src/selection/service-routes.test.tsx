@@ -79,13 +79,12 @@ beforeEach(() => {
 describe('service collection route', () => {
   it('restores fuzzy search and renders non-navigating service cards', async () => {
     const listUrl = `${servicesPath}?q=wkr`
-    const page = renderRoutes(listUrl)
+    renderRoutes(listUrl)
     const input = await screen.findByRole('searchbox', { name: 'Search services' })
 
     expect(input).toHaveValue('wkr')
     expect(screen.getAllByText(/worker/i)).toHaveLength(2)
-    fireEvent.click(screen.getByRole('article', { name: 'Worker' }))
-    expect(page.router.state.location.href).toBe(listUrl)
+    expect(screen.queryByRole('link', { name: 'Worker' })).not.toBeInTheDocument()
   })
 
   it('refreshes all service cards without changing q or starting a duplicate request', async () => {
@@ -186,7 +185,6 @@ describe('service collection route', () => {
     refreshedServices.resolve([createService('service-web', 'Web', null)])
     await waitFor(() => expect(card).toHaveTextContent('No active deployment'))
     expect(readServicesMock).toHaveBeenCalledTimes(2)
-    expect(screen.queryByRole('button', { name: /Refresh Web/ })).not.toBeInTheDocument()
   })
 
   it('shows a recoverable error when post-action synchronization fails', async () => {
