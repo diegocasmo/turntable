@@ -47,8 +47,8 @@ function resolveStatus(
 }
 
 export function usePickerSelections(projects: readonly SelectionProject[]) {
-  const search = useSearch({ from: '/_authenticated/projects' })
-  const navigate = useNavigate({ from: '/projects' })
+  const search = useSearch({ from: '/' })
+  const navigate = useNavigate({ from: '/' })
   const project = resolvePickerSelection(projects, search.projectId)
   const environments = project.selectedOption?.environments ?? []
   const environment = resolvePickerSelection(environments, search.environmentId)

@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated.projects'
+import { Route as AuthenticatedProjectsProjectIdEnvironmentsRouteImport } from './routes/_authenticated.projects_.$projectId.environments'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -39,18 +40,26 @@ const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedProjectsProjectIdEnvironmentsRoute =
+  AuthenticatedProjectsProjectIdEnvironmentsRouteImport.update({
+    id: '/projects_/$projectId/environments',
+    path: '/projects/$projectId/environments',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/connect': typeof ConnectRoute
   '/healthz': typeof HealthzRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/projects/$projectId/environments': typeof AuthenticatedProjectsProjectIdEnvironmentsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/connect': typeof ConnectRoute
   '/healthz': typeof HealthzRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/projects/$projectId/environments': typeof AuthenticatedProjectsProjectIdEnvironmentsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,12 +68,23 @@ export interface FileRoutesById {
   '/connect': typeof ConnectRoute
   '/healthz': typeof HealthzRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/projects_/$projectId/environments': typeof AuthenticatedProjectsProjectIdEnvironmentsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/connect' | '/healthz' | '/projects'
+  fullPaths:
+    | '/'
+    | '/connect'
+    | '/healthz'
+    | '/projects'
+    | '/projects/$projectId/environments'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/connect' | '/healthz' | '/projects'
+  to:
+    | '/'
+    | '/connect'
+    | '/healthz'
+    | '/projects'
+    | '/projects/$projectId/environments'
   id:
     | '__root__'
     | '/'
@@ -72,6 +92,7 @@ export interface FileRouteTypes {
     | '/connect'
     | '/healthz'
     | '/_authenticated/projects'
+    | '/_authenticated/projects_/$projectId/environments'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,15 +139,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/projects_/$projectId/environments': {
+      id: '/_authenticated/projects_/$projectId/environments'
+      path: '/projects/$projectId/environments'
+      fullPath: '/projects/$projectId/environments'
+      preLoaderRoute: typeof AuthenticatedProjectsProjectIdEnvironmentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedProjectsProjectIdEnvironmentsRoute: typeof AuthenticatedProjectsProjectIdEnvironmentsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedProjectsProjectIdEnvironmentsRoute:
+    AuthenticatedProjectsProjectIdEnvironmentsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
