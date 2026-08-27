@@ -36,7 +36,6 @@ export function EntitySearchSurfaces<Entity extends SelectionEntity>({
         entities={filteredEntities}
         query={query}
         renderCard={renderCard}
-        onClearQuery={() => onQueryChange('')}
       />
     </>
   )

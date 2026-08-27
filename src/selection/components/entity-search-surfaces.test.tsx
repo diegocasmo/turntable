@@ -47,9 +47,13 @@ describe('EntitySearchSurfaces', () => {
 
     fireEvent.change(input, { target: { value: 'zzzz' } })
     expect(screen.getByText('No results for “zzzz”.')).toHaveAttribute('role', 'status')
-    fireEvent.click(screen.getByRole('button', { name: 'Clear project search' }))
+    const clear = screen.getByRole('button', { name: 'Clear project search' })
+    expect(screen.getAllByRole('button')).toEqual([clear])
+    expect(screen.queryByRole('button', { name: 'Clear search' })).not.toBeInTheDocument()
+    fireEvent.click(clear)
 
     expect(input).toHaveValue('')
+    expect(input).toHaveFocus()
     expect(screen.getAllByRole('article')).toHaveLength(3)
   })
 })

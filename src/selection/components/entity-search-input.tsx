@@ -1,5 +1,5 @@
 import { XIcon } from '@phosphor-icons/react/X'
-import { useId } from 'react'
+import { useId, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -17,6 +17,7 @@ export function EntitySearchInput({
   resultCount,
 }: EntitySearchInputProps) {
   const inputId = useId()
+  const inputRef = useRef<HTMLInputElement>(null)
   const resultsId = `${inputId}-results`
   const entityName = label.toLowerCase()
 
@@ -30,9 +31,10 @@ export function EntitySearchInput({
       </label>
       <div className="relative mt-2">
         <Input
+          ref={inputRef}
           id={inputId}
           aria-describedby={resultsId}
-          className="h-10 border-border bg-popover pr-11 text-sm text-foreground"
+          className="h-10 border-border bg-popover pr-11 text-sm text-foreground [&::-webkit-search-cancel-button]:hidden"
           placeholder={`Filter ${entityName}s`}
           type="search"
           value={query}
@@ -45,7 +47,10 @@ export function EntitySearchInput({
             className="absolute top-1/2 right-0 size-10 -translate-y-1/2 shadow-none"
             size="icon-xs"
             variant="ghost"
-            onClick={() => onQueryChange('')}
+            onClick={() => {
+              onQueryChange('')
+              inputRef.current?.focus()
+            }}
           >
             <XIcon aria-hidden="true" weight="bold" />
           </Button>

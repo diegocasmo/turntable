@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { SelectionEntity } from '@/selection/filter-entities'
 
@@ -7,7 +6,6 @@ type EntityCardGridProps<Entity extends SelectionEntity> = Readonly<{
   allEntityCount: number
   entities: readonly Entity[]
   emptyMessage: string
-  onClearQuery: () => void
   query: string
   renderCard: (entity: Entity) => ReactNode
 }>
@@ -65,7 +63,6 @@ export function EntityCardGrid<Entity extends SelectionEntity>({
   allEntityCount,
   emptyMessage,
   entities,
-  onClearQuery,
   query,
   renderCard,
 }: EntityCardGridProps<Entity>) {
@@ -73,15 +70,10 @@ export function EntityCardGrid<Entity extends SelectionEntity>({
     const hasNoMatches = allEntityCount > 0 && query.trim() !== ''
 
     return (
-      <div className="flex min-h-40 flex-col items-start justify-center gap-3 border border-dashed border-border px-5 py-8">
+      <div className="flex min-h-40 items-center border border-dashed border-border px-5 py-8">
         <p role="status" className="text-sm text-foreground-soft">
           {hasNoMatches ? `No results for “${query.trim()}”.` : emptyMessage}
         </p>
-        {hasNoMatches ? (
-          <Button type="button" variant="secondary" onClick={onClearQuery}>
-            Clear search
-          </Button>
-        ) : null}
       </div>
     )
   }
