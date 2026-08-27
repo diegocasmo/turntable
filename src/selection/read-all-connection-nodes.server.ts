@@ -1,14 +1,11 @@
+import type { EnvironmentsConnection } from '@/gql/operations/environment-list'
 import type { EnvironmentServicesConnection } from '@/gql/operations/environment-services'
-import type { SelectionEnvironmentsConnection as ScopedSelectionEnvironmentsConnection } from '@/gql/operations/selection-environments'
-import type { SelectionProjectsConnection as ScopedSelectionProjectsConnection } from '@/gql/operations/selection-projects'
+import type { ProjectsConnection } from '@/gql/operations/project-list'
 import { RailwayResponseError } from '@/railway/errors'
 
 export const railwayConnectionPageSize = 500
 
-type RailwayConnection =
-  | ScopedSelectionEnvironmentsConnection
-  | EnvironmentServicesConnection
-  | ScopedSelectionProjectsConnection
+type RailwayConnection = EnvironmentsConnection | EnvironmentServicesConnection | ProjectsConnection
 
 type ConnectionNode<Connection extends RailwayConnection> = Connection['edges'][number]['node']
 

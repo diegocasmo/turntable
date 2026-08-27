@@ -76,6 +76,11 @@ The service list comes from `Environment.serviceInstances`. Each `ServiceInstanc
 
 The route holds the project ID, environment ID, and service ID. A reload keeps each valid explicit choice.
 
+Selection routes are children of one pathless authenticated route. A signed-out or expired session
+redirects to `/connect` before a selection loader runs. The validated `redirect` search value keeps
+the requested internal selection URL. A successful connection replaces `/connect` with that URL.
+The server-function session middleware remains the data security boundary.
+
 ### Deployment identity
 
 The status subscription needs a deployment ID. Each "spin up again" makes a new deployment with a new ID. Every screen must find the current ID, also after a reload.

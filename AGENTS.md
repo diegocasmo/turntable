@@ -46,6 +46,7 @@ These rules apply to all work in this repository. This file is the only source f
 26. Put each TanStack server function in its own non-server file named after its exported function so the browser can import its RPC stub. Put its server-only work in a verb-named `.server.ts` file named after its main exported action. Keep shared protocol, storage, or security policy in one explicit module. Use direct imports. Do not add barrel files.
 27. Open an external link in a new tab only when leaving Turntable would interrupt the current task. Use `rel="noreferrer"`. Give a visual and accessible warning that the link opens in a new tab.
 28. Reserve enough space inside the component that changes for the largest normal asynchronous state. Do not stack an empty feedback row when an existing stable region can show that state. A skeleton must match that reserved region. A full-screen state change and an unusually long error can change the layout.
+29. When a component test helper only varies component props, accept typed partial props and apply them after complete defaults. Use explicit typed options for router, provider, mock, or controlled-state harnesses.
 
 ## Commands
 

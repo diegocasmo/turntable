@@ -21,7 +21,10 @@ export function NotFoundPage() {
         <p className="mt-8 max-w-lg text-lg leading-8 text-foreground-soft">
           This address does not point to a Turntable screen.
         </p>
-        <a href="/" className={buttonVariants({ className: 'mt-10', variant: 'secondary' })}>
+        <a
+          href="/projects"
+          className={buttonVariants({ className: 'mt-10', variant: 'secondary' })}
+        >
           Return to Turntable
         </a>
       </section>

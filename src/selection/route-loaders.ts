@@ -1,20 +1,15 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { redirect } from '@tanstack/react-router'
+import { findEntityById } from '@/selection/find-entity-by-id'
 import {
   createEnvironmentsQueryOptions,
   createProjectsQueryOptions,
   createServicesQueryOptions,
-} from '@/selection/query-options'
-import type { SessionState } from '@/session/schema'
+} from '@/selection/queries'
 
 type LoaderContext = Readonly<{
   queryClient: QueryClient
-  sessionState: SessionState
 }>
-
-function findEntity(entities: readonly Readonly<{ id: string }>[], id: string) {
-  return entities.find((entity) => entity.id === id)
-}
 
 function throwMissingSelection(href: string, message: string): never {
   throw redirect({
@@ -25,14 +20,12 @@ function throwMissingSelection(href: string, message: string): never {
 }
 
 export async function loadProjectsRoute(context: LoaderContext) {
-  if (context.sessionState !== 'authenticated') return
   await context.queryClient.ensureQueryData(createProjectsQueryOptions())
 }
 
 export async function loadEnvironmentsRoute(context: LoaderContext, projectId: string) {
-  if (context.sessionState !== 'authenticated') return
   const projects = await context.queryClient.ensureQueryData(createProjectsQueryOptions())
-  if (!findEntity(projects, projectId)) {
+  if (!findEntityById(projects, projectId)) {
     throwMissingSelection('/projects', 'The selected project is no longer available.')
   }
   await context.queryClient.ensureQueryData(createEnvironmentsQueryOptions(projectId))
@@ -44,11 +37,10 @@ export async function loadServicesRoute(
   environmentId: string,
 ) {
   await loadEnvironmentsRoute(context, projectId)
-  if (context.sessionState !== 'authenticated') return
   const environments = context.queryClient.getQueryData(
     createEnvironmentsQueryOptions(projectId).queryKey,
   )
-  if (!environments || !findEntity(environments, environmentId)) {
+  if (!findEntityById(environments, environmentId)) {
     throwMissingSelection(
       `/projects/${projectId}/environments`,
       'The selected environment is no longer available.',
@@ -66,7 +58,7 @@ export async function refreshEnvironmentsRoute(queryClient: QueryClient, project
     ...createProjectsQueryOptions(),
     staleTime: 0,
   })
-  if (!findEntity(projects, projectId)) return 'project-missing' as const
+  if (!findEntityById(projects, projectId)) return 'project-missing' as const
   await queryClient.fetchQuery({ ...createEnvironmentsQueryOptions(projectId), staleTime: 0 })
   return 'valid' as const
 }
@@ -77,12 +69,12 @@ export async function refreshServicesRoute(
   environmentId: string,
 ) {
   const projects = await queryClient.fetchQuery({ ...createProjectsQueryOptions(), staleTime: 0 })
-  if (!findEntity(projects, projectId)) return 'project-missing' as const
+  if (!findEntityById(projects, projectId)) return 'project-missing' as const
   const environments = await queryClient.fetchQuery({
     ...createEnvironmentsQueryOptions(projectId),
     staleTime: 0,
   })
-  if (!findEntity(environments, environmentId)) return 'environment-missing' as const
+  if (!findEntityById(environments, environmentId)) return 'environment-missing' as const
   await queryClient.fetchQuery({
     ...createServicesQueryOptions(projectId, environmentId),
     staleTime: 0,
