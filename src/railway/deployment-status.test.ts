@@ -3,6 +3,7 @@ import {
   type DeploymentStatus,
   type DeploymentStatusTone,
   deploymentStatusSchema,
+  isDeploymentStatusTransitional,
   readDeploymentStatusPresentation,
 } from '@/railway/deployment-status'
 
@@ -28,5 +29,11 @@ describe('deployment status', () => {
 
   it.each(statusToneCases)('maps $status to the $tone badge', ({ status, tone }) => {
     expect(readDeploymentStatusPresentation(status).tone).toBe(tone)
+  })
+
+  it('distinguishes transitional and terminal statuses', () => {
+    expect(isDeploymentStatusTransitional('INITIALIZING')).toBe(true)
+    expect(isDeploymentStatusTransitional('SUCCESS')).toBe(false)
+    expect(isDeploymentStatusTransitional('FAILED')).toBe(false)
   })
 })

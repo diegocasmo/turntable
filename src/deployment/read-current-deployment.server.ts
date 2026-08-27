@@ -41,5 +41,5 @@ export async function readRailwayCurrentDeployment(
   })
   const current = [...deployments].sort(compareDeploymentCreatedAt)[0]
 
-  return current ? { id: current.id } : null
+  return current ? { id: current.id, status: current.status } : null
 }

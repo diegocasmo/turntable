@@ -11,6 +11,7 @@ export const deploymentIdentityQuery = graphql(`
         node {
           id
           createdAt
+          status
         }
       }
       pageInfo {

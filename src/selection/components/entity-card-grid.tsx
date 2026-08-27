@@ -52,7 +52,7 @@ export function EntityCard<Entity extends SelectionEntity>({
       ) : (
         <div className="min-h-24 min-w-0 px-5 py-4">{content}</div>
       )}
-      {actions ? <div className="flex items-start p-2">{actions}</div> : null}
+      {actions ? <div className="col-span-full min-w-0">{actions}</div> : null}
     </article>
   )
 }
