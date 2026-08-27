@@ -4,7 +4,7 @@ import {
   createEnvironmentsQueryOptions,
   createProjectsQueryOptions,
   createServicesQueryOptions,
-} from '@/selection/query-options'
+} from '@/selection/queries'
 import type { SessionState } from '@/session/schema'
 
 type LoaderContext = Readonly<{
