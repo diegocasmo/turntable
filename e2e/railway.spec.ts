@@ -1,6 +1,11 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-import { readRailwayE2EConfig, restoreRailwayE2ETarget, runWithRailwayE2ETarget } from './railway'
+import {
+  railwayTargetNames,
+  readRailwayE2EConfig,
+  restoreRailwayE2ETarget,
+  runWithRailwayE2ETarget,
+} from './railway'
 
 const minute = 60_000
 const expectRailwayStatus = expect.configure({ timeout: 2 * minute })
@@ -30,9 +35,18 @@ test('a user can control and refresh the configured Railway service', async ({ p
       }
       const expectNoAxeViolations = async () =>
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
-      await page.getByRole('combobox', { name: 'Project' }).selectOption(projectId)
-      await page.getByRole('combobox', { name: 'Environment' }).selectOption(environmentId)
-      await page.getByRole('combobox', { name: 'Service' }).selectOption(serviceId)
+
+      await page.getByRole('combobox', { name: 'Project' }).fill(railwayTargetNames.project)
+      const projectOption = page.getByRole('option', {
+        name: railwayTargetNames.project,
+        exact: true,
+      })
+      await expect(projectOption).toBeVisible()
+      await projectOption.click()
+      await page.getByRole('combobox', { name: 'Environment' }).fill(config.expectedEnvironmentName)
+      await page.getByRole('option', { name: config.expectedEnvironmentName, exact: true }).click()
+      await page.getByRole('combobox', { name: 'Service' }).fill(railwayTargetNames.service)
+      await page.getByRole('option', { name: railwayTargetNames.service, exact: true }).click()
 
       await expectStatus('Success').toBeVisible()
       expect(await readDeploymentHeight()).toBe(stableDeploymentHeight)

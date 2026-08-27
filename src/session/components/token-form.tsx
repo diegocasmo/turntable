@@ -29,16 +29,16 @@ export function TokenForm({ expired }: TokenFormProps) {
 
   return (
     <form aria-labelledby="connect-title" className="w-full" method="post" onSubmit={handleSubmit}>
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground/70">
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
         Step 01 / Connect
       </p>
       <h2 id="connect-title" className="mt-4 text-3xl leading-tight sm:text-4xl">
         Connect to Railway
       </h2>
-      <p className="mt-4 leading-7 text-muted-foreground">
+      <p className="mt-4 leading-7 text-foreground-soft">
         Create a token on{' '}
         <a
-          className="text-accent underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          className="text-warning underline underline-offset-4 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-ring focus-visible:outline-solid"
           href={railwayTokensUrl}
           rel="noreferrer"
           target="_blank"
@@ -60,7 +60,7 @@ export function TokenForm({ expired }: TokenFormProps) {
               <div className="mt-8 grid gap-3">
                 <Label
                   htmlFor="railway-token"
-                  className="uppercase tracking-[0.12em] text-muted-foreground"
+                  className="uppercase tracking-[0.12em] text-foreground-soft"
                 >
                   Railway API token
                 </Label>
@@ -79,7 +79,7 @@ export function TokenForm({ expired }: TokenFormProps) {
                     session.reset()
                     field.handleChange(event.target.value)
                   }}
-                  className="h-12 border-input bg-background px-4 text-base text-foreground focus-visible:border-ring focus-visible:ring-ring/40"
+                  className="h-12 border-border bg-background px-4 text-base text-foreground focus-visible:border-ring focus-visible:ring-ring"
                 />
               </div>
 
@@ -95,14 +95,14 @@ export function TokenForm({ expired }: TokenFormProps) {
 
               <div className="mt-4 min-h-12">
                 {validationError ? (
-                  <p id={errorId} role="alert" className="text-sm leading-6 text-destructive">
+                  <p id={errorId} role="alert" className="text-sm leading-6 text-danger-foreground">
                     {validationError.message}
                   </p>
                 ) : null}
                 {!validationError && session.error ? (
                   <p
                     role="alert"
-                    className="border-l-2 border-destructive pl-3 text-sm leading-6 text-destructive"
+                    className="border-l-2 border-destructive pl-3 text-sm leading-6 text-danger-foreground"
                   >
                     {session.error.message}
                   </p>
@@ -110,13 +110,13 @@ export function TokenForm({ expired }: TokenFormProps) {
                 {!validationError && !session.error && expired ? (
                   <p
                     role="alert"
-                    className="border-l-2 border-accent pl-3 text-sm leading-6 text-accent"
+                    className="border-l-2 border-warning pl-3 text-sm leading-6 text-warning-foreground"
                   >
                     Your session expired. Enter your Railway API token again.
                   </p>
                 ) : null}
                 {!validationError && !session.error && !expired && session.isPending ? (
-                  <p role="status" className="text-sm leading-6 text-muted-foreground">
+                  <p role="status" className="text-sm leading-6 text-foreground-soft">
                     Railway is checking the token.
                   </p>
                 ) : null}

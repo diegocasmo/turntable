@@ -39,13 +39,13 @@ export function DeploymentStatus({ loading = false, target }: DeploymentStatusPr
   let status: ReactNode = <StatusBadge status={current?.status ?? null} />
   if (target === undefined) status = 'Choose a service'
   if (event?.type === 'gone') {
-    status = <span className="text-sm text-destructive">Deployment unavailable</span>
+    status = <span className="text-sm text-danger-foreground">Deployment unavailable</span>
   }
   if (deployment.transition === 'reconnect') status = 'Reconnecting…'
   if (deployment.transition === 'spin-up') status = 'Starting deployment…'
   if (failure) {
     status = (
-      <span className="w-full overflow-auto border-l-2 border-destructive bg-destructive/15 px-3 text-sm leading-6 text-destructive">
+      <span className="w-full overflow-auto border-l-2 border-destructive bg-danger-surface px-3 text-sm leading-6 text-danger-foreground">
         {failure.message}
       </span>
     )
@@ -61,10 +61,10 @@ export function DeploymentStatus({ loading = false, target }: DeploymentStatusPr
   }
 
   return (
-    <section aria-label={deploymentStatusLabel} className="h-[97px] border-t border-muted">
+    <section aria-label={deploymentStatusLabel} className="h-[97px] border-t border-border-subtle">
       <div className="grid h-full grid-rows-[2rem_2rem] gap-2 py-3">
         <div className="grid grid-cols-[minmax(0,1fr)_7rem] items-center gap-2">
-          <p className="truncate font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="truncate font-mono text-xs uppercase tracking-[0.16em] text-foreground-soft">
             {deploymentStatusLabel}
           </p>
           {action}

@@ -12,9 +12,9 @@ function SelectionSkeleton() {
   return (
     <div aria-hidden="true" className="grid gap-4 motion-safe:animate-pulse">
       {['w-16', 'w-24', 'w-14'].map((width) => (
-        <div key={width} className="border-t border-muted pt-3">
+        <div key={width} className="border-t border-border-subtle pt-3">
           <div className={`h-4 ${width} bg-muted`} />
-          <div className="mt-2 h-8 w-full border border-muted bg-secondary" />
+          <div className="mt-2 h-8 w-full border border-border-subtle bg-popover" />
         </div>
       ))}
       <DeploymentStatusSkeleton />
@@ -28,8 +28,8 @@ function SelectionFailure({ error, retry }: Readonly<{ error: Error; retry: () =
       <div className="invisible col-start-1 row-start-1">
         <SelectionSkeleton />
       </div>
-      <div className="col-start-1 row-start-1 grid grid-cols-[1fr_auto] items-center gap-3 self-center border-l-2 border-destructive bg-destructive/15 px-3 py-2">
-        <p role="alert" className="text-sm leading-6 text-destructive">
+      <div className="col-start-1 row-start-1 grid grid-cols-[1fr_auto] items-center gap-3 self-center border-l-2 border-destructive bg-danger-surface px-3 py-2">
+        <p role="alert" className="text-sm leading-6 text-danger-foreground">
           {error.message}
         </p>
         <Button type="button" variant="secondary" size="sm" onClick={retry}>
@@ -77,16 +77,13 @@ export function SelectionPickers() {
           Loading choices.
         </p>
       ) : null}
-      <section
+      <fieldset
         aria-busy={isInitialLoad || undefined}
-        aria-labelledby="selection-title"
-        className="mt-6 grid gap-4"
+        className="mt-6 grid min-w-0 gap-4 border-0 p-0"
       >
-        <h3 id="selection-title" className="text-2xl leading-tight">
-          Choose a service
-        </h3>
+        <legend className="p-0 text-2xl leading-tight">Choose a service</legend>
         {content}
-      </section>
+      </fieldset>
     </>
   )
 }

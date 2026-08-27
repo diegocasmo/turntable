@@ -10,7 +10,7 @@ export function NotFoundPage() {
 
       <section
         aria-labelledby="not-found-title"
-        className="relative w-full max-w-2xl border border-border bg-card/95 p-8 shadow-[14px_14px_0_black] sm:p-12"
+        className="relative w-full max-w-2xl border border-border bg-card/95 p-8 shadow-[14px_14px_0_var(--shadow-color)] sm:p-12"
       >
         <p className="mb-5 font-mono text-xs font-semibold uppercase tracking-[0.24em] text-primary">
           Route signal lost
@@ -18,7 +18,7 @@ export function NotFoundPage() {
         <h1 id="not-found-title" className="text-5xl leading-none tracking-[-0.04em] sm:text-7xl">
           Page not found
         </h1>
-        <p className="mt-8 max-w-lg text-lg leading-8 text-muted-foreground">
+        <p className="mt-8 max-w-lg text-lg leading-8 text-foreground-soft">
           This address does not point to a Turntable screen.
         </p>
         <a href="/" className={buttonVariants({ className: 'mt-10', variant: 'secondary' })}>

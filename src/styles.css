@@ -41,8 +41,6 @@ h1 {
 @theme inline {
   --font-heading: var(--font-mono);
   --font-mono: "JetBrains Mono Variable", monospace;
-  --color-positive-foreground: var(--positive-foreground);
-  --color-positive: var(--positive);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -61,6 +59,19 @@ h1 {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-border-subtle: var(--border-subtle);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-surface: var(--danger-surface);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-foreground-soft: var(--foreground-soft);
+  --color-positive: var(--positive);
+  --color-positive-foreground: var(--positive-foreground);
+  --color-positive-surface: var(--positive-surface);
+  --color-primary-hover: var(--primary-hover);
+  --color-surface-hover: var(--surface-hover);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-surface: var(--warning-surface);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -71,28 +82,41 @@ h1 {
 }
 
 :root {
+  color-scheme: dark;
   --background: #141613;
   --foreground: #f4f0e6;
-  --grid-line: rgb(244 240 230 / 0.05);
   --card: #1d201c;
-  --card-foreground: #f4f0e6;
+  --card-foreground: var(--foreground);
   --popover: #242522;
-  --popover-foreground: #f4f0e6;
+  --popover-foreground: var(--foreground);
   --primary: #d59c55;
-  --primary-foreground: #141613;
-  --secondary: #242522;
-  --secondary-foreground: #f4f0e6;
+  --primary-foreground: var(--background);
+  --primary-hover: #e5ad68;
+  --secondary: var(--popover);
+  --secondary-foreground: var(--foreground);
   --muted: #4d4e47;
-  --muted-foreground: #c9c5b9;
-  --accent: #e5ad68;
-  --accent-foreground: #141613;
+  --muted-foreground: #8f8c81;
+  --accent: var(--primary);
+  --accent-foreground: var(--primary-foreground);
   --destructive: #d97767;
-  --positive: #6f9e77;
-  --positive-foreground: #b7d9bd;
+  --destructive-foreground: var(--background);
   --border: #706d60;
-  --input: #706d60;
-  --ring: #d59c55;
-  --radius: 0;
+  --input: var(--muted);
+  --ring: var(--foreground);
+  --border-subtle: var(--muted);
+  --foreground-soft: #c9c5b9;
+  --surface-hover: #30312d;
+  --danger-surface: #2d201e;
+  --danger-foreground: #f0b8ae;
+  --warning: var(--primary-hover);
+  --warning-surface: #2b281f;
+  --warning-foreground: #f4d4a9;
+  --positive: #6f9e77;
+  --positive-surface: #1d2b22;
+  --positive-foreground: #b7d9bd;
+  --shadow-color: #090a08;
+  --grid-line: rgb(244 240 230 / 5%);
+  --radius: 0.625rem;
 }
 
 @layer base {

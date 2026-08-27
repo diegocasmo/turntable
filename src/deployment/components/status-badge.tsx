@@ -7,10 +7,10 @@ import {
 } from '@/railway/deployment-status'
 
 const badgeToneClasses: Record<DeploymentStatusTone, string> = {
-  danger: 'border-destructive bg-destructive/15 text-destructive',
-  neutral: 'border-border bg-secondary text-muted-foreground',
-  positive: 'border-positive bg-positive/15 text-positive-foreground',
-  progress: 'border-accent bg-accent/10 text-accent',
+  danger: 'border-destructive bg-danger-surface text-danger-foreground',
+  neutral: 'border-border bg-secondary text-foreground-soft',
+  positive: 'border-positive bg-positive-surface text-positive-foreground',
+  progress: 'border-warning bg-warning-surface text-warning-foreground',
 }
 
 type StatusBadgeProps = Readonly<{

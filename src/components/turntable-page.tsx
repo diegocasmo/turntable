@@ -21,7 +21,7 @@ export function TurntablePage({ sessionState }: TurntablePageProps) {
       <main className="relative grid items-start justify-items-center px-6 py-6 sm:py-8 lg:place-items-center lg:py-12">
         <section
           aria-labelledby="page-title"
-          className="w-full max-w-5xl border border-border bg-card/95 shadow-[14px_14px_0_black]"
+          className="w-full max-w-5xl border border-border bg-card/95 shadow-[14px_14px_0_var(--shadow-color)]"
         >
           <div className="grid lg:grid-cols-[1.05fr_0.95fr]">
             <header className="relative overflow-hidden border-b border-border p-6 sm:p-8 lg:border-r lg:border-b-0 lg:p-12">
@@ -34,7 +34,7 @@ export function TurntablePage({ sessionState }: TurntablePageProps) {
               >
                 Turntable
               </h1>
-              <p className="mt-4 max-w-md text-base leading-7 text-muted-foreground sm:text-lg lg:mt-7 lg:leading-8">
+              <p className="mt-4 max-w-md text-base leading-7 text-foreground-soft sm:text-lg lg:mt-7 lg:leading-8">
                 One service. Live state. Clear controls.
               </p>
 
@@ -61,7 +61,7 @@ export function TurntablePage({ sessionState }: TurntablePageProps) {
         </section>
       </main>
 
-      <footer className="relative px-6 pb-8 text-center font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground/70">
+      <footer className="relative px-6 pb-8 text-center font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground">
         Unofficial. Not a Railway product.
       </footer>
     </div>

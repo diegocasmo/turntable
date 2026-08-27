@@ -1,11 +1,22 @@
+import fuzzysort from 'fuzzysort'
+import { useMemo, useState } from 'react'
 import {
-  NativeSelect,
-  NativeSelectOptGroup,
-  NativeSelectOption,
-} from '@/components/ui/native-select'
+  Combobox,
+  ComboboxCollection,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxLabel,
+  ComboboxList,
+  ComboboxStatus,
+} from '@/components/ui/combobox'
+
+const maximumVisibleOptions = 20
 
 export type PickerOption = Readonly<{ id: string; name: string }>
-export type PickerGroup = PickerOption & Readonly<{ options: readonly PickerOption[] }>
+export type PickerGroup = PickerOption & Readonly<{ items: readonly PickerOption[] }>
 export type PickerState =
   | Readonly<{ kind: 'blocked'; parent: string }>
   | Readonly<{ kind: 'empty' | 'ready' }>
@@ -19,6 +30,8 @@ export type PickerModel = Readonly<{
   state: PickerState
 }>
 
+type PickerEntry = Readonly<{ group?: PickerGroup; option: PickerOption }>
+
 function resolvePlaceholder(state: PickerState, label: string) {
   const noun = label.toLowerCase()
   const article = noun === 'environment' ? 'an' : 'a'
@@ -30,40 +43,147 @@ function resolvePlaceholder(state: PickerState, label: string) {
   return `Choose ${article} ${noun}`
 }
 
+function collectPickerEntries(
+  groups: readonly PickerGroup[] | undefined,
+  options: readonly PickerOption[] | undefined,
+) {
+  if (groups) {
+    return groups.flatMap((group) => group.items.map((option) => ({ group, option })))
+  }
+  return (options ?? []).map((option) => ({ option }))
+}
+
+function filterPickerEntries(entries: readonly PickerEntry[], query: string) {
+  const normalizedQuery = query.trim()
+  if (normalizedQuery === '') {
+    return { entries: entries.slice(0, maximumVisibleOptions), total: entries.length }
+  }
+
+  const results = fuzzysort.go(normalizedQuery, entries, {
+    keys: [(entry) => entry.option.name, (entry) => entry.group?.name ?? ''],
+    limit: maximumVisibleOptions,
+  })
+  return { entries: results.map((result) => result.obj), total: results.total }
+}
+
+function groupPickerEntries(entries: readonly PickerEntry[]) {
+  const groups = new Map<string, { id: string; items: PickerOption[]; name: string }>()
+  for (const entry of entries) {
+    if (!entry.group) continue
+    const group = groups.get(entry.group.id)
+    if (group) group.items.push(entry.option)
+    else
+      groups.set(entry.group.id, {
+        id: entry.group.id,
+        items: [entry.option],
+        name: entry.group.name,
+      })
+  }
+  return [...groups.values()]
+}
+
+function resolveResultStatus(label: string, query: string, shown: number, total: number) {
+  if (total === 0) return ''
+  const noun = `${label.toLowerCase()}${total === 1 ? '' : 's'}`
+  if (shown < total) return `${shown} of ${total} ${noun} shown.`
+  return `${total} ${noun} ${query.trim() === '' ? 'available' : 'found'}.`
+}
+
 function renderOption(option: PickerOption) {
   return (
-    <NativeSelectOption key={option.id} value={option.id}>
+    <ComboboxItem
+      key={option.id}
+      value={option}
+      className="data-highlighted:bg-primary data-highlighted:text-primary-foreground"
+    >
       {option.name}
-    </NativeSelectOption>
+    </ComboboxItem>
   )
 }
 
 export function Picker({ groups, label, onSelect, options, selectedOption, state }: PickerModel) {
-  const choices =
-    groups?.map((group) => (
-      <NativeSelectOptGroup key={group.id} label={group.name}>
-        {group.options.map(renderOption)}
-      </NativeSelectOptGroup>
-    )) ?? options?.map(renderOption)
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const entries = useMemo(() => collectPickerEntries(groups, options), [groups, options])
+  const results = useMemo(() => filterPickerEntries(entries, query), [entries, query])
+  const visibleOptions = results.entries.map((entry) => entry.option)
+  const visibleGroups = groupPickerEntries(results.entries)
+  const inputId = `${label.toLowerCase()}-picker`
+  const labelId = `${inputId}-label`
+  const resultStatusId = `${inputId}-results`
+  const disabled = state.kind !== 'ready'
 
   return (
-    <label htmlFor={label} className="block border-t border-muted pt-3">
-      <span className="block font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground">
-        {label}
-      </span>
-      <NativeSelect
-        id={label}
-        aria-describedby="selection-status"
-        className="mt-2 w-full"
-        disabled={state.kind !== 'ready'}
-        value={selectedOption?.id ?? ''}
-        onChange={(event) => onSelect(event.currentTarget.value)}
+    <div className="border-t border-border-subtle pt-3">
+      <label
+        id={labelId}
+        htmlFor={inputId}
+        className="block font-mono text-xs uppercase tracking-[0.16em] text-foreground-soft"
       >
-        <NativeSelectOption value="" disabled>
-          {resolvePlaceholder(state, label)}
-        </NativeSelectOption>
-        {choices}
-      </NativeSelect>
-    </label>
+        {label}
+      </label>
+      <Combobox<PickerOption>
+        autoHighlight
+        disabled={disabled}
+        filteredItems={groups ? visibleGroups : visibleOptions}
+        isItemEqualToValue={(option, value) => option.id === value.id}
+        itemToStringLabel={(option) => option.name}
+        itemToStringValue={(option) => option.id}
+        items={groups ?? options ?? []}
+        limit={maximumVisibleOptions}
+        open={open}
+        value={selectedOption ?? null}
+        onInputValueChange={(value, details) =>
+          setQuery(details.reason === 'input-change' ? value : '')
+        }
+        onOpenChange={setOpen}
+        onValueChange={(option) => {
+          if (option) onSelect(option.id)
+        }}
+      >
+        <ComboboxInput
+          id={inputId}
+          aria-describedby={`selection-status ${resultStatusId}`}
+          aria-labelledby={labelId}
+          className="mt-2 w-full border-border bg-popover text-foreground"
+          disabled={disabled}
+          placeholder={resolvePlaceholder(state, label)}
+          triggerLabel={`Show ${label.toLowerCase()} options`}
+          onFocus={() => setOpen(true)}
+        />
+        <ComboboxContent className="border border-border bg-popover text-foreground shadow-[3px_3px_0_var(--shadow-color)] ring-0">
+          <ComboboxEmpty
+            aria-label={`${label} empty results`}
+            role="note"
+            className="text-foreground-soft"
+          >
+            No {label.toLowerCase()}s found.
+          </ComboboxEmpty>
+          <ComboboxList>
+            {groups ? (
+              visibleGroups.map((group) => (
+                <ComboboxGroup
+                  key={group.id}
+                  items={group.items}
+                  className="border-t border-border-subtle first:border-t-0"
+                >
+                  <ComboboxLabel className="font-mono uppercase tracking-[0.12em] text-muted-foreground">
+                    {group.name}
+                  </ComboboxLabel>
+                  <ComboboxCollection>{renderOption}</ComboboxCollection>
+                </ComboboxGroup>
+              ))
+            ) : (
+              <ComboboxCollection>{renderOption}</ComboboxCollection>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+        <ComboboxStatus id={resultStatusId} aria-label={`${label} results`} className="sr-only">
+          {state.kind === 'ready'
+            ? resolveResultStatus(label, query, results.entries.length, results.total)
+            : null}
+        </ComboboxStatus>
+      </Combobox>
+    </div>
   )
 }

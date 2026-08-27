@@ -23,7 +23,7 @@ type DeploymentActionsProps = Readonly<{
 type DeploymentAction = 'Spin down' | 'Spin up'
 
 const menuItemClassName =
-  'grid cursor-pointer grid-cols-[1rem_1fr] items-center gap-2 px-3 py-2 font-mono text-xs font-semibold uppercase tracking-[0.12em] text-foreground outline-none data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground [&_svg]:size-4'
+  'grid cursor-pointer grid-cols-[1rem_1fr] items-center gap-2 px-3 py-2 font-mono text-xs font-semibold uppercase tracking-[0.12em] text-foreground outline-none data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground data-[highlighted]:outline-2 data-[highlighted]:outline-offset-[-2px] data-[highlighted]:outline-primary-foreground data-[highlighted]:outline-solid [&_svg]:size-4'
 
 export function DeploymentActions(props: DeploymentActionsProps) {
   const spinUp = useSpinUpDeployment(props.onDeploymentCreated)
@@ -71,7 +71,7 @@ export function DeploymentActions(props: DeploymentActionsProps) {
         </Menu.Trigger>
         <Menu.Portal container={portalRef}>
           <Menu.Positioner align="end" className="z-30" sideOffset={8}>
-            <Menu.Popup className="min-w-[var(--anchor-width)] border border-border bg-popover shadow-[5px_5px_0_black] outline-none">
+            <Menu.Popup className="min-w-[var(--anchor-width)] border border-border bg-popover shadow-[5px_5px_0_var(--shadow-color)] outline-none">
               <Menu.Item className={menuItemClassName} onClick={props.onRefresh}>
                 <ArrowClockwiseIcon aria-hidden="true" weight="bold" />
                 {props.refreshLabel}
@@ -84,7 +84,7 @@ export function DeploymentActions(props: DeploymentActionsProps) {
                 <Menu.Item
                   className={cn(
                     menuItemClassName,
-                    'border-t border-border text-destructive data-[highlighted]:bg-destructive data-[highlighted]:text-primary-foreground',
+                    'border-t border-border text-danger-foreground data-[highlighted]:bg-destructive data-[highlighted]:text-destructive-foreground',
                   )}
                   onClick={() => openAction('Spin down')}
                 >
@@ -101,9 +101,9 @@ export function DeploymentActions(props: DeploymentActionsProps) {
         onOpenChange={(open) => !open && !dialogPending && setAction(null)}
       >
         <AlertDialog.Portal>
-          <AlertDialog.Backdrop className="fixed inset-0 z-40 min-h-dvh bg-black/80 transition-opacity duration-150 motion-reduce:transition-none data-ending-style:opacity-0 data-starting-style:opacity-0" />
+          <AlertDialog.Backdrop className="fixed inset-0 z-40 min-h-dvh bg-[var(--shadow-color)]/80 transition-opacity duration-150 motion-reduce:transition-none data-ending-style:opacity-0 data-starting-style:opacity-0" />
           <AlertDialog.Popup
-            className="fixed top-1/2 left-1/2 z-50 grid w-[min(28rem,calc(100vw-3rem))] -translate-x-1/2 -translate-y-1/2 gap-6 border border-border bg-card p-6 text-foreground shadow-[10px_10px_0_black] transition-[scale,opacity] duration-100 motion-reduce:transition-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0"
+            className="fixed top-1/2 left-1/2 z-50 grid w-[min(28rem,calc(100vw-3rem))] -translate-x-1/2 -translate-y-1/2 gap-6 border border-border bg-card p-6 text-foreground shadow-[10px_10px_0_var(--shadow-color)] transition-[scale,opacity] duration-100 motion-reduce:transition-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0"
             initialFocus={dialogPending ? false : cancelRef}
           >
             <div className="grid gap-2">
@@ -111,7 +111,10 @@ export function DeploymentActions(props: DeploymentActionsProps) {
                 {action} deployment?
               </AlertDialog.Title>
               <AlertDialog.Description
-                className="h-12 overflow-auto text-sm leading-6 text-muted-foreground"
+                className={cn(
+                  'h-12 overflow-auto text-sm leading-6 text-foreground-soft',
+                  dialogError && 'text-danger-foreground',
+                )}
                 role={dialogError ? 'alert' : 'status'}
               >
                 {dialogError?.message ??
