@@ -27,17 +27,15 @@ function EnvironmentRoute() {
   const router = useRouter()
   const { q = '' } = Route.useSearch()
   const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
-  const projectName = project.name
-
   return (
     <SelectionListPage
       breadcrumbs={[
         {
           kind: 'link',
-          label: `Project: ${projectName}`,
+          label: `Project: ${project.name}`,
           link: (
             <Link activeOptions={{ exact: true }} activeProps={{}} search={{}} to="/projects">
-              Project: {projectName}
+              Project: {project.name}
             </Link>
           ),
         },

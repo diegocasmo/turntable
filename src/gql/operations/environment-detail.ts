@@ -5,7 +5,6 @@ export const environmentDetailQuery = graphql(`
     environment(id: $environmentId, projectId: $projectId) {
       id
       name
-      projectId
     }
   }
 `)

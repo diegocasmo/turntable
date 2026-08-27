@@ -66,24 +66,21 @@ function ServiceRoute() {
   const router = useRouter()
   const { q = '' } = Route.useSearch()
   const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
-  const projectName = project.name
-  const environmentName = environment.name
-
   return (
     <SelectionListPage
       breadcrumbs={[
         {
           kind: 'link',
-          label: `Project: ${projectName}`,
+          label: `Project: ${project.name}`,
           link: (
             <Link activeOptions={{ exact: true }} activeProps={{}} search={{}} to="/projects">
-              Project: {projectName}
+              Project: {project.name}
             </Link>
           ),
         },
         {
           kind: 'link',
-          label: `Environment: ${environmentName}`,
+          label: `Environment: ${environment.name}`,
           link: (
             <Link
               activeOptions={{ exact: true }}
@@ -92,7 +89,7 @@ function ServiceRoute() {
               search={{}}
               to="/projects/$projectId/environments"
             >
-              Environment: {environmentName}
+              Environment: {environment.name}
             </Link>
           ),
         },

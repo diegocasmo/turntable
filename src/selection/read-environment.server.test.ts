@@ -15,7 +15,6 @@ describe('readRailwayEnvironment', () => {
     const environment = {
       id: testRailwayEnvironmentId,
       name: 'Production',
-      projectId: testRailwayProjectId,
     }
     const fetchRequest = createRailwayFetch(createRailwayResponse({ environment }))
 
@@ -36,27 +35,9 @@ describe('readRailwayEnvironment', () => {
     })
   })
 
-  it('rejects a mismatched parent and returns null for not found', async () => {
-    const wrongParentFetch = createRailwayFetch(
-      createRailwayResponse({
-        environment: {
-          id: testRailwayEnvironmentId,
-          name: 'Production',
-          projectId: 'another-project',
-        },
-      }),
-    )
+  it('returns null for not found', async () => {
     const notFoundFetch = createRailwayFetch({ errors: [{ message: 'Environment not found' }] })
 
-    await expect(
-      readRailwayEnvironment(
-        testRailwayToken,
-        testRailwayApiUrl,
-        testRailwayProjectId,
-        testRailwayEnvironmentId,
-        wrongParentFetch,
-      ),
-    ).resolves.toBeNull()
     await expect(
       readRailwayEnvironment(
         testRailwayToken,

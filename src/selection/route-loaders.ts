@@ -30,7 +30,7 @@ async function readProjectForRoute(queryClient: QueryClient, projectId: string) 
   const detail = queryClient.getQueryData(detailOptions.queryKey)
   if (projects === undefined && detail) return detail
 
-  return queryClient.fetchQuery({ ...detailOptions, staleTime: 0 })
+  return queryClient.fetchQuery(detailOptions)
 }
 
 async function readEnvironmentForRoute(
@@ -46,7 +46,7 @@ async function readEnvironmentForRoute(
   const detail = queryClient.getQueryData(detailOptions.queryKey)
   if (environments === undefined && detail) return detail
 
-  return queryClient.fetchQuery({ ...detailOptions, staleTime: 0 })
+  return queryClient.fetchQuery(detailOptions)
 }
 
 export async function loadProjectsRoute(context: LoaderContext) {
@@ -83,19 +83,16 @@ export async function loadServicesRoute(
 }
 
 export async function refreshProjectsRoute(queryClient: QueryClient) {
-  await queryClient.fetchQuery({ ...createProjectsQueryOptions(), staleTime: 0 })
+  await queryClient.fetchQuery(createProjectsQueryOptions())
 }
 
 export async function refreshEnvironmentsRoute(queryClient: QueryClient, projectId: string) {
-  const project = await queryClient.fetchQuery({
-    ...createProjectQueryOptions(projectId),
-    staleTime: 0,
-  })
+  const project = await queryClient.fetchQuery(createProjectQueryOptions(projectId))
   if (!project) {
     queryClient.removeQueries({ exact: true, queryKey: createProjectsQueryOptions().queryKey })
     return 'project-missing' as const
   }
-  await queryClient.fetchQuery({ ...createEnvironmentsQueryOptions(projectId), staleTime: 0 })
+  await queryClient.fetchQuery(createEnvironmentsQueryOptions(projectId))
   return 'valid' as const
 }
 
@@ -104,18 +101,14 @@ export async function refreshServicesRoute(
   projectId: string,
   environmentId: string,
 ) {
-  const project = await queryClient.fetchQuery({
-    ...createProjectQueryOptions(projectId),
-    staleTime: 0,
-  })
+  const project = await queryClient.fetchQuery(createProjectQueryOptions(projectId))
   if (!project) {
     queryClient.removeQueries({ exact: true, queryKey: createProjectsQueryOptions().queryKey })
     return 'project-missing' as const
   }
-  const environment = await queryClient.fetchQuery({
-    ...createEnvironmentQueryOptions(projectId, environmentId),
-    staleTime: 0,
-  })
+  const environment = await queryClient.fetchQuery(
+    createEnvironmentQueryOptions(projectId, environmentId),
+  )
   if (!environment) {
     queryClient.removeQueries({
       exact: true,
@@ -123,9 +116,6 @@ export async function refreshServicesRoute(
     })
     return 'environment-missing' as const
   }
-  await queryClient.fetchQuery({
-    ...createServicesQueryOptions(projectId, environmentId),
-    staleTime: 0,
-  })
+  await queryClient.fetchQuery(createServicesQueryOptions(projectId, environmentId))
   return 'valid' as const
 }

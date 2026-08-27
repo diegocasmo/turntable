@@ -19,7 +19,7 @@ export async function readRailwayEnvironment(
       token,
       variables: { environmentId, projectId },
     })
-    return result.environment.projectId === projectId ? result.environment : null
+    return result.environment
   } catch (error) {
     if (error instanceof RailwayGraphQLError && error.isNotFound) return null
     throw error
