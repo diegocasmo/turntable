@@ -39,7 +39,7 @@ export function ServiceActionDialog({
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
       <Tooltip.Root disabled={!disabled}>
-        <Tooltip.Trigger delay={100} render={<span className="contents" />}>
+        <Tooltip.Trigger delay={100} render={<span className="block" />}>
           <AlertDialog.Trigger
             aria-describedby={disabled ? disabledDescriptionId : undefined}
             aria-label={`${label} ${serviceName}`}

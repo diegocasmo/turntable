@@ -12,6 +12,7 @@ import {
   SelectionRouteError,
   SelectionRoutePending,
 } from '@/selection/components/selection-route-state'
+import { findEntityById } from '@/selection/find-entity-by-id'
 import {
   createEnvironmentsQueryOptions,
   createProjectsQueryOptions,
@@ -30,7 +31,7 @@ function checkServiceOperationIsVisible(
     id: string
   }>,
 ) {
-  const service = services.find((candidate) => candidate.id === operation.serviceId)
+  const service = findEntityById(services, operation.serviceId)
   if (!service) return true
 
   const deploymentId = service.deployment?.id ?? null
