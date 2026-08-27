@@ -299,6 +299,10 @@ describe('service collection route', () => {
           createService('service-worker', 'Worker'),
         ])
         .mockResolvedValueOnce([
+          createService('service-web', 'Web', null),
+          createService('service-worker', 'Worker'),
+        ])
+        .mockResolvedValueOnce([
           createService('service-web', 'Web', 'INITIALIZING'),
           createService('service-worker', 'Worker', 'REMOVING'),
         ])
@@ -317,7 +321,11 @@ describe('service collection route', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
       fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
-      await vi.waitFor(() => expect(screen.getByText('Initializing')).toBeVisible())
+      await vi.waitFor(() => expect(readServicesMock).toHaveBeenCalledTimes(2))
+      expect(screen.getByText('No active deployment')).toBeVisible()
+
+      await act(() => vi.advanceTimersByTimeAsync(5_000))
+      expect(screen.getByText('Initializing')).toBeVisible()
       expect(screen.getByText('Removing')).toBeVisible()
 
       await act(() => vi.advanceTimersByTimeAsync(5_000))
@@ -327,10 +335,10 @@ describe('service collection route', () => {
       expect(screen.getByText('Failed')).toBeVisible()
       expect(screen.getByText('No active deployment')).toBeVisible()
       expect(page.router.state.location.href).toContain('/services?q=w')
-      expect(readServicesMock).toHaveBeenCalledTimes(4)
+      expect(readServicesMock).toHaveBeenCalledTimes(5)
 
       await act(() => vi.advanceTimersByTimeAsync(10_000))
-      expect(readServicesMock).toHaveBeenCalledTimes(4)
+      expect(readServicesMock).toHaveBeenCalledTimes(5)
     } finally {
       vi.useRealTimers()
     }
