@@ -1,10 +1,21 @@
-import { createRootRoute, HeadContent, Scripts } from '@tanstack/react-router'
+import { type QueryClient, queryOptions } from '@tanstack/react-query'
+import { createRootRouteWithContext, HeadContent, Scripts } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { NotFoundPage } from '@/components/not-found-page'
+import { queryKeys } from '@/query-keys'
 import { createSecurityHeaders } from '@/security-headers'
+import { readSessionState } from '@/session/read-session-state'
 import appCss from '@/styles.css?url'
 
-export const Route = createRootRoute({
+const sessionQueryOptions = queryOptions({
+  queryFn: ({ signal }) => readSessionState({ signal }),
+  queryKey: queryKeys.session.read,
+})
+
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  beforeLoad: async ({ context }) => ({
+    sessionState: await context.queryClient.ensureQueryData(sessionQueryOptions),
+  }),
   headers: ({ ssr }) => (ssr?.nonce ? createSecurityHeaders(ssr.nonce) : undefined),
   head: () => ({
     meta: [
