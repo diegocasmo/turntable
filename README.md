@@ -63,16 +63,3 @@ pnpm test:e2e
 This command starts Turntable, uses the configured Railway target, and runs all browser tests. CI
 uses `turntable-e2e/ci`. It runs for branches in this repository, `main`, and manual requests. It
 does not run for fork pull requests, because they cannot receive the token.
-
-## Check a deployed build
-
-Use the configured Railway test target. Complete this list with a keyboard and then with a pointer:
-
-1. Connect and open each collection route directly.
-2. Search and clear search on Projects, Environments, and Services.
-3. Refresh each collection. Confirm that the route and search stay unchanged.
-4. Use Back, Forward, and reload on each route.
-5. Check focus, breadcrumbs, Sign out, and service actions at 390 by 844 pixels.
-6. Repeat at 1440 by 900 pixels.
-7. Run Spin down and Spin up. Confirm that each service reaches the Railway-reported final state.
-8. Confirm that the target is running before you finish.

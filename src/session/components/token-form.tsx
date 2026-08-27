@@ -29,10 +29,7 @@ export function TokenForm({ expired }: TokenFormProps) {
 
   return (
     <form aria-labelledby="connect-title" className="w-full" method="post" onSubmit={handleSubmit}>
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-        Step 01 / Connect
-      </p>
-      <h2 id="connect-title" className="mt-4 text-3xl leading-tight sm:text-4xl">
+      <h2 id="connect-title" className="text-3xl leading-tight sm:text-4xl">
         Connect to Railway
       </h2>
       <p className="mt-4 leading-7 text-foreground-soft">

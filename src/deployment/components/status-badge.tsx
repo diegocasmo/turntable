@@ -1,3 +1,6 @@
+import { ArrowsClockwiseIcon } from '@phosphor-icons/react/ArrowsClockwise'
+import { HourglassSimpleIcon } from '@phosphor-icons/react/HourglassSimple'
+import { WarningIcon } from '@phosphor-icons/react/Warning'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import {
@@ -29,6 +32,15 @@ export function StatusBadge({ status }: StatusBadgeProps) {
       className={cn('font-mono font-semibold uppercase tracking-[0.12em]', badgeToneClasses[tone])}
       role="status"
     >
+      {presentation?.indicator === 'activity' ? (
+        <ArrowsClockwiseIcon aria-hidden="true" data-icon="inline-start" weight="bold" />
+      ) : null}
+      {presentation?.indicator === 'waiting' ? (
+        <HourglassSimpleIcon aria-hidden="true" data-icon="inline-start" weight="bold" />
+      ) : null}
+      {presentation?.indicator === 'attention' ? (
+        <WarningIcon aria-hidden="true" data-icon="inline-start" weight="bold" />
+      ) : null}
       {label}
     </Badge>
   )

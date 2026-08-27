@@ -7,6 +7,7 @@ import {
   readDeploymentStatusPresentation,
 } from '@/railway/deployment-status'
 
+type DeploymentStatusIndicator = ReturnType<typeof readDeploymentStatusPresentation>['indicator']
 const statusToneCases: ReadonlyArray<
   Readonly<{ status: DeploymentStatus; tone: DeploymentStatusTone }>
 > = [
@@ -17,25 +18,24 @@ const statusToneCases: ReadonlyArray<
   { status: 'REMOVED', tone: 'neutral' },
   { status: 'unknown', tone: 'neutral' },
 ]
-
-const transitionCases: ReadonlyArray<
-  Readonly<{ status: DeploymentStatus; transitional: boolean }>
-> = [
-  { status: 'BUILDING', transitional: true },
-  { status: 'CRASHED', transitional: false },
-  { status: 'DEPLOYING', transitional: true },
-  { status: 'FAILED', transitional: false },
-  { status: 'INITIALIZING', transitional: true },
-  { status: 'NEEDS_APPROVAL', transitional: true },
-  { status: 'QUEUED', transitional: true },
-  { status: 'REMOVED', transitional: false },
-  { status: 'REMOVING', transitional: true },
-  { status: 'SKIPPED', transitional: false },
-  { status: 'SLEEPING', transitional: false },
-  { status: 'SUCCESS', transitional: false },
-  { status: 'WAITING', transitional: true },
-  { status: 'unknown', transitional: false },
-]
+const statusIndicatorCases = [
+  { indicator: 'activity', status: 'BUILDING' },
+  { indicator: null, status: 'CRASHED' },
+  { indicator: 'activity', status: 'DEPLOYING' },
+  { indicator: null, status: 'FAILED' },
+  { indicator: 'activity', status: 'INITIALIZING' },
+  { indicator: 'attention', status: 'NEEDS_APPROVAL' },
+  { indicator: 'waiting', status: 'QUEUED' },
+  { indicator: null, status: 'REMOVED' },
+  { indicator: 'activity', status: 'REMOVING' },
+  { indicator: null, status: 'SKIPPED' },
+  { indicator: null, status: 'SLEEPING' },
+  { indicator: null, status: 'SUCCESS' },
+  { indicator: 'waiting', status: 'WAITING' },
+  { indicator: null, status: 'unknown' },
+] as const satisfies ReadonlyArray<
+  Readonly<{ indicator: DeploymentStatusIndicator; status: DeploymentStatus }>
+>
 
 describe('deployment status', () => {
   it('keeps a known Railway status', () => {
@@ -50,10 +50,16 @@ describe('deployment status', () => {
     expect(readDeploymentStatusPresentation(status).tone).toBe(tone)
   })
 
-  it.each(transitionCases)(
-    'reports $status transitional as $transitional',
-    ({ status, transitional }) => {
-      expect(isDeploymentStatusTransitional(status)).toBe(transitional)
+  it.each(statusIndicatorCases)(
+    'maps $status to the $indicator indicator',
+    ({ indicator, status }) => {
+      expect(readDeploymentStatusPresentation(status).indicator).toBe(indicator)
     },
   )
+
+  it('distinguishes transitional and terminal statuses', () => {
+    expect(isDeploymentStatusTransitional('INITIALIZING')).toBe(true)
+    expect(isDeploymentStatusTransitional('SUCCESS')).toBe(false)
+    expect(isDeploymentStatusTransitional('FAILED')).toBe(false)
+  })
 })

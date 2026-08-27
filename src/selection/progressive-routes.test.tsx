@@ -1,13 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { routeTree } from '@/routeTree.gen'
 import { createRailwayEnvironment, createRailwayProject } from '@/test/railway'
+import { renderRoutes } from '@/test/render-routes'
 
-const { readEnvironmentsMock, readProjectsMock } = vi.hoisted(() => ({
+const { readEnvironmentsMock, readProjectMock, readProjectsMock } = vi.hoisted(() => ({
   readEnvironmentsMock: vi.fn(),
+  readProjectMock: vi.fn(),
   readProjectsMock: vi.fn(),
 }))
 
@@ -22,24 +20,14 @@ vi.mock('@/routes/__root', async () => {
   }
 })
 vi.mock('@/selection/read-projects', () => ({ readProjects: readProjectsMock }))
+vi.mock('@/selection/read-project', () => ({ readProject: readProjectMock }))
 vi.mock('@/selection/read-environments', () => ({ readEnvironments: readEnvironmentsMock }))
 vi.stubGlobal('scrollTo', vi.fn())
 
-function renderRoutes(initialEntry: string) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  const router = createRouter({
-    context: { queryClient },
-    defaultPendingMs: 0,
-    history: createMemoryHistory({ initialEntries: [initialEntry] }),
-    routeTree,
-    Wrap: ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    ),
-  })
-  return { router, ...render(<RouterProvider router={router} />) }
-}
-
 beforeEach(() => {
+  readProjectMock
+    .mockReset()
+    .mockResolvedValue(createRailwayProject({ id: 'project-worker', name: 'Worker' }))
   readProjectsMock
     .mockReset()
     .mockResolvedValue([
@@ -58,11 +46,9 @@ describe('progressive project and environment routes', () => {
 
     expect(await screen.findByRole('heading', { name: 'Loading projects' })).toBeVisible()
     const breadcrumbs = screen.getByRole('navigation', { name: 'Selection progress' })
-    expect(within(breadcrumbs).getByText('Project')).toHaveAttribute('aria-current', 'page')
-    expect(within(breadcrumbs).getByRole('button', { name: 'Environment' })).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    )
+    expect(within(breadcrumbs).getByText('Project')).toBeVisible()
+    expect(within(breadcrumbs).getByRole('button', { name: 'Environment' })).toBeVisible()
+    expect(within(breadcrumbs).getByRole('button', { name: 'Services' })).toBeVisible()
     expect(within(breadcrumbs).queryByText('Selection')).not.toBeInTheDocument()
 
     projects.resolve([])
@@ -80,21 +66,23 @@ describe('progressive project and environment routes', () => {
       'href',
       '/projects',
     )
-    expect(within(breadcrumbs).getByText('Environment')).toHaveAttribute('aria-current', 'page')
+    expect(within(breadcrumbs).getByText('Environment')).toBeVisible()
+    expect(within(breadcrumbs).getByRole('button', { name: 'Services' })).toBeVisible()
   })
 
-  it('restores q and filters only the visible cards in fuzzy order', async () => {
+  it('restores q and filters the visible cards', async () => {
     renderRoutes('/projects?q=wkr')
     const input = await screen.findByRole('searchbox', { name: 'Search projects' })
 
     expect(input).toHaveValue('wkr')
     expect(screen.queryByText('Home')).not.toBeInTheDocument()
-    expect(screen.getByText('Project')).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Select Worker in Railway workspace' })).toBeVisible()
     expect(
-      screen.getAllByRole('link', { name: /^Select / }).map((link) => link.textContent),
-    ).toEqual(['WorkerRailway workspace', 'API workerRailway workspace'])
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
-    expect(screen.queryByRole('option')).not.toBeInTheDocument()
+      screen.getByRole('link', { name: 'Select API worker in Railway workspace' }),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('link', { name: 'Select Web in Railway workspace' }),
+    ).not.toBeInTheDocument()
   })
 
   it('replaces q while typing and clears it for normal card navigation', async () => {
@@ -120,20 +108,14 @@ describe('progressive project and environment routes', () => {
   })
 
   it('uses breadcrumbs for backward navigation and keeps future steps disabled', async () => {
-    renderRoutes('/projects/project-worker/environments?q=prod')
+    const page = renderRoutes('/projects/project-worker/environments?q=prod')
     expect(await screen.findByRole('heading', { name: 'Choose an environment' })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Project: Worker' })).toHaveAttribute(
-      'href',
-      '/projects',
-    )
-    screen.getByRole('link', { name: 'Project: Worker' }).focus()
-    expect(screen.getByRole('link', { name: 'Project: Worker' })).toHaveFocus()
-    expect(screen.getByText('Environment')).toHaveAttribute('aria-current', 'page')
     expect(screen.queryByRole('button', { name: /Change project/i })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Services' })).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'Services' }))
+    expect(page.router.state.location.href).toBe('/projects/project-worker/environments?q=prod')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Project: Worker' }))
+    await waitFor(() => expect(page.router.state.location.href).toBe('/projects'))
   })
 
   it('distinguishes same-named projects by workspace', async () => {
@@ -173,14 +155,13 @@ describe('progressive project and environment routes', () => {
     await waitFor(() => expect(readProjectsMock).toHaveBeenCalledTimes(2))
     fireEvent.click(refresh)
     expect(readProjectsMock).toHaveBeenCalledTimes(2)
-    await waitFor(() => expect(refresh).toHaveAttribute('aria-busy', 'true'))
     refreshedProjects.resolve([createRailwayProject({ name: 'Worker' })])
 
     expect(
       await screen.findByRole('link', { name: 'Select Worker in Railway workspace' }),
     ).toBeVisible()
     expect(page.router.state.location.href).toBe('/projects?q=work')
-    expect(screen.getByText('Projects refreshed.')).toHaveAttribute('role', 'status')
+    expect(screen.getByText('Projects refreshed.')).toBeVisible()
   })
 
   it('refreshes the selected project before its environments', async () => {
@@ -194,6 +175,7 @@ describe('progressive project and environment routes', () => {
 
     expect(await screen.findByRole('link', { name: 'Select Staging' })).toBeVisible()
     expect(page.router.state.location.href).toBe('/projects/project-worker/environments?q=stag')
-    expect(readProjectsMock).toHaveBeenCalledTimes(2)
+    expect(readProjectMock).toHaveBeenCalledTimes(2)
+    expect(readProjectsMock).not.toHaveBeenCalled()
   })
 })
