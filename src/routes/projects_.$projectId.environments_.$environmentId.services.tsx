@@ -1,7 +1,11 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useRouter, useRouterState } from '@tanstack/react-router'
+import { useState } from 'react'
 import { TurntablePage } from '@/components/turntable-page'
-import { ServiceActions } from '@/deployment/components/service-actions'
+import {
+  type AcceptedServiceOperation,
+  ServiceActions,
+} from '@/deployment/components/service-actions'
 import { StatusBadge } from '@/deployment/components/status-badge'
 import { EntityCard } from '@/selection/components/entity-card-grid'
 import { SelectionListPage } from '@/selection/components/selection-list-page'
@@ -16,6 +20,25 @@ import {
 } from '@/selection/query-options'
 import { loadServicesRoute, refreshServicesRoute } from '@/selection/route-loaders'
 import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
+
+type PendingServiceOperation = AcceptedServiceOperation &
+  Readonly<{ previousDeploymentId: string | null }>
+
+function checkServiceOperationIsVisible(
+  operation: PendingServiceOperation,
+  services: ReadonlyArray<{
+    deployment: Readonly<{ id: string }> | null
+    id: string
+  }>,
+) {
+  const service = services.find((candidate) => candidate.id === operation.serviceId)
+  if (!service) return true
+
+  const deploymentId = service.deployment?.id ?? null
+  return operation.action === 'spin-down'
+    ? deploymentId !== operation.deploymentId
+    : deploymentId === operation.deploymentId || deploymentId !== operation.previousDeploymentId
+}
 
 export const Route = createFileRoute('/projects_/$projectId/environments_/$environmentId/services')(
   {
@@ -40,10 +63,19 @@ function ServiceRoute() {
 function AuthenticatedServiceRoute() {
   const { queryClient } = Route.useRouteContext()
   const { environmentId, projectId } = Route.useParams()
+  const [pendingOperations, setPendingOperations] = useState<PendingServiceOperation[]>([])
   const projects = useSuspenseQuery(createProjectsQueryOptions()).data
   const environments = useSuspenseQuery(createEnvironmentsQueryOptions(projectId)).data
-  const servicesQuery = useSuspenseQuery(createServicesQueryOptions(projectId, environmentId))
+  const servicesQuery = useSuspenseQuery(
+    createServicesQueryOptions(projectId, environmentId, pendingOperations.length > 0),
+  )
   const services = servicesQuery.data
+  const unresolvedOperations = pendingOperations.filter(
+    (operation) => !checkServiceOperationIsVisible(operation, services),
+  )
+  if (unresolvedOperations.length !== pendingOperations.length) {
+    setPendingOperations(unresolvedOperations)
+  }
   const navigate = Route.useNavigate()
   const router = useRouter()
   const { q = '' } = Route.useSearch()
@@ -95,6 +127,15 @@ function AuthenticatedServiceRoute() {
                 deployment={service.deployment}
                 serviceName={service.name}
                 target={{ environmentId, projectId, serviceId: service.id }}
+                onOperationAccepted={(operation) => {
+                  setPendingOperations((current) => [
+                    ...current,
+                    {
+                      ...operation,
+                      previousDeploymentId: service.deployment?.id ?? null,
+                    },
+                  ])
+                }}
               />
             }
             entity={service}

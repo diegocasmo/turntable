@@ -29,7 +29,11 @@ export function createEnvironmentsQueryOptions(projectId: string) {
   })
 }
 
-export function createServicesQueryOptions(projectId: string, environmentId: string) {
+export function createServicesQueryOptions(
+  projectId: string,
+  environmentId: string,
+  continueSynchronizing = false,
+) {
   return queryOptions({
     queryFn: ({ signal }) => readServices({ data: { environmentId, projectId }, signal }),
     queryKey: selectionQueryKeys.services(projectId, environmentId),
@@ -39,7 +43,9 @@ export function createServicesQueryOptions(projectId: string, environmentId: str
           service.deployment !== null && isDeploymentStatusTransitional(service.deployment.status),
       )
 
-      return hasTransitionalService || query.state.isInvalidated ? 5_000 : false
+      return continueSynchronizing || hasTransitionalService || query.state.isInvalidated
+        ? 5_000
+        : false
     },
     retry: false,
     staleTime: Number.POSITIVE_INFINITY,
