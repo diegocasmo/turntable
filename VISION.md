@@ -27,8 +27,9 @@ Three goals shape the product:
 The service must already exist. Turntable does not create or delete a service.
 
 Turntable does not open a stream for each service. The Services page reads one collection. It reads
-that collection every 5 seconds while Railway reports at least one transitional deployment. It
-stops after all shown deployments are stable or the user leaves the route.
+that collection every 5 seconds while an accepted action is not visible or Railway reports at
+least one transitional deployment. It stops after the action appears, all shown deployments are
+stable, or the user leaves the route.
 
 This rule avoids one stream or poll loop for every visible service. It also lets all visible
 services share one scoped request.
@@ -107,7 +108,8 @@ request. The service card then shows Railway's current status.
 Both actions need confirmation. A pending mutation disables duplicate submission. A failed
 mutation stays visible in the confirmation dialog. After success, Turntable invalidates only the
 selected project and environment Services query. It does not guess the next status. The query keeps
-reading while Railway reports a transitional status. It stops when all shown statuses are stable.
+reading while the accepted action is not visible or Railway reports a transitional status. It
+stops when the action appears and all shown statuses are stable.
 
 Railway has 13 known deployment statuses in the committed schema. One function maps each status to
 a badge. An unknown status maps to `Unknown` and does not crash the page.
@@ -179,8 +181,8 @@ failures. Tests query the user interface by role and accessible name.
 `pnpm test:e2e` drives one real Railway target. It selects the target through the route flow and
 runs both lifecycle actions. Test cleanup starts the shared target and polls the exact returned
 deployment at 1, 2, 4, and then 5 second intervals. Cleanup stops after two minutes or at a terminal
-failure state. Application polling is limited to the Services collection while a shown deployment
-is transitional.
+failure state. Application polling is limited to the Services collection while an accepted action
+is not visible or a shown deployment is transitional.
 
 ## Cut line
 
