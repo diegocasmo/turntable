@@ -1,8 +1,8 @@
 import { Tooltip } from '@base-ui/react/tooltip'
-import { useId } from 'react'
+import { type ReactNode, useId } from 'react'
 
 export type SelectionBreadcrumbStep =
-  | Readonly<{ href: string; kind: 'link'; label: string }>
+  | Readonly<{ kind: 'link'; label: string; link: ReactNode }>
   | Readonly<{ kind: 'current'; label: string }>
   | Readonly<{ description: string; kind: 'disabled'; label: string }>
 
@@ -47,12 +47,11 @@ function DisabledBreadcrumb({
 function renderStep(step: SelectionBreadcrumbStep) {
   if (step.kind === 'link') {
     return (
-      <a
-        className={`${itemClassName} text-foreground-soft hover:text-primary focus-visible:bg-primary focus-visible:text-primary-foreground`}
-        href={step.href}
+      <span
+        className={`${itemClassName} p-0 text-foreground-soft hover:text-primary [&_a]:inline-flex [&_a]:min-h-8 [&_a]:items-center [&_a]:px-1 [&_a]:outline-none [&_a]:focus-visible:bg-primary [&_a]:focus-visible:text-primary-foreground [&_a]:focus-visible:outline-[3px] [&_a]:focus-visible:outline-offset-1 [&_a]:focus-visible:outline-ring`}
       >
-        {step.label}
-      </a>
+        {step.link}
+      </span>
     )
   }
 
