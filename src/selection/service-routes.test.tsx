@@ -10,7 +10,9 @@ import { renderRoutes } from '@/test/render-routes'
 
 const {
   connectMock,
+  readEnvironmentMock,
   readEnvironmentsMock,
+  readProjectMock,
   readProjectsMock,
   readServicesMock,
   session,
@@ -18,7 +20,9 @@ const {
   spinUpMock,
 } = vi.hoisted(() => ({
   connectMock: vi.fn(),
+  readEnvironmentMock: vi.fn(),
   readEnvironmentsMock: vi.fn(),
+  readProjectMock: vi.fn(),
   readProjectsMock: vi.fn(),
   readServicesMock: vi.fn(),
   session: {
@@ -40,7 +44,9 @@ vi.mock('@/routes/__root', async () => {
   }
 })
 vi.mock('@/selection/read-projects', () => ({ readProjects: readProjectsMock }))
+vi.mock('@/selection/read-project', () => ({ readProject: readProjectMock }))
 vi.mock('@/selection/read-environments', () => ({ readEnvironments: readEnvironmentsMock }))
+vi.mock('@/selection/read-environment', () => ({ readEnvironment: readEnvironmentMock }))
 vi.mock('@/selection/read-services', () => ({ readServices: readServicesMock }))
 vi.mock('@/session/connect-to-railway', () => ({ connectToRailway: connectMock }))
 vi.mock('@/deployment/spin-down-deployment', () => ({ spinDownDeployment: spinDownMock }))
@@ -57,13 +63,28 @@ function createService(id: string, name: string, status: 'SUCCESS' | null = 'SUC
 
 const servicesPath = `/projects/${testRailwayProjectId}/environments/${testRailwayEnvironmentId}/services`
 
+async function renderServicesThroughCollections() {
+  const page = renderRoutes('/projects')
+  fireEvent.click(
+    await screen.findByRole('link', { name: 'Select Turntable in Railway workspace' }),
+  )
+  fireEvent.click(await screen.findByRole('link', { name: 'Select Production' }))
+  await screen.findByRole('heading', { name: 'Services' })
+  return page
+}
+
 beforeEach(() => {
   session.current = 'authenticated'
   connectMock.mockReset().mockImplementation(async () => {
     session.current = 'authenticated'
     return session.current
   })
+  readProjectMock.mockReset().mockResolvedValue(createRailwayProject())
   readProjectsMock.mockReset().mockResolvedValue([createRailwayProject()])
+  readEnvironmentMock.mockReset().mockResolvedValue({
+    ...createRailwayEnvironment(),
+    projectId: testRailwayProjectId,
+  })
   readEnvironmentsMock.mockReset().mockResolvedValue([createRailwayEnvironment()])
   readServicesMock
     .mockReset()
@@ -109,32 +130,34 @@ describe('service collection route', () => {
   })
 
   it('replaces a stale project after refresh proves it is missing', async () => {
+    readProjectMock.mockResolvedValue(null)
     readProjectsMock.mockResolvedValueOnce([createRailwayProject()]).mockResolvedValueOnce([])
-    const page = renderRoutes(`${servicesPath}?q=web`)
-    await screen.findByRole('heading', { name: 'Services' })
+    const page = await renderServicesThroughCollections()
     fireEvent.click(screen.getByRole('button', { name: 'Refresh services' }))
 
     expect(await screen.findByRole('heading', { name: 'Choose a project' })).toBeVisible()
     expect(page.router.state.location.href).toBe('/projects')
     expect(screen.getByText('The selected project is no longer available.')).toBeVisible()
+    expect(screen.queryByRole('link', { name: /Select Turntable/ })).not.toBeInTheDocument()
   })
 
   it('replaces a stale environment after refresh proves it is missing', async () => {
+    readEnvironmentMock.mockResolvedValue(null)
     readEnvironmentsMock
       .mockResolvedValueOnce([createRailwayEnvironment()])
       .mockResolvedValueOnce([])
-    const page = renderRoutes(servicesPath)
-    await screen.findByRole('heading', { name: 'Services' })
+    const page = await renderServicesThroughCollections()
     fireEvent.click(screen.getByRole('button', { name: 'Refresh services' }))
 
     expect(await screen.findByRole('heading', { name: 'Choose an environment' })).toBeVisible()
     expect(page.router.state.location.href).toBe(`/projects/${testRailwayProjectId}/environments`)
     expect(screen.getByText('The selected environment is no longer available.')).toBeVisible()
+    expect(screen.queryByRole('link', { name: 'Select Production' })).not.toBeInTheDocument()
   })
 
   it('keeps a refresh network failure on the current URL', async () => {
-    readProjectsMock
-      .mockResolvedValueOnce([createRailwayProject()])
+    readProjectMock
+      .mockResolvedValueOnce(createRailwayProject())
       .mockRejectedValueOnce(new Error('Railway could not refresh projects.'))
     const listUrl = `${servicesPath}?q=web`
     const page = renderRoutes(listUrl)
@@ -148,20 +171,24 @@ describe('service collection route', () => {
   })
 
   it('does not replace a route that the user left during refresh', async () => {
-    const refreshedEnvironments =
-      Promise.withResolvers<ReturnType<typeof createRailwayEnvironment>[]>()
-    readEnvironmentsMock
-      .mockResolvedValueOnce([createRailwayEnvironment()])
-      .mockReturnValueOnce(refreshedEnvironments.promise)
+    const refreshedEnvironment = Promise.withResolvers<
+      (ReturnType<typeof createRailwayEnvironment> & { projectId: string }) | null
+    >()
+    readEnvironmentMock
+      .mockResolvedValueOnce({
+        ...createRailwayEnvironment(),
+        projectId: testRailwayProjectId,
+      })
+      .mockReturnValueOnce(refreshedEnvironment.promise)
     const page = renderRoutes(servicesPath)
     await screen.findByRole('heading', { name: 'Services' })
     fireEvent.click(screen.getByRole('button', { name: 'Refresh services' }))
-    await waitFor(() => expect(readEnvironmentsMock).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(readEnvironmentMock).toHaveBeenCalledTimes(2))
     fireEvent.click(screen.getByRole('link', { name: /^Project:/ }))
     await screen.findByRole('heading', { name: 'Choose a project' })
 
-    refreshedEnvironments.resolve([])
-    await refreshedEnvironments.promise
+    refreshedEnvironment.resolve(null)
+    await refreshedEnvironment.promise
     await Promise.resolve()
 
     expect(page.router.state.location.href).toBe('/projects')
@@ -212,6 +239,7 @@ describe('service collection route', () => {
     const listUrl = `${servicesPath}?q=worker`
     const page = renderRoutes(listUrl)
     const token = await screen.findByLabelText('Railway API token')
+    expect(readProjectMock).not.toHaveBeenCalled()
     expect(readProjectsMock).not.toHaveBeenCalled()
     fireEvent.change(token, { target: { value: 'test-token' } })
     fireEvent.submit(screen.getByRole('form', { name: 'Connect to Railway' }))

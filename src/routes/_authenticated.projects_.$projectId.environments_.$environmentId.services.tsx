@@ -13,11 +13,7 @@ import {
   SelectionRoutePending,
 } from '@/selection/components/selection-route-state'
 import { findEntityById } from '@/selection/find-entity-by-id'
-import {
-  createEnvironmentsQueryOptions,
-  createProjectsQueryOptions,
-  createServicesQueryOptions,
-} from '@/selection/queries'
+import { createServicesQueryOptions } from '@/selection/queries'
 import { loadServicesRoute, refreshServicesRoute } from '@/selection/route-loaders'
 import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
 
@@ -53,10 +49,9 @@ export const Route = createFileRoute(
 
 function ServiceRoute() {
   const { queryClient } = Route.useRouteContext()
+  const { environment, project } = Route.useLoaderData()
   const { environmentId, projectId } = Route.useParams()
   const [pendingOperations, setPendingOperations] = useState<PendingServiceOperation[]>([])
-  const projects = useSuspenseQuery(createProjectsQueryOptions()).data
-  const environments = useSuspenseQuery(createEnvironmentsQueryOptions(projectId)).data
   const servicesQuery = useSuspenseQuery(
     createServicesQueryOptions(projectId, environmentId, pendingOperations.length > 0),
   )
@@ -71,8 +66,8 @@ function ServiceRoute() {
   const router = useRouter()
   const { q = '' } = Route.useSearch()
   const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
-  const projectName = findEntityById(projects, projectId)?.name ?? projectId
-  const environmentName = findEntityById(environments, environmentId)?.name ?? environmentId
+  const projectName = project.name
+  const environmentName = environment.name
 
   return (
     <SelectionListPage
