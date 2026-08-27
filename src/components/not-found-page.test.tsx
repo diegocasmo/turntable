@@ -16,7 +16,7 @@ describe('Not found page', () => {
     expect(within(main).getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible()
     expect(within(main).getByRole('link', { name: 'Return to Turntable' })).toHaveAttribute(
       'href',
-      '/',
+      '/projects',
     )
   })
 })

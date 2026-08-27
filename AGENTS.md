@@ -22,13 +22,13 @@ These rules apply to all work in this repository. This file is the only source f
 2. Point to the single source of truth. Do not copy information that has a source. Give a link or a file path instead.
 3. Use strict TypeScript. Do not use `any`. Do not use a type assertion to hide an error. The Railway client can assert the successful `data` value once, after it validates the GraphQL response and rejects errors, missing data, and null data.
 4. Do not write `useEffect`. Use TanStack Query for server state and asynchronous action state. Use TanStack Form for form state. Ask the project owner before you add a different state tool.
-5. Use GraphQL subscriptions for live data. Do not poll. There is no exception.
+5. Do not use subscriptions or polling in application code. Read a snapshot on route load and once after a successful mutation. The real Railway end-to-end cleanup can poll at 1, 2, 4, and then 5 second intervals for at most two minutes. This is the only polling exception.
 6. Keep the plaintext Railway API token in the token form and its request only. Never persist, log, or put it in a long-lived client cache. Remove the form and its mutation from client state after a successful connection. The client then stores only ciphertext.
 7. Keep each pull request at or below the added-line limit that [the Dangerfile](./dangerfile.mts) defines and enforces. The check counts tests like other files. Split the work instead.
 8. `.gitattributes` marks each file that a tool owns and replaces with `linguist-generated=true`. The size check in CI does not count these files, and GitHub hides them in the diff. Do not mark source code that the project owns and maintains.
 9. A feature's dependencies land in a pull request before its feature code. A dependency pull request can add the minimum configuration, generated output, and tests that prove the dependencies work. The scaffold pull request can add the dependencies of the scaffold.
 10. Put tests in the same pull request as the code that they test.
-11. Make the user interface accessible. Use semantic HTML. Use an `aria-live` region for the live status.
+11. Make the user interface accessible. Use semantic HTML. Use an `aria-live` region for action progress, results, and errors when needed.
 12. Validate every Railway response body at the boundary with zod. The body is not always GraphQL. Use gql.tada for successful GraphQL result and variable types. Do not copy a GraphQL result shape into zod or a hand-written type. Validate a domain rule with zod when GraphQL cannot express it. Map an unknown status to the unknown badge. Do not crash.
 13. Never log a request body. Redact `Authorization`, `Cookie`, and `Set-Cookie` in every log line and every error path.
 14. Write commit messages and pull request titles in the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format.

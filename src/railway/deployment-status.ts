@@ -62,6 +62,3 @@ export function readDeploymentStatusPresentation(status: DeploymentStatus) {
 export function isDeploymentStatusTransitional(status: DeploymentStatus) {
   return transitionalDeploymentStatuses.has(status)
 }
-
-export const formatDeploymentStatus = (status: DeploymentStatus) =>
-  readDeploymentStatusPresentation(status).label

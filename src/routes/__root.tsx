@@ -18,7 +18,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: 'Turntable' },
       {
         name: 'description',
-        content: 'Start and stop one Railway container, and see its status live.',
+        content: 'Start and stop Railway containers from one clear service view.',
       },
     ],
     links: [{ rel: 'stylesheet', href: appCss }],

@@ -9,7 +9,3 @@ export const deploymentTargetSchema = z.object({
 })
 
 export type DeploymentTarget = z.infer<typeof deploymentTargetSchema>
-
-export const deploymentStreamInputSchema = deploymentTargetSchema.extend({
-  deploymentId: railwayIdSchema.optional(),
-})

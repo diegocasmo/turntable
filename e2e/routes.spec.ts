@@ -71,7 +71,10 @@ test('an unknown route is accessible and returns 404', async ({ page }) => {
 
   expect(response?.status()).toBe(404)
   await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Return to Turntable' })).toHaveAttribute('href', '/')
+  await expect(page.getByRole('link', { name: 'Return to Turntable' })).toHaveAttribute(
+    'href',
+    '/projects',
+  )
 
   const results = await new AxeBuilder({ page }).analyze()
 

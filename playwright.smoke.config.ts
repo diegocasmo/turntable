@@ -17,7 +17,6 @@ export default defineConfig({
       APP_ORIGIN: 'https://turntable.test',
       PORT: '3100',
       RAILWAY_API_URL: `https://${railwayHostname}`,
-      RAILWAY_WEBSOCKET_URL: `wss://${railwayHostname}`,
       SESSION_SECRET: randomBytes(32).toString('base64'),
     },
     reuseExistingServer: false,

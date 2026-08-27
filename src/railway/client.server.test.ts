@@ -1,6 +1,6 @@
 import { print } from 'graphql'
 import { describe, expect, it, vi } from 'vitest'
-import { selectionHierarchyQuery } from '@/gql/operations/projects'
+import { selectionProjectsQuery } from '@/gql/operations/selection-projects'
 import { createRailwayClient } from '@/railway/client.server'
 import {
   RailwayGraphQLError,
@@ -16,7 +16,7 @@ import {
 } from '@/test/railway'
 import { createJsonResponse } from '@/test/response'
 
-const query = print(selectionHierarchyQuery)
+const query = print(selectionProjectsQuery)
 const variables = { workspaceId: testRailwayWorkspaceId }
 const validData = { projects: createRailwayPage([]) }
 
@@ -33,7 +33,7 @@ function setUpClient(response: Response) {
 }
 
 function sendRequest(client: ReturnType<typeof createRailwayClient>) {
-  return client.request({ document: selectionHierarchyQuery, token: testRailwayToken, variables })
+  return client.request({ document: selectionProjectsQuery, token: testRailwayToken, variables })
 }
 
 describe('Railway HTTP client', () => {
