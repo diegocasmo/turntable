@@ -7,6 +7,7 @@ import type { SelectionEntity } from '@/selection/filter-entities'
 
 type SelectionListPageProps<Entity extends SelectionEntity> = Readonly<{
   breadcrumbs: readonly SelectionBreadcrumbStep[]
+  dataError?: Error | null
   emptyMessage: string
   entities: readonly Entity[]
   label: string
@@ -20,6 +21,7 @@ type SelectionListPageProps<Entity extends SelectionEntity> = Readonly<{
 
 export function SelectionListPage<Entity extends SelectionEntity>({
   breadcrumbs,
+  dataError,
   emptyMessage,
   entities,
   label,
@@ -33,12 +35,13 @@ export function SelectionListPage<Entity extends SelectionEntity>({
   const refresh = useMutation({ mutationFn: onRefresh })
   let feedback = notice
   if (refresh.isSuccess) feedback = `${label}s refreshed.`
+  if (dataError) feedback = dataError.message
   if (refresh.error) feedback = refresh.error.message
 
   return (
     <EntitySelectionPage
       breadcrumbs={breadcrumbs}
-      feedbackKind={refresh.error ? 'alert' : 'status'}
+      feedbackKind={refresh.error || dataError ? 'alert' : 'status'}
       refreshLabel={`${label}s`}
       refreshPending={refresh.isPending}
       title={title}

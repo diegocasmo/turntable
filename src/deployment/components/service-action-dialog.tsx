@@ -1,6 +1,7 @@
 import { AlertDialog } from '@base-ui/react/alert-dialog'
+import { Tooltip } from '@base-ui/react/tooltip'
 import { CircleNotchIcon } from '@phosphor-icons/react/CircleNotch'
-import { useRef } from 'react'
+import { useId, useRef } from 'react'
 import { AsyncButton, Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -16,7 +17,6 @@ type ServiceActionDialogProps = Readonly<{
   onOpenChange: (open: boolean) => void
   destructive?: boolean
   disabled?: boolean
-  disabledDescriptionId?: string
 }>
 
 export function ServiceActionDialog({
@@ -31,28 +31,43 @@ export function ServiceActionDialog({
   onOpenChange,
   destructive = false,
   disabled = false,
-  disabledDescriptionId,
 }: ServiceActionDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null)
+  const disabledDescriptionId = useId()
   const triggerRef = useRef<HTMLButtonElement>(null)
 
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
-      <AlertDialog.Trigger
-        aria-describedby={disabledDescriptionId}
-        aria-label={`${label} ${serviceName}`}
-        disabled={disabled}
-        render={
-          <Button
-            ref={triggerRef}
-            className="min-h-11 w-full"
-            focusableWhenDisabled={disabled}
-            variant={destructive ? 'destructive' : 'secondary'}
-          />
-        }
-      >
-        {label}
-      </AlertDialog.Trigger>
+      <Tooltip.Root disabled={!disabled}>
+        <Tooltip.Trigger delay={100} render={<span className="block" />}>
+          <AlertDialog.Trigger
+            aria-describedby={disabled ? disabledDescriptionId : undefined}
+            aria-label={`${label} ${serviceName}`}
+            disabled={disabled}
+            render={
+              <Button
+                ref={triggerRef}
+                className="min-h-11 w-full"
+                focusableWhenDisabled={disabled}
+                variant={destructive ? 'destructive' : 'secondary'}
+              />
+            }
+          >
+            {label}
+          </AlertDialog.Trigger>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Positioner className="z-50" sideOffset={8}>
+            <Tooltip.Popup
+              id={disabledDescriptionId}
+              role="tooltip"
+              className="max-w-56 border border-border bg-popover px-3 py-2 font-mono text-xs text-foreground shadow-[3px_3px_0_var(--shadow-color)]"
+            >
+              {description}
+            </Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>
       <AlertDialog.Portal>
         <AlertDialog.Backdrop className="fixed inset-0 z-40 min-h-dvh bg-[var(--shadow-color)]/80 transition-opacity duration-150 motion-reduce:transition-none data-ending-style:opacity-0 data-starting-style:opacity-0" />
         <AlertDialog.Popup

@@ -1,10 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { routeTree } from '@/routeTree.gen'
 import { createRailwayEnvironment, createRailwayProject } from '@/test/railway'
+import { renderRoutes } from '@/test/render-routes'
 
 const { readEnvironmentsMock, readProjectsMock } = vi.hoisted(() => ({
   readEnvironmentsMock: vi.fn(),
@@ -24,20 +21,6 @@ vi.mock('@/routes/__root', async () => {
 vi.mock('@/selection/read-projects', () => ({ readProjects: readProjectsMock }))
 vi.mock('@/selection/read-environments', () => ({ readEnvironments: readEnvironmentsMock }))
 vi.stubGlobal('scrollTo', vi.fn())
-
-function renderRoutes(initialEntry: string) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  const router = createRouter({
-    context: { queryClient },
-    defaultPendingMs: 0,
-    history: createMemoryHistory({ initialEntries: [initialEntry] }),
-    routeTree,
-    Wrap: ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    ),
-  })
-  return { router, ...render(<RouterProvider router={router} />) }
-}
 
 beforeEach(() => {
   readProjectsMock

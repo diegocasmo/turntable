@@ -5,14 +5,12 @@ import { useSpinDownDeployment } from '@/deployment/hooks/use-spin-down-deployme
 type SpinDownActionProps = Readonly<{
   deploymentId: string | null
   serviceName: string
-  unavailableDescriptionId: string
   onRequestAccepted: (deploymentId: string) => void
 }>
 
 export function SpinDownAction({
   deploymentId,
   serviceName,
-  unavailableDescriptionId,
   onRequestAccepted,
 }: SpinDownActionProps) {
   const [open, setOpen] = useState(false)
@@ -27,10 +25,9 @@ export function SpinDownAction({
       description={
         deploymentId
           ? 'This removes the running container. The service configuration stays in Railway.'
-          : 'Spin down is no longer available because there is no successful deployment.'
+          : 'Spin down requires a successful deployment.'
       }
       disabled={!deploymentId}
-      disabledDescriptionId={unavailableDescriptionId}
       error={spinDown.error}
       label="Spin down"
       open={open}
