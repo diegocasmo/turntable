@@ -41,9 +41,15 @@ test('a user can control the configured Railway service from the collection', as
 
       await expectNoAxeViolations()
       await expectUsableViewport()
+      const environmentBreadcrumb = page.getByRole('button', { name: 'Environment' })
+      await environmentBreadcrumb.hover()
+      await expect(page.getByRole('tooltip')).toHaveText('Select a project first', {
+        timeout: 300,
+      })
       await page
         .getByRole('searchbox', { name: 'Search projects' })
         .fill(railwayTargetNames.project)
+      await expect(page.getByRole('button', { name: 'Clear project search' })).toHaveCount(1)
       const projectCardLink = page.getByRole('link', {
         name: `Select ${railwayTargetNames.project}`,
         exact: false,
@@ -77,34 +83,35 @@ test('a user can control the configured Railway service from the collection', as
       await expectNoAxeViolations()
       await expectUsableViewport()
 
-      const actions = serviceCard.getByRole('button', {
-        name: `Actions for ${railwayTargetNames.service}`,
+      const spinUp = serviceCard.getByRole('button', {
+        name: `Spin up ${railwayTargetNames.service}`,
       })
-      await actions.focus()
-      expect((await actions.boundingBox())?.height).toBeGreaterThanOrEqual(44)
-      await page.keyboard.press('Enter')
-      await expect(page.getByRole('menuitem', { name: 'Spin up' })).toBeFocused()
-      const menuBox = await page.getByRole('menu').boundingBox()
-      expect(menuBox?.x).toBeGreaterThanOrEqual(0)
-      expect((menuBox?.x ?? 0) + (menuBox?.width ?? 0)).toBeLessThanOrEqual(390)
-      await expect(page.getByRole('menuitem', { name: 'Refresh' })).toHaveCount(0)
-      await page.keyboard.press('Escape')
-      await expect(actions).toBeFocused()
+      const spinDown = serviceCard.getByRole('button', {
+        name: `Spin down ${railwayTargetNames.service}`,
+      })
+      expect((await spinUp.boundingBox())?.height).toBeGreaterThanOrEqual(44)
+      expect((await spinDown.boundingBox())?.height).toBeGreaterThanOrEqual(44)
+      await expect(serviceCard.getByRole('button', { name: /Actions for/ })).toHaveCount(0)
 
-      await actions.click()
-      await page.getByRole('menuitem', { name: 'Spin down' }).click()
+      await spinDown.focus()
+      await page.keyboard.press('Enter')
       const dialog = page.getByRole('alertdialog')
       await expect(dialog).toHaveAccessibleName('Spin down deployment?')
       spinDownAttempted = true
-      await dialog.getByRole('button', { name: 'Spin down' }).click()
+      await dialog.getByRole('button', { name: `Spin down ${railwayTargetNames.service}` }).click()
       await expectRailway(dialog).toHaveCount(0)
+      await expectRailway(
+        serviceCard.getByText('No active deployment', { exact: true }),
+      ).toBeVisible()
 
-      await actions.click()
-      await page.getByRole('menuitem', { name: 'Spin up' }).click()
-      await page.getByRole('alertdialog').getByRole('button', { name: 'Spin up' }).click()
+      await spinUp.click()
+      await page
+        .getByRole('alertdialog')
+        .getByRole('button', { name: `Spin up ${railwayTargetNames.service}` })
+        .click()
       await expectRailway(page.getByRole('alertdialog')).toHaveCount(0)
+      await expectRailway(serviceCard.getByText('Success', { exact: true })).toBeVisible()
 
-      await restoreRailwayE2ETarget(config)
       spinDownAttempted = false
       await page.setViewportSize({ width: 1440, height: 900 })
       await page.reload()

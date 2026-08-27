@@ -1,8 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { DeploymentStatus } from '@/railway/deployment-status'
 import { routeTree } from '@/routeTree.gen'
 import {
   createRailwayEnvironment,
@@ -50,7 +51,7 @@ vi.mock('@/deployment/spin-down-deployment', () => ({ spinDownDeployment: spinDo
 vi.mock('@/deployment/spin-up-deployment', () => ({ spinUpDeployment: spinUpMock }))
 vi.stubGlobal('scrollTo', vi.fn())
 
-function createService(id: string, name: string, status: 'SUCCESS' | null = 'SUCCESS') {
+function createService(id: string, name: string, status: DeploymentStatus | null = 'SUCCESS') {
   return {
     deployment: status ? { id: `deployment-${id}`, status } : null,
     id,
@@ -287,6 +288,52 @@ describe('service collection route', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Railway could not reload services.')
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+  })
+
+  it('shows concurrent lifecycle changes and stops reading after terminal states', async () => {
+    vi.useFakeTimers()
+    try {
+      readServicesMock
+        .mockResolvedValueOnce([
+          createService('service-web', 'Web', null),
+          createService('service-worker', 'Worker'),
+        ])
+        .mockResolvedValueOnce([
+          createService('service-web', 'Web', 'INITIALIZING'),
+          createService('service-worker', 'Worker', 'REMOVING'),
+        ])
+        .mockResolvedValueOnce([
+          createService('service-web', 'Web', 'DEPLOYING'),
+          createService('service-worker', 'Worker', 'REMOVING'),
+        ])
+        .mockResolvedValue([
+          createService('service-web', 'Web', 'FAILED'),
+          createService('service-worker', 'Worker', null),
+        ])
+      const page = renderRoutes(
+        `/projects/${testRailwayProjectId}/environments/${testRailwayEnvironmentId}/services?q=w`,
+      )
+      await vi.waitFor(() => expect(screen.getByRole('article', { name: 'Web' })).toBeVisible())
+
+      fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
+      await vi.waitFor(() => expect(screen.getByText('Initializing')).toBeVisible())
+      expect(screen.getByText('Removing')).toBeVisible()
+
+      await act(() => vi.advanceTimersByTimeAsync(5_000))
+      expect(screen.getByText('Deploying')).toBeVisible()
+      expect(screen.getByText('Removing')).toBeVisible()
+      await act(() => vi.advanceTimersByTimeAsync(5_000))
+      expect(screen.getByText('Failed')).toBeVisible()
+      expect(screen.getByText('No active deployment')).toBeVisible()
+      expect(page.router.state.location.href).toContain('/services?q=w')
+      expect(readServicesMock).toHaveBeenCalledTimes(4)
+
+      await act(() => vi.advanceTimersByTimeAsync(10_000))
+      expect(readServicesMock).toHaveBeenCalledTimes(4)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('does not expose the removed service detail route', async () => {
