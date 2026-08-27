@@ -6,6 +6,7 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import { EntityCard, primaryActionClassName } from '@/selection/components/entity-card-grid'
+import type { SelectionProgress } from '@/selection/components/selection-breadcrumbs'
 import { SelectionListPage } from '@/selection/components/selection-list-page'
 import {
   SelectionRouteError,
@@ -15,21 +16,19 @@ import { createProjectsQueryOptions } from '@/selection/queries'
 import { loadProjectsRoute, refreshProjectsRoute } from '@/selection/route-loaders'
 import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
 
-const projectRouteBreadcrumbs = [
-  { kind: 'current', label: 'Project' },
-  { kind: 'disabled', label: 'Environment', description: 'Select a project first' },
-  { kind: 'disabled', label: 'Services', description: 'Select an environment first' },
-] as const
+const projectSelectionProgress: SelectionProgress = { step: 'project' }
 
 function ProjectRoutePending() {
-  return <SelectionRoutePending breadcrumbs={projectRouteBreadcrumbs} title="Loading projects" />
+  return (
+    <SelectionRoutePending selectionProgress={projectSelectionProgress} title="Loading projects" />
+  )
 }
 
 function ProjectRouteError(props: ErrorComponentProps) {
   return (
     <SelectionRouteError
       {...props}
-      breadcrumbs={projectRouteBreadcrumbs}
+      selectionProgress={projectSelectionProgress}
       title="Could not load projects"
     />
   )
@@ -52,7 +51,6 @@ function ProjectRoute() {
 
   return (
     <SelectionListPage
-      breadcrumbs={projectRouteBreadcrumbs}
       emptyMessage="No projects are available."
       entities={projects.map((project) => ({
         ...project,
@@ -61,6 +59,7 @@ function ProjectRoute() {
       label="Project"
       notice={notice}
       query={q}
+      selectionProgress={projectSelectionProgress}
       title="Choose a project"
       onQueryChange={(query) =>
         void navigate({ replace: true, search: query === '' ? {} : { q: query } })

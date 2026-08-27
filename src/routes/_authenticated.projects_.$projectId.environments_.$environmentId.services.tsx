@@ -2,7 +2,6 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import {
   createFileRoute,
   type ErrorComponentProps,
-  Link,
   useRouter,
   useRouterState,
 } from '@tanstack/react-router'
@@ -13,7 +12,6 @@ import {
 } from '@/deployment/components/service-actions'
 import { StatusBadge } from '@/deployment/components/status-badge'
 import { EntityCard } from '@/selection/components/entity-card-grid'
-import type { SelectionBreadcrumbStep } from '@/selection/components/selection-breadcrumbs'
 import { SelectionListPage } from '@/selection/components/selection-list-page'
 import {
   SelectionRouteError,
@@ -43,41 +41,11 @@ function checkServiceOperationIsVisible(
     : deploymentId === operation.deploymentId || deploymentId !== operation.previousDeploymentId
 }
 
-function readServiceRouteStateBreadcrumbs(projectId: string): readonly SelectionBreadcrumbStep[] {
-  return [
-    {
-      kind: 'link',
-      label: 'Project',
-      link: (
-        <Link activeOptions={{ exact: true }} activeProps={{}} search={{}} to="/projects">
-          Project
-        </Link>
-      ),
-    },
-    {
-      kind: 'link',
-      label: 'Environment',
-      link: (
-        <Link
-          activeOptions={{ exact: true }}
-          activeProps={{}}
-          params={{ projectId }}
-          search={{}}
-          to="/projects/$projectId/environments"
-        >
-          Environment
-        </Link>
-      ),
-    },
-    { kind: 'current', label: 'Services' },
-  ]
-}
-
 function ServiceRoutePending() {
   const { projectId } = Route.useParams()
   return (
     <SelectionRoutePending
-      breadcrumbs={readServiceRouteStateBreadcrumbs(projectId)}
+      selectionProgress={{ projectId, step: 'services' }}
       title="Loading services"
     />
   )
@@ -88,7 +56,7 @@ function ServiceRouteError(props: ErrorComponentProps) {
   return (
     <SelectionRouteError
       {...props}
-      breadcrumbs={readServiceRouteStateBreadcrumbs(projectId)}
+      selectionProgress={{ projectId, step: 'services' }}
       title="Could not load services"
     />
   )
@@ -126,39 +94,18 @@ function ServiceRoute() {
   const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
   return (
     <SelectionListPage
-      breadcrumbs={[
-        {
-          kind: 'link',
-          label: `Project: ${project.name}`,
-          link: (
-            <Link activeOptions={{ exact: true }} activeProps={{}} search={{}} to="/projects">
-              Project: {project.name}
-            </Link>
-          ),
-        },
-        {
-          kind: 'link',
-          label: `Environment: ${environment.name}`,
-          link: (
-            <Link
-              activeOptions={{ exact: true }}
-              activeProps={{}}
-              params={{ projectId }}
-              search={{}}
-              to="/projects/$projectId/environments"
-            >
-              Environment: {environment.name}
-            </Link>
-          ),
-        },
-        { kind: 'current', label: 'Services' },
-      ]}
       dataError={servicesQuery.error}
       emptyMessage="No services are available."
       entities={services}
       label="Service"
       notice={notice}
       query={q}
+      selectionProgress={{
+        environmentName: environment.name,
+        projectId,
+        projectName: project.name,
+        step: 'services',
+      }}
       title="Services"
       onQueryChange={(query) =>
         void navigate({ replace: true, search: query === '' ? {} : { q: query } })
