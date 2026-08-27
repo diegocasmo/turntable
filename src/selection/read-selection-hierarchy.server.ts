@@ -5,11 +5,11 @@ import {
   projectEnvironmentsQuery,
 } from '@/gql/operations/project-environments'
 import {
+  projectHierarchyQuery,
   type SelectionEnvironment,
   type SelectionEnvironmentNode,
   type SelectionProject,
   type SelectionProjectNode,
-  selectionHierarchyQuery,
 } from '@/gql/operations/projects'
 import { createRailwayClient } from '@/railway/client.server'
 import {
@@ -73,7 +73,7 @@ async function readRailwayProject(
 async function readRailwayWorkspace(client: RailwayClient, token: string, workspaceId: string) {
   const readPage = (after: string | null = null) =>
     client.request({
-      document: selectionHierarchyQuery,
+      document: projectHierarchyQuery,
       token,
       variables: { after, first: railwayConnectionPageSize, workspaceId },
     })

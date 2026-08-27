@@ -13,6 +13,10 @@ export const environmentServicesQuery = graphql(`
           node {
             id: serviceId
             name: serviceName
+            latestDeployment {
+              id
+              status
+            }
           }
         }
         pageInfo {
@@ -27,4 +31,4 @@ export const environmentServicesQuery = graphql(`
 export type EnvironmentServicesConnection = ResultOf<
   typeof environmentServicesQuery
 >['environment']['serviceInstances']
-export type ServiceOption = EnvironmentServicesConnection['edges'][number]['node']
+export type RailwayService = EnvironmentServicesConnection['edges'][number]['node']
