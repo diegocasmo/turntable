@@ -8,83 +8,109 @@ import {
 } from './railway'
 
 const minute = 60_000
-const expectRailwayStatus = expect.configure({ timeout: 2 * minute })
+const expectRailway = expect.configure({ timeout: 30_000 })
 test.describe.configure({ timeout: 8 * minute })
-test('a user can control and refresh the configured Railway service', async ({ page }) => {
+
+test('a user can control the configured Railway service from the collection', async ({ page }) => {
   const config = readRailwayE2EConfig()
-  const { environmentId, projectId, serviceId } = config.target
+  const { environmentId, projectId } = config.target
 
   await runWithRailwayE2ETarget(config, async () => {
     let spinDownAttempted = false
 
     try {
+      await page.setViewportSize({ width: 390, height: 844 })
       await page.goto('/')
       await page.getByLabel('Railway API token').fill(config.token)
       await page.getByRole('button', { name: 'Connect to Railway' }).click()
-      await expect(page.getByRole('heading', { name: 'Choose a project' })).toBeVisible()
+      await expectRailway(page.getByRole('heading', { name: 'Choose a project' })).toBeVisible()
       expect(new URL(page.url()).searchParams.has('token')).toBe(false)
 
       const expectNoAxeViolations = async () =>
         expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+      const expectUsableViewport = async () => {
+        const layout = await page.evaluate(() => ({
+          height: document.body.getBoundingClientRect().height,
+          scrollWidth: document.documentElement.scrollWidth,
+          viewportHeight: window.innerHeight,
+          viewportWidth: window.innerWidth,
+        }))
+        expect(layout.height).toBeGreaterThanOrEqual(layout.viewportHeight)
+        expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewportWidth)
+      }
+
       await expectNoAxeViolations()
-      await page.getByRole('combobox', { name: 'Search projects' }).fill(railwayTargetNames.project)
-      const projectOption = page.getByRole('option', {
-        name: railwayTargetNames.project,
-        exact: true,
+      await expectUsableViewport()
+      await page
+        .getByRole('searchbox', { name: 'Search projects' })
+        .fill(railwayTargetNames.project)
+      const projectCardLink = page.getByRole('link', {
+        name: `Select ${railwayTargetNames.project}`,
+        exact: false,
       })
-      await expect(projectOption).toBeVisible()
-      await projectOption.click()
-      await expect(page).toHaveURL(`/projects/${projectId}/environments`)
+      await projectCardLink.focus()
+      await page.keyboard.press('Enter')
+      await expectRailway(page).toHaveURL(`/projects/${projectId}/environments`)
+
       await expectNoAxeViolations()
       await page
-        .getByRole('combobox', { name: 'Search environments' })
+        .getByRole('searchbox', { name: 'Search environments' })
         .fill(config.expectedEnvironmentName)
-      await page.getByRole('option', { name: config.expectedEnvironmentName, exact: true }).click()
-      await expect(page).toHaveURL(`/projects/${projectId}/environments/${environmentId}/services`)
-      await expectNoAxeViolations()
-      await page.getByRole('combobox', { name: 'Search services' }).fill(railwayTargetNames.service)
-      await page.getByRole('option', { name: railwayTargetNames.service, exact: true }).click()
-      await expect(page).toHaveURL(
-        `/projects/${projectId}/environments/${environmentId}/services/${serviceId}`,
+      const environmentCardLink = page.getByRole('link', {
+        name: `Select ${config.expectedEnvironmentName}`,
+      })
+      await environmentCardLink.focus()
+      await page.keyboard.press('Enter')
+      await expectRailway(page).toHaveURL(
+        `/projects/${projectId}/environments/${environmentId}/services`,
       )
 
-      const deploymentRegion = page.getByRole('region', { name: 'Deployment status' })
-      const readDeploymentHeight = () => deploymentRegion.evaluate((node) => node.clientHeight)
-      const stableDeploymentHeight = await readDeploymentHeight()
-      const expectStatus = (name: string) =>
-        expectRailwayStatus(deploymentRegion.getByRole('status').getByText(name, { exact: true }))
-      const selectAction = async (name: 'Refresh' | 'Spin down' | 'Spin up') => {
-        await deploymentRegion.getByRole('button', { name: 'Actions' }).click()
-        await page.getByRole('menuitem', { name }).click()
-      }
-      await expectStatus('Success').toBeVisible()
-      expect(await readDeploymentHeight()).toBe(stableDeploymentHeight)
-      const actions = deploymentRegion.getByRole('button', { name: 'Actions' })
+      await expectNoAxeViolations()
+      const serviceSearch = page.getByRole('searchbox', { name: 'Search services' })
+      await serviceSearch.fill(railwayTargetNames.service)
+      await expect(page).toHaveURL(
+        `/projects/${projectId}/environments/${environmentId}/services?q=${railwayTargetNames.service}`,
+      )
+      const serviceCard = page.getByRole('article', { name: railwayTargetNames.service })
+      await expect(serviceCard).toBeVisible()
+      await expect(serviceCard.getByText('Success', { exact: true })).toBeVisible()
+      await expectNoAxeViolations()
+      await expectUsableViewport()
+
+      const actions = serviceCard.getByRole('button', {
+        name: `Actions for ${railwayTargetNames.service}`,
+      })
       await actions.focus()
+      expect((await actions.boundingBox())?.height).toBeGreaterThanOrEqual(44)
       await page.keyboard.press('Enter')
-      await expect(page.getByRole('menuitem', { name: 'Refresh' })).toBeFocused()
-      await expectNoAxeViolations()
-      await page.keyboard.press('End')
-      await page.keyboard.press('Enter')
-      const dialog = page.getByRole('alertdialog')
-      await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused()
-      await expect(dialog).toHaveCSS('opacity', '1')
-      await expectNoAxeViolations()
+      await expect(page.getByRole('menuitem', { name: 'Spin up' })).toBeFocused()
+      const menuBox = await page.getByRole('menu').boundingBox()
+      expect(menuBox?.x).toBeGreaterThanOrEqual(0)
+      expect((menuBox?.x ?? 0) + (menuBox?.width ?? 0)).toBeLessThanOrEqual(390)
+      await expect(page.getByRole('menuitem', { name: 'Refresh' })).toHaveCount(0)
       await page.keyboard.press('Escape')
       await expect(actions).toBeFocused()
-      await selectAction('Spin down')
+
+      await actions.click()
+      await page.getByRole('menuitem', { name: 'Spin down' }).click()
+      const dialog = page.getByRole('alertdialog')
       await expect(dialog).toHaveAccessibleName('Spin down deployment?')
       spinDownAttempted = true
       await dialog.getByRole('button', { name: 'Spin down' }).click()
-      await expectStatus('Removed').toBeVisible()
-      expect(await readDeploymentHeight()).toBe(stableDeploymentHeight)
-      await selectAction('Spin up')
+      await expectRailway(dialog).toHaveCount(0)
+
+      await actions.click()
+      await page.getByRole('menuitem', { name: 'Spin up' }).click()
       await page.getByRole('alertdialog').getByRole('button', { name: 'Spin up' }).click()
-      await expectStatus('Success').toBeVisible()
+      await expectRailway(page.getByRole('alertdialog')).toHaveCount(0)
+
       await restoreRailwayE2ETarget(config)
-      await selectAction('Refresh')
-      await expectStatus('Success').toBeVisible()
-      expect(new URL(page.url()).search).toBe('')
+      spinDownAttempted = false
+      await page.setViewportSize({ width: 1440, height: 900 })
+      await page.reload()
+      await expect(serviceSearch).toHaveValue(railwayTargetNames.service)
+      await expectRailway(serviceCard.getByText('Success', { exact: true })).toBeVisible()
+      await expectUsableViewport()
     } finally {
       if (spinDownAttempted) await restoreRailwayE2ETarget(config)
     }

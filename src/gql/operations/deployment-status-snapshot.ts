@@ -5,7 +5,6 @@ export const deploymentStatusSnapshotQuery = graphql(`
     deployment(id: $deploymentId) {
       id
       status
-      deploymentStopped
     }
   }
 `)
