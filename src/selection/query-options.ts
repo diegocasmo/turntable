@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
+import { isDeploymentStatusTransitional } from '@/railway/deployment-status'
 import { readEnvironments } from '@/selection/read-environments'
 import { readProjects } from '@/selection/read-projects'
 import { readServices } from '@/selection/read-services'
@@ -32,6 +33,14 @@ export function createServicesQueryOptions(projectId: string, environmentId: str
   return queryOptions({
     queryFn: ({ signal }) => readServices({ data: { environmentId, projectId }, signal }),
     queryKey: selectionQueryKeys.services(projectId, environmentId),
+    refetchInterval: (query) => {
+      const hasTransitionalService = query.state.data?.some(
+        (service) =>
+          service.deployment !== null && isDeploymentStatusTransitional(service.deployment.status),
+      )
+
+      return hasTransitionalService || query.state.isInvalidated ? 5_000 : false
+    },
     retry: false,
     staleTime: Number.POSITIVE_INFINITY,
   })

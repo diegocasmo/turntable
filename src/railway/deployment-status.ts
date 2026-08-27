@@ -16,6 +16,15 @@ const knownDeploymentStatusSchema = z.enum([
   'WAITING',
 ])
 const unknownDeploymentStatus: 'unknown' = 'unknown'
+const transitionalDeploymentStatuses = new Set<DeploymentStatus>([
+  'BUILDING',
+  'DEPLOYING',
+  'INITIALIZING',
+  'NEEDS_APPROVAL',
+  'QUEUED',
+  'REMOVING',
+  'WAITING',
+])
 
 export const deploymentStatusSchema = z.string().transform((value) => {
   const result = knownDeploymentStatusSchema.safeParse(value)
@@ -48,6 +57,10 @@ const deploymentStatusPresentations: Record<DeploymentStatus, DeploymentStatusPr
 
 export function readDeploymentStatusPresentation(status: DeploymentStatus) {
   return deploymentStatusPresentations[status]
+}
+
+export function isDeploymentStatusTransitional(status: DeploymentStatus) {
+  return transitionalDeploymentStatuses.has(status)
 }
 
 export const formatDeploymentStatus = (status: DeploymentStatus) =>

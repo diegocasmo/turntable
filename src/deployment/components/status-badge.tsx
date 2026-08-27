@@ -24,7 +24,10 @@ export function StatusBadge({ status }: StatusBadgeProps) {
 
   return (
     <Badge
+      aria-atomic="true"
+      aria-live="polite"
       className={cn('font-mono font-semibold uppercase tracking-[0.12em]', badgeToneClasses[tone])}
+      role="status"
     >
       {label}
     </Badge>

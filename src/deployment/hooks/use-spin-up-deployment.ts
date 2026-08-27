@@ -3,9 +3,7 @@ import { useServerFn } from '@tanstack/react-start'
 import type { DeploymentTarget } from '@/deployment/schema'
 import { spinUpDeployment } from '@/deployment/spin-up-deployment'
 
-export function useSpinUpDeployment(
-  onSuccess: (deploymentId: string) => Promise<void> | void,
-) {
+export function useSpinUpDeployment(onSuccess: (deploymentId: string) => Promise<void> | void) {
   const requestSpinUp = useServerFn(spinUpDeployment)
 
   return useMutation({
