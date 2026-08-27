@@ -7,7 +7,6 @@ import {
 } from '@/selection/components/entity-selection-page'
 
 const breadcrumbs = [
-  { href: '/projects', kind: 'link', label: 'Home' },
   { kind: 'current', label: 'Project' },
   { description: 'Select a project first', kind: 'disabled', label: 'Environment' },
   { description: 'Select an environment first', kind: 'disabled', label: 'Services' },
@@ -32,10 +31,7 @@ describe('EntitySelectionPage', () => {
     renderPage()
     const breadcrumb = screen.getByRole('navigation', { name: 'Selection progress' })
 
-    expect(within(breadcrumb).getByRole('link', { name: 'Home' })).toHaveAttribute(
-      'href',
-      '/projects',
-    )
+    expect(within(breadcrumb).queryByText('Home')).not.toBeInTheDocument()
     expect(within(breadcrumb).getByText('Project')).toHaveAttribute('aria-current', 'page')
     expect(within(breadcrumb).queryByRole('link', { name: 'Project' })).not.toBeInTheDocument()
     const environment = within(breadcrumb).getByRole('button', { name: 'Environment' })

@@ -10,8 +10,9 @@ type SelectionBreadcrumbsProps = Readonly<{
   steps: readonly SelectionBreadcrumbStep[]
 }>
 
+const breadcrumbTooltipDelayMilliseconds = 100
 const itemClassName =
-  'break-words font-mono text-xs font-semibold uppercase tracking-[0.1em] outline-none focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-ring'
+  'inline-flex min-h-8 items-center break-words px-1 font-mono text-xs font-semibold uppercase tracking-[0.1em] outline-none focus-visible:outline-[3px] focus-visible:outline-offset-1 focus-visible:outline-ring'
 
 function DisabledBreadcrumb({
   description,
@@ -24,7 +25,7 @@ function DisabledBreadcrumb({
       <Tooltip.Trigger
         aria-describedby={descriptionId}
         aria-disabled="true"
-        className={`${itemClassName} cursor-help border-0 bg-transparent p-0 text-muted-foreground`}
+        className={`${itemClassName} cursor-help border-0 bg-transparent text-muted-foreground focus-visible:bg-secondary focus-visible:text-foreground`}
       >
         {label}
       </Tooltip.Trigger>
@@ -46,7 +47,10 @@ function DisabledBreadcrumb({
 function renderStep(step: SelectionBreadcrumbStep) {
   if (step.kind === 'link') {
     return (
-      <a className={`${itemClassName} text-foreground-soft hover:text-primary`} href={step.href}>
+      <a
+        className={`${itemClassName} text-foreground-soft hover:text-primary focus-visible:bg-primary focus-visible:text-primary-foreground`}
+        href={step.href}
+      >
         {step.label}
       </a>
     )
@@ -65,7 +69,7 @@ function renderStep(step: SelectionBreadcrumbStep) {
 
 export function SelectionBreadcrumbs({ steps }: SelectionBreadcrumbsProps) {
   return (
-    <Tooltip.Provider>
+    <Tooltip.Provider delay={breadcrumbTooltipDelayMilliseconds}>
       <nav aria-label="Selection progress">
         <ol className="flex flex-wrap items-center gap-x-2 gap-y-3">
           {steps.map((step, index) => (
