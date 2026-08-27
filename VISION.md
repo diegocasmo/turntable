@@ -10,7 +10,7 @@ A user gives a Railway API token. The user then does these tasks:
 
 1. Select a project.
 2. Select an environment.
-3. See the services and their current status snapshots.
+3. See the services and their current statuses.
 4. Spin a service down.
 5. Spin a service up again.
 
@@ -26,12 +26,12 @@ Three goals shape the product:
 
 The service must already exist. Turntable does not create or delete a service.
 
-Turntable does not provide live updates. Each Services page shows one snapshot. A successful Spin
-up or Spin down action reads that Services snapshot one more time. The collection Refresh action or
-a browser reload reads a new snapshot.
+Turntable does not open a stream for each service. The Services page reads one collection. It reads
+that collection every 5 seconds while Railway reports at least one transitional deployment. It
+stops after all shown deployments are stable or the user leaves the route.
 
-This rule avoids one open stream or one poll loop for every visible service. It also keeps the
-application within Railway API limits. The application does not use subscriptions or polling.
+This rule avoids one stream or poll loop for every visible service. It also lets all visible
+services share one scoped request.
 
 ## Route flow
 
@@ -92,16 +92,22 @@ the Railway CLI uses:
 | Action | GraphQL operation | Rule |
 | --- | --- | --- |
 | Spin down | `deploymentRemove` | The shown deployment status must be exactly `SUCCESS`. |
-| Spin up | `serviceInstanceDeployV2` | The service can have no active deployment. |
+| Spin up | `serviceInstanceDeployV2` | The service exists in the selected environment. |
 
-The sources are Railway CLI
+The action sources are Railway CLI
 [`down.rs`](https://github.com/railwayapp/cli/blob/3efce83e618a158b16de8eed3a9e1f4f2e585d80/src/commands/down.rs)
 and
 [`redeploy.rs`](https://github.com/railwayapp/cli/blob/3efce83e618a158b16de8eed3a9e1f4f2e585d80/src/commands/redeploy.rs).
 
+The current Railway CLI `up` command waits for a terminal deployment status in attached mode. Its
+detached mode returns after Railway queues the build. Turntable uses the same distinction between
+an accepted action and a completed deployment. It keeps the dialog pending only for the action
+request. The service card then shows Railway's current status.
+
 Both actions need confirmation. A pending mutation disables duplicate submission. A failed
 mutation stays visible in the confirmation dialog. After success, Turntable invalidates only the
-selected project and environment Services query. It does not guess the next status.
+selected project and environment Services query. It does not guess the next status. The query keeps
+reading while Railway reports a transitional status. It stops when all shown statuses are stable.
 
 Railway has 13 known deployment statuses in the committed schema. One function maps each status to
 a badge. An unknown status maps to `Unknown` and does not crash the page.
@@ -152,8 +158,8 @@ Every selection page keeps this order:
 6. Loading, empty, no-results, or error feedback when needed.
 
 Project and Environment cards are links. Service cards are not navigation controls. Each Service
-card shows its status snapshot and a separate More menu. The menu has Spin up and, when the exact
-status allows it, Spin down. It has no Refresh action.
+card shows its status and a stable action area. Spin up and Spin down are direct text buttons. Spin
+down is available only when the exact status allows it. There is no service Refresh action.
 
 The page-level Refresh action reads the visible collection again. Dependent pages first read their
 parents again. A successful read that no longer contains a selected parent returns the user to the
@@ -162,7 +168,7 @@ nearest valid collection route. A failed read stays on the current route and sho
 Sign out is in the application header. The shell uses CSS to fill at least the dynamic viewport
 height. Content can grow and scroll when the card list is long.
 
-The interface uses semantic HTML, visible focus, keyboard menus, labelled controls, and polite
+The interface uses semantic HTML, visible focus, labelled controls, and polite
 status messages. Biome checks accessibility rules. Playwright uses axe on rendered routes.
 
 ## Tests
@@ -173,7 +179,8 @@ failures. Tests query the user interface by role and accessible name.
 `pnpm test:e2e` drives one real Railway target. It selects the target through the route flow and
 runs both lifecycle actions. Test cleanup starts the shared target and polls the exact returned
 deployment at 1, 2, 4, and then 5 second intervals. Cleanup stops after two minutes or at a terminal
-failure state. This bounded cleanup is the only poll in the repository.
+failure state. Application polling is limited to the Services collection while a shown deployment
+is transitional.
 
 ## Cut line
 
@@ -182,7 +189,7 @@ The product is complete when one user can do these tasks on the deployed applica
 1. Paste a token.
 2. Select a project and environment.
 3. Search the service cards.
-4. See each active deployment snapshot.
+4. See each active deployment status.
 5. Spin a service down.
 6. Spin a service up again.
 

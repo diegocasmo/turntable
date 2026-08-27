@@ -1,6 +1,6 @@
 # Turntable
 
-Turntable starts and stops Railway containers. It shows a status snapshot for each service. See
+Turntable starts and stops Railway containers. It shows the current status for each service. See
 [VISION.md](./VISION.md) for the product scope and design.
 
 ## Install
@@ -72,7 +72,7 @@ Use the configured Railway test target. Complete this list with a keyboard and t
 2. Search and clear search on Projects, Environments, and Services.
 3. Refresh each collection. Confirm that the route and search stay unchanged.
 4. Use Back, Forward, and reload on each route.
-5. Check focus, breadcrumbs, Sign out, and service menus at 390 by 844 pixels.
+5. Check focus, breadcrumbs, Sign out, and service actions at 390 by 844 pixels.
 6. Repeat at 1440 by 900 pixels.
-7. Run Spin down and Spin up. Confirm that the Services snapshot updates once after each action.
+7. Run Spin down and Spin up. Confirm that each service reaches the Railway-reported final state.
 8. Confirm that the target is running before you finish.
