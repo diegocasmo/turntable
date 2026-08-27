@@ -102,6 +102,23 @@ describe('service card actions', () => {
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
   })
 
+  it('reports the deployment submitted before service data changes', async () => {
+    const response = Promise.withResolvers<boolean>()
+    spinDownMock.mockReturnValue(response.promise)
+    const page = renderComponent()
+    fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
+    page.rerender(
+      <ServiceActions {...defaultProps} deployment={{ id: 'deployment-2', status: 'SUCCESS' }} />,
+    )
+    response.resolve(true)
+    await waitFor(() =>
+      expect(operationAcceptedMock).toHaveBeenCalledWith(
+        expect.objectContaining({ deploymentId: 'deployment-1' }),
+      ),
+    )
+  })
+
   it('disables a stale spin-down confirmation', () => {
     const page = renderComponent()
     fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
