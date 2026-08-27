@@ -23,7 +23,6 @@ vi.mock('@/selection/read-services', () => ({ readServices: readServicesMock }))
 function createContext() {
   return {
     queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }),
-    sessionState: 'authenticated' as const,
   }
 }
 

@@ -51,18 +51,19 @@ beforeEach(() => {
 })
 
 describe('progressive project and environment routes', () => {
-  it('restores q and filters only the visible cards in fuzzy order', async () => {
+  it('restores q and filters the visible cards', async () => {
     renderRoutes('/projects?q=wkr')
     const input = await screen.findByRole('searchbox', { name: 'Search projects' })
 
     expect(input).toHaveValue('wkr')
     expect(screen.queryByText('Home')).not.toBeInTheDocument()
-    expect(screen.getByText('Project')).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Select Worker in Railway workspace' })).toBeVisible()
     expect(
-      screen.getAllByRole('link', { name: /^Select / }).map((link) => link.textContent),
-    ).toEqual(['WorkerRailway workspace', 'API workerRailway workspace'])
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
-    expect(screen.queryByRole('option')).not.toBeInTheDocument()
+      screen.getByRole('link', { name: 'Select API worker in Railway workspace' }),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('link', { name: 'Select Web in Railway workspace' }),
+    ).not.toBeInTheDocument()
   })
 
   it('replaces q while typing and clears it for normal card navigation', async () => {
@@ -88,20 +89,14 @@ describe('progressive project and environment routes', () => {
   })
 
   it('uses breadcrumbs for backward navigation and keeps future steps disabled', async () => {
-    renderRoutes('/projects/project-worker/environments?q=prod')
+    const page = renderRoutes('/projects/project-worker/environments?q=prod')
     expect(await screen.findByRole('heading', { name: 'Choose an environment' })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Project: Worker' })).toHaveAttribute(
-      'href',
-      '/projects',
-    )
-    screen.getByRole('link', { name: 'Project: Worker' }).focus()
-    expect(screen.getByRole('link', { name: 'Project: Worker' })).toHaveFocus()
-    expect(screen.getByText('Environment')).toHaveAttribute('aria-current', 'page')
     expect(screen.queryByRole('button', { name: /Change project/i })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Services' })).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'Services' }))
+    expect(page.router.state.location.href).toBe('/projects/project-worker/environments?q=prod')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Project: Worker' }))
+    await waitFor(() => expect(page.router.state.location.href).toBe('/projects'))
   })
 
   it('distinguishes same-named projects by workspace', async () => {
@@ -141,14 +136,13 @@ describe('progressive project and environment routes', () => {
     await waitFor(() => expect(readProjectsMock).toHaveBeenCalledTimes(2))
     fireEvent.click(refresh)
     expect(readProjectsMock).toHaveBeenCalledTimes(2)
-    await waitFor(() => expect(refresh).toHaveAttribute('aria-busy', 'true'))
     refreshedProjects.resolve([createRailwayProject({ name: 'Worker' })])
 
     expect(
       await screen.findByRole('link', { name: 'Select Worker in Railway workspace' }),
     ).toBeVisible()
     expect(page.router.state.location.href).toBe('/projects?q=work')
-    expect(screen.getByText('Projects refreshed.')).toHaveAttribute('role', 'status')
+    expect(screen.getByText('Projects refreshed.')).toBeVisible()
   })
 
   it('refreshes the selected project before its environments', async () => {

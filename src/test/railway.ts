@@ -1,12 +1,9 @@
 import { vi } from 'vitest'
 import type { RailwayDeployment } from '@/gql/operations/deployment-identity'
-import type { ServiceOption } from '@/gql/operations/environment-services'
+import type { RailwayEnvironment } from '@/gql/operations/environment-list'
+import type { RailwayService } from '@/gql/operations/environment-services'
+import type { ProjectsConnection, RailwayProject } from '@/gql/operations/project-list'
 import type { SelectionEnvironment, SelectionProject } from '@/gql/operations/projects'
-import type { EnvironmentOption } from '@/gql/operations/selection-environments'
-import type {
-  ProjectOption,
-  SelectionProjectsConnection,
-} from '@/gql/operations/selection-projects'
 import { createJsonResponse } from '@/test/response'
 
 export const testRailwayApiUrl = 'https://backboard.railway.test/graphql/v2'
@@ -16,7 +13,7 @@ export const testRailwayServiceId = 'service-1'
 export const testRailwayToken = 'railway-token-that-must-not-leak'
 export const testRailwayWorkspaceId = 'workspace-1'
 
-type PageInfo = SelectionProjectsConnection['pageInfo']
+type PageInfo = ProjectsConnection['pageInfo']
 
 export function createRailwayEdge<Node>(node: Node) {
   return { node }
@@ -29,7 +26,7 @@ export function createRailwayPage<Node>(
   return { edges: nodes.map(createRailwayEdge), pageInfo }
 }
 
-export function createRailwayProject(overrides: Partial<ProjectOption> = {}): ProjectOption {
+export function createRailwayProject(overrides: Partial<RailwayProject> = {}): RailwayProject {
   return {
     id: testRailwayProjectId,
     name: 'Turntable',
@@ -39,12 +36,12 @@ export function createRailwayProject(overrides: Partial<ProjectOption> = {}): Pr
 }
 
 export function createRailwayEnvironment(
-  overrides: Partial<EnvironmentOption> = {},
-): EnvironmentOption {
+  overrides: Partial<RailwayEnvironment> = {},
+): RailwayEnvironment {
   return { id: testRailwayEnvironmentId, name: 'Production', ...overrides }
 }
 
-export function createRailwayService(overrides: Partial<ServiceOption> = {}): ServiceOption {
+export function createRailwayService(overrides: Partial<RailwayService> = {}): RailwayService {
   return {
     id: testRailwayServiceId,
     latestDeployment: { id: 'deployment-1', status: 'SUCCESS' },

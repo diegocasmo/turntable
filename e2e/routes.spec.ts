@@ -33,6 +33,8 @@ test('the token route is accessible', async ({ page }) => {
   const rawHtml = (await response?.body())?.toString() ?? ''
 
   await expect(page.getByLabel('Railway API token')).toBeVisible()
+  expect(new URL(page.url()).pathname).toBe('/connect')
+  expect(new URL(page.url()).searchParams.get('redirect')).toBe('/projects')
 
   const policy = response?.headers()['content-security-policy'] ?? ''
   const nonce = readNonce(policy)
@@ -58,6 +60,15 @@ test('the token route is accessible', async ({ page }) => {
   expect(cspViolations).toEqual([])
 })
 
+test('a signed-out selection route keeps its return address', async ({ page }) => {
+  await page.goto('/projects?projectId=project-1')
+
+  await expect(page.getByLabel('Railway API token')).toBeVisible()
+  const location = new URL(page.url())
+  expect(location.pathname).toBe('/connect')
+  expect(location.searchParams.get('redirect')).toBe('/projects?projectId=project-1')
+})
+
 test('the health check returns only ok', async ({ request }) => {
   const response = await request.get('/healthz')
 
@@ -71,7 +82,10 @@ test('an unknown route is accessible and returns 404', async ({ page }) => {
 
   expect(response?.status()).toBe(404)
   await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Return to Turntable' })).toHaveAttribute('href', '/')
+  await expect(page.getByRole('link', { name: 'Return to Turntable' })).toHaveAttribute(
+    'href',
+    '/projects',
+  )
 
   const results = await new AxeBuilder({ page }).analyze()
 

@@ -1,5 +1,4 @@
 import type { ErrorComponentProps } from '@tanstack/react-router'
-import { TurntablePage } from '@/components/turntable-page'
 import {
   EntitySelectionFailure,
   EntitySelectionPage,
@@ -10,24 +9,20 @@ const loadingBreadcrumbs = [{ kind: 'current', label: 'Selection' }] as const
 
 export function SelectionRoutePending() {
   return (
-    <TurntablePage sessionState="authenticated">
-      <EntitySelectionPage
-        breadcrumbs={loadingBreadcrumbs}
-        feedback="Loading choices."
-        title="Loading selection"
-      >
-        <EntitySelectionSkeleton />
-      </EntitySelectionPage>
-    </TurntablePage>
+    <EntitySelectionPage
+      breadcrumbs={loadingBreadcrumbs}
+      feedback="Loading choices."
+      title="Loading selection"
+    >
+      <EntitySelectionSkeleton />
+    </EntitySelectionPage>
   )
 }
 
 export function SelectionRouteError({ error, reset }: ErrorComponentProps) {
   return (
-    <TurntablePage sessionState="authenticated">
-      <EntitySelectionPage breadcrumbs={loadingBreadcrumbs} title="Could not load selection">
-        <EntitySelectionFailure error={error} onRetry={reset} />
-      </EntitySelectionPage>
-    </TurntablePage>
+    <EntitySelectionPage breadcrumbs={loadingBreadcrumbs} title="Could not load selection">
+      <EntitySelectionFailure error={error} onRetry={reset} />
+    </EntitySelectionPage>
   )
 }
