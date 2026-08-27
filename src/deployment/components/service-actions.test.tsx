@@ -48,8 +48,7 @@ function renderServiceCard(currentDeployment: Readonly<typeof deployment> | null
       />
     </QueryClientProvider>
   )
-  const result = render(renderCard(currentDeployment))
-  return { ...result, renderCard }
+  return { ...render(renderCard(currentDeployment)), renderCard }
 }
 
 beforeEach(() => {
@@ -62,7 +61,6 @@ describe('service card actions', () => {
   it('shows both actions directly and does not make the card interactive', () => {
     renderServiceCard()
     const card = screen.getByRole('article', { name: 'Web' })
-
     expect(within(card).getByRole('button', { name: 'Spin up Web' })).toBeEnabled()
     expect(within(card).getByRole('button', { name: 'Spin down Web' })).toBeEnabled()
     expect(within(card).queryByRole('button', { name: 'Actions for Web' })).not.toBeInTheDocument()
@@ -71,7 +69,6 @@ describe('service card actions', () => {
 
   it('shows why spin down is unavailable without hiding the action', () => {
     renderServiceCard(null)
-
     const spinDown = screen.getByRole('button', { name: 'Spin down Web' })
     expect(spinDown).toHaveAttribute('aria-disabled', 'true')
     spinDown.focus()
@@ -86,7 +83,6 @@ describe('service card actions', () => {
     renderServiceCard()
     fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
     fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
-
     const pendingButton = await screen.findByRole('button', { name: 'Spinning up...' })
     expect(pendingButton).toHaveAttribute('aria-busy', 'true')
     fireEvent.click(pendingButton)
@@ -109,7 +105,6 @@ describe('service card actions', () => {
     renderServiceCard()
     fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
     fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
-
     expect(await screen.findByRole('alert')).toHaveTextContent('Railway could not stop Web.')
     const retry = screen.getByRole('button', { name: 'Spin down Web' })
     expect(retry).not.toHaveAttribute('aria-busy')
@@ -119,16 +114,17 @@ describe('service card actions', () => {
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
   })
 
-  it('keeps focus on spin down after the deployment changes', async () => {
+  it('disables stale confirmation and restores focus to spin down', async () => {
     const page = renderServiceCard()
     fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
+    expect(screen.getByRole('alertdialog')).toBeVisible()
 
-    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
-    const trigger = screen.getByRole('button', { name: 'Spin down Web' })
-    expect(trigger).toHaveFocus()
     page.rerender(page.renderCard(null))
 
-    expect(screen.getByRole('button', { name: 'Spin down Web' })).toHaveFocus()
+    const confirm = screen.getByRole('button', { name: 'Spin down Web' })
+    expect(confirm).toBeDisabled()
+    expect(screen.getByText(/no successful deployment/)).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Spin down Web' })).toHaveFocus())
   })
 })

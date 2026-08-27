@@ -51,6 +51,7 @@ function DeploymentActionDialog({
   disabledDescriptionId,
 }: ActionDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const pendingLabel = action === 'Spin up' ? 'Spinning up...' : 'Spinning down...'
 
   return (
@@ -61,6 +62,7 @@ function DeploymentActionDialog({
         disabled={disabled}
         render={
           <Button
+            ref={triggerRef}
             className="min-h-11 w-full"
             focusableWhenDisabled={disabled}
             variant={action === 'Spin down' ? 'destructive' : 'secondary'}
@@ -74,6 +76,7 @@ function DeploymentActionDialog({
         <AlertDialog.Popup
           className="fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-3rem)] w-[min(28rem,calc(100vw-3rem))] -translate-x-1/2 -translate-y-1/2 gap-6 overflow-y-auto border border-border bg-card p-6 text-foreground shadow-[10px_10px_0_var(--shadow-color)] transition-[scale,opacity] duration-100 motion-reduce:transition-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0"
           initialFocus={pending ? false : cancelRef}
+          finalFocus={triggerRef}
         >
           <div className="grid gap-2">
             <AlertDialog.Title className="text-xl font-medium">
@@ -99,6 +102,7 @@ function DeploymentActionDialog({
             <AsyncButton
               aria-label={pending ? pendingLabel : `${action} ${serviceName}`}
               className="w-full"
+              disabled={disabled}
               pending={pending}
               variant={action === 'Spin down' ? 'destructiveConfirm' : 'primary'}
               onClick={onConfirm}
@@ -187,7 +191,11 @@ function SpinDownAction({
   return (
     <DeploymentActionDialog
       action="Spin down"
-      description="This removes the running container. The service configuration stays in Railway."
+      description={
+        deploymentId
+          ? 'This removes the running container. The service configuration stays in Railway.'
+          : 'Spin down is no longer available because there is no successful deployment.'
+      }
       disabled={!deploymentId}
       disabledDescriptionId={unavailableDescriptionId}
       error={spinDown.error}
