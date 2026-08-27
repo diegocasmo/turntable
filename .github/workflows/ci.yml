@@ -105,4 +105,3 @@ jobs:
           RAILWAY_TEST_PROJECT_ID: ${{ vars.RAILWAY_TEST_PROJECT_ID }}
           RAILWAY_TEST_SERVICE_ID: ${{ vars.RAILWAY_TEST_SERVICE_ID }}
           RAILWAY_TEST_TOKEN: ${{ secrets.RAILWAY_TEST_TOKEN }}
-          RAILWAY_WEBSOCKET_URL: wss://backboard.railway.com/graphql/v2

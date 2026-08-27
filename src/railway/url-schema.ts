@@ -9,9 +9,3 @@ export const railwayHttpsUrlSchema = z.url({
   protocol: /^https$/,
   error: `must use https and ${railwayHostname}`,
 })
-
-export const railwayWebSocketUrlSchema = z.url({
-  hostname: railwayHostnamePattern,
-  protocol: /^wss$/,
-  error: `must use wss and ${railwayHostname}`,
-})

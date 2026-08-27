@@ -1,8 +1,5 @@
-import type { DeploymentTarget } from '@/deployment/schema'
 export const queryKeys = {
-  deployment: { watch: (target: DeploymentTarget | undefined) => ['deployment', target] as const },
   environments: { list: (projectId: string) => ['projects', projectId, 'environments'] as const },
-  projectHierarchy: { read: ['project-hierarchy'] as const },
   projects: { list: ['projects'] as const },
   session: { read: ['session'] as const },
   services: {

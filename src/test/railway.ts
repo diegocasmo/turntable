@@ -1,9 +1,7 @@
 import { vi } from 'vitest'
-import type { RailwayDeployment } from '@/gql/operations/deployment-identity'
 import type { RailwayEnvironment } from '@/gql/operations/environment-list'
 import type { RailwayService } from '@/gql/operations/environment-services'
 import type { ProjectsConnection, RailwayProject } from '@/gql/operations/project-list'
-import type { SelectionEnvironment, SelectionProject } from '@/gql/operations/projects'
 import { createJsonResponse } from '@/test/response'
 
 export const testRailwayApiUrl = 'https://backboard.railway.test/graphql/v2'
@@ -46,41 +44,6 @@ export function createRailwayService(overrides: Partial<RailwayService> = {}): R
     id: testRailwayServiceId,
     latestDeployment: { id: 'deployment-1', status: 'SUCCESS' },
     name: 'Web',
-    ...overrides,
-  }
-}
-
-export function createSelectionEnvironment(
-  overrides: Partial<SelectionEnvironment> = {},
-): SelectionEnvironment {
-  return {
-    ...createRailwayEnvironment(),
-    services: [createRailwayService()],
-    ...overrides,
-  }
-}
-
-export function createSelectionProject(
-  overrides: Partial<SelectionProject> = {},
-): SelectionProject {
-  return {
-    ...createRailwayProject(),
-    environments: [createSelectionEnvironment()],
-    ...overrides,
-  }
-}
-
-export function createRailwayDeployment(
-  overrides: Partial<RailwayDeployment> = {},
-): RailwayDeployment {
-  const deployment = {
-    createdAt: '2026-08-25T12:00:00.000Z',
-    id: 'deployment-1',
-    status: 'SUCCESS',
-  } satisfies { createdAt: string; id: string; status: 'SUCCESS' }
-
-  return {
-    ...deployment,
     ...overrides,
   }
 }

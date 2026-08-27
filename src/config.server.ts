@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { z } from 'zod'
 import { formatLog } from './logging.ts'
-import { railwayHttpsUrlSchema, railwayWebSocketUrlSchema } from './railway/url-schema.ts'
+import { railwayHttpsUrlSchema } from './railway/url-schema.ts'
 
 type Environment = Readonly<Record<string, string | undefined>>
 type ErrorWriter = (line: string) => void
@@ -11,8 +11,6 @@ const sessionSecretSchema = z
   .refine((value) => Buffer.from(value, 'base64').byteLength === 32, 'must be 32 bytes in base64')
 
 const httpUrlSchema = z.url({ protocol: /^https?$/ })
-
-const webSocketUrlSchema = z.url({ protocol: /^wss?$/ })
 
 function createAppOriginSchema(protocol: RegExp, protocolError: string) {
   return z
@@ -37,14 +35,12 @@ const environmentSchema = z
         APP_ORIGIN: productionAppOriginSchema,
         NODE_ENV: z.literal('production'),
         RAILWAY_API_URL: railwayHttpsUrlSchema,
-        RAILWAY_WEBSOCKET_URL: railwayWebSocketUrlSchema,
       }),
       z.object({
         ...sharedEnvironmentShape,
         APP_ORIGIN: appOriginSchema,
         NODE_ENV: z.enum(['development', 'test']),
         RAILWAY_API_URL: httpUrlSchema,
-        RAILWAY_WEBSOCKET_URL: webSocketUrlSchema,
       }),
     ]),
   )
@@ -63,7 +59,6 @@ export function readConfig(environment: Environment) {
     appOrigin: result.data.APP_ORIGIN,
     nodeEnvironment: result.data.NODE_ENV,
     railwayApiUrl: result.data.RAILWAY_API_URL,
-    railwayWebSocketUrl: result.data.RAILWAY_WEBSOCKET_URL,
     sessionSecret: result.data.SESSION_SECRET,
   }
 }

@@ -5,7 +5,6 @@ import { readConfig } from './src/config.server.ts'
 const testEnvironment = loadEnv('development', process.cwd(), [
   'APP_ORIGIN',
   'RAILWAY_API_URL',
-  'RAILWAY_WEBSOCKET_URL',
   'SESSION_SECRET',
 ])
 const testOrigin = readConfig(testEnvironment).appOrigin
