@@ -1,0 +1,88 @@
+import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils'
+import type { SelectionEntity } from '@/selection/filter-entities'
+
+type EntityCardGridProps<Entity extends SelectionEntity> = Readonly<{
+  allEntityCount: number
+  entities: readonly Entity[]
+  emptyMessage: string
+  query: string
+  renderCard: (entity: Entity) => ReactNode
+}>
+
+type EntityCardProps<Entity extends SelectionEntity> = Readonly<{
+  actions?: ReactNode
+  entity: Entity
+  meta?: ReactNode
+  renderPrimaryAction?: (content: ReactNode) => ReactNode
+}>
+
+const primaryActionClassName =
+  'block min-h-24 min-w-0 cursor-pointer px-5 py-4 text-left outline-none focus-visible:outline-[3px] focus-visible:outline-offset-[-4px] focus-visible:outline-ring'
+
+export function EntityCard<Entity extends SelectionEntity>({
+  actions,
+  entity,
+  meta,
+  renderPrimaryAction,
+}: EntityCardProps<Entity>) {
+  const content = (
+    <>
+      <span className="block break-words font-semibold text-foreground">{entity.name}</span>
+      {entity.description ? (
+        <span className="mt-2 block break-words font-mono text-xs text-foreground-soft">
+          {entity.description}
+        </span>
+      ) : null}
+      {meta ? <span className="mt-3 block">{meta}</span> : null}
+    </>
+  )
+
+  return (
+    <article
+      aria-label={entity.name}
+      className={cn(
+        'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] border border-border bg-card shadow-[3px_3px_0_var(--shadow-color)]',
+        renderPrimaryAction &&
+          'transition-[border-color,box-shadow,transform] focus-within:border-primary hover:border-foreground-soft active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_var(--shadow-color)]',
+      )}
+    >
+      {renderPrimaryAction ? (
+        renderPrimaryAction(content)
+      ) : (
+        <div className="min-h-24 min-w-0 px-5 py-4">{content}</div>
+      )}
+      {actions ? <div className="flex items-start p-2">{actions}</div> : null}
+    </article>
+  )
+}
+
+export { primaryActionClassName }
+
+export function EntityCardGrid<Entity extends SelectionEntity>({
+  allEntityCount,
+  emptyMessage,
+  entities,
+  query,
+  renderCard,
+}: EntityCardGridProps<Entity>) {
+  if (entities.length === 0) {
+    const hasNoMatches = allEntityCount > 0 && query.trim() !== ''
+
+    return (
+      <div className="flex min-h-40 items-center border border-dashed border-border px-5 py-8">
+        <p role="status" className="text-sm text-foreground-soft">
+          {hasNoMatches ? `No results for “${query.trim()}”.` : emptyMessage}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {entities.map((entity) => (
+        <div key={entity.id}>{renderCard(entity)}</div>
+      ))}
+    </div>
+  )
+}
