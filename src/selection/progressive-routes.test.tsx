@@ -54,10 +54,9 @@ describe('progressive project and environment routes', () => {
   it('restores q and filters only the visible cards in fuzzy order', async () => {
     renderRoutes('/projects?q=wkr')
     const input = await screen.findByRole('searchbox', { name: 'Search projects' })
-    const home = screen.getByRole('link', { name: 'Home' })
 
     expect(input).toHaveValue('wkr')
-    expect(home).toHaveAttribute('aria-current', 'false')
+    expect(screen.queryByText('Home')).not.toBeInTheDocument()
     expect(screen.getByText('Project')).toHaveAttribute('aria-current', 'page')
     expect(
       screen.getAllByRole('link', { name: /^Select / }).map((link) => link.textContent),

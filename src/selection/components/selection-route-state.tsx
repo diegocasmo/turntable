@@ -5,16 +5,8 @@ import {
   EntitySelectionPage,
   EntitySelectionSkeleton,
 } from '@/selection/components/entity-selection-page'
-import { SelectionHomeLink } from '@/selection/components/selection-breadcrumbs'
 
-const loadingBreadcrumbs = [
-  {
-    kind: 'link',
-    label: 'Home',
-    link: <SelectionHomeLink />,
-  },
-  { kind: 'current', label: 'Selection' },
-] as const
+const loadingBreadcrumbs = [{ kind: 'current', label: 'Selection' }] as const
 
 export function SelectionRoutePending() {
   return (

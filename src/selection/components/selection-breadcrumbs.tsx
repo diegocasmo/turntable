@@ -1,5 +1,4 @@
 import { Tooltip } from '@base-ui/react/tooltip'
-import { useLinkProps } from '@tanstack/react-router'
 import { type ReactNode, useId } from 'react'
 
 export type SelectionBreadcrumbStep =
@@ -14,16 +13,6 @@ type SelectionBreadcrumbsProps = Readonly<{
 const breadcrumbTooltipDelayMilliseconds = 100
 const itemClassName =
   'inline-flex min-h-8 items-center break-words px-1 font-mono text-xs font-semibold uppercase tracking-[0.1em] outline-none focus-visible:outline-[3px] focus-visible:outline-offset-1 focus-visible:outline-ring'
-
-export function SelectionHomeLink() {
-  const linkProps = useLinkProps({ search: {}, to: '/projects' })
-
-  return (
-    <a {...linkProps} aria-current={false}>
-      Home
-    </a>
-  )
-}
 
 function DisabledBreadcrumb({
   description,

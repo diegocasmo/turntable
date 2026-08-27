@@ -2,7 +2,6 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useRouter, useRouterState } from '@tanstack/react-router'
 import { TurntablePage } from '@/components/turntable-page'
 import { EntityCard, primaryActionClassName } from '@/selection/components/entity-card-grid'
-import { SelectionHomeLink } from '@/selection/components/selection-breadcrumbs'
 import { SelectionListPage } from '@/selection/components/selection-list-page'
 import {
   SelectionRouteError,
@@ -47,11 +46,6 @@ function AuthenticatedEnvironmentRoute() {
     <TurntablePage sessionState="authenticated">
       <SelectionListPage
         breadcrumbs={[
-          {
-            kind: 'link',
-            label: 'Home',
-            link: <SelectionHomeLink />,
-          },
           {
             kind: 'link',
             label: `Project: ${projectName}`,
