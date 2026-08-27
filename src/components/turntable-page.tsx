@@ -55,7 +55,7 @@ export function TurntablePage({ children, sessionState }: TurntablePageProps) {
                   Turntable
                 </h1>
                 <p className="mt-4 max-w-md text-base leading-7 text-foreground-soft sm:text-lg lg:mt-7 lg:leading-8">
-                  Service snapshots. Clear controls.
+                  Spin Railway containers up and down.
                 </p>
 
                 <div
