@@ -16,11 +16,13 @@ export const railwayTokenSchema = z.string().check(
 )
 
 export const sessionInputSchema = z.object({ token: railwayTokenSchema })
+
+function isProjectsPath(path: string) {
+  return /^\/projects(?:[/?#]|$)/u.test(path)
+}
+
 export const connectSearchSchema = z.object({
-  redirect: z
-    .string()
-    .refine((path) => /^\/projects(?:[/?#]|$)/u.test(path))
-    .catch('/projects'),
+  redirect: z.string().refine(isProjectsPath).catch('/projects'),
 })
 
 export type SessionState = 'authenticated' | 'expired' | 'signed-out'
