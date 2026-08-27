@@ -15,11 +15,7 @@ type SelectionRouteStateProps = Readonly<{
 export function SelectionRoutePending({ breadcrumbs, title }: SelectionRouteStateProps) {
   return (
     <TurntablePage sessionState="authenticated">
-      <EntitySelectionPage
-        breadcrumbs={breadcrumbs}
-        feedback="Loading choices."
-        title={title}
-      >
+      <EntitySelectionPage breadcrumbs={breadcrumbs} feedback="Loading choices." title={title}>
         <EntitySelectionSkeleton />
       </EntitySelectionPage>
     </TurntablePage>

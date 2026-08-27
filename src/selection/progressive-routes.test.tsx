@@ -80,10 +80,7 @@ describe('progressive project and environment routes', () => {
       'href',
       '/projects',
     )
-    expect(within(breadcrumbs).getByText('Environment')).toHaveAttribute(
-      'aria-current',
-      'page',
-    )
+    expect(within(breadcrumbs).getByText('Environment')).toHaveAttribute('aria-current', 'page')
   })
 
   it('restores q and filters only the visible cards in fuzzy order', async () => {
