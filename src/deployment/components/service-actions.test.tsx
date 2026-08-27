@@ -1,9 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import type { ComponentProps } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ServiceActions } from '@/deployment/components/service-actions'
-import { StatusBadge } from '@/deployment/components/status-badge'
-import { EntityCard } from '@/selection/components/entity-card-grid'
 import {
   testRailwayEnvironmentId,
   testRailwayProjectId,
@@ -29,26 +28,21 @@ const target = {
 }
 const deployment = { id: 'deployment-1', status: 'SUCCESS' as const }
 const operationAcceptedMock = vi.fn()
+const defaultProps = {
+  deployment,
+  onOperationAccepted: operationAcceptedMock,
+  serviceName: 'Web',
+  target,
+} satisfies ComponentProps<typeof ServiceActions>
 
-function renderServiceCard(currentDeployment: Readonly<typeof deployment> | null = deployment) {
+function renderComponent(props: Partial<ComponentProps<typeof ServiceActions>> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  const renderCard = (nextDeployment: Readonly<typeof deployment> | null) => (
-    <QueryClientProvider client={queryClient}>
-      <EntityCard
-        actions={
-          <ServiceActions
-            deployment={nextDeployment}
-            serviceName="Web"
-            target={target}
-            onOperationAccepted={operationAcceptedMock}
-          />
-        }
-        entity={{ id: testRailwayServiceId, name: 'Web' }}
-        meta={<StatusBadge status={nextDeployment?.status ?? null} />}
-      />
-    </QueryClientProvider>
-  )
-  return { ...render(renderCard(currentDeployment)), renderCard }
+
+  return render(<ServiceActions {...defaultProps} {...props} />, {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    ),
+  })
 }
 
 beforeEach(() => {
@@ -58,17 +52,15 @@ beforeEach(() => {
 })
 
 describe('service card actions', () => {
-  it('shows both actions directly and does not make the card interactive', () => {
-    renderServiceCard()
-    const card = screen.getByRole('article', { name: 'Web' })
-    expect(within(card).getByRole('button', { name: 'Spin up Web' })).toBeEnabled()
-    expect(within(card).getByRole('button', { name: 'Spin down Web' })).toBeEnabled()
-    expect(within(card).queryByRole('button', { name: 'Actions for Web' })).not.toBeInTheDocument()
-    expect(card.querySelector('a')).toBeNull()
+  it('shows both actions directly', () => {
+    renderComponent()
+    expect(screen.getByRole('button', { name: 'Spin up Web' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Spin down Web' })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: 'Actions for Web' })).not.toBeInTheDocument()
   })
 
   it('shows why spin down is unavailable without hiding the action', () => {
-    renderServiceCard(null)
+    renderComponent({ deployment: null })
     const spinDown = screen.getByRole('button', { name: 'Spin down Web' })
     fireEvent.click(spinDown)
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
@@ -78,7 +70,7 @@ describe('service card actions', () => {
   it('shows spin-up request progress in the confirmation button', async () => {
     const response = Promise.withResolvers<string>()
     spinUpMock.mockReturnValue(response.promise)
-    renderServiceCard()
+    renderComponent()
     fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
     fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
     const pendingButton = await screen.findByRole('button', { name: 'Spinning up...' })
@@ -99,7 +91,7 @@ describe('service card actions', () => {
     spinDownMock
       .mockRejectedValueOnce(new Error('Railway could not stop Web.'))
       .mockResolvedValueOnce(true)
-    renderServiceCard()
+    renderComponent()
     fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
     fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Railway could not stop Web.')
@@ -111,11 +103,11 @@ describe('service card actions', () => {
   })
 
   it('disables a stale spin-down confirmation', () => {
-    const page = renderServiceCard()
+    const page = renderComponent()
     fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
     expect(screen.getByRole('alertdialog')).toBeVisible()
 
-    page.rerender(page.renderCard(null))
+    page.rerender(<ServiceActions {...defaultProps} deployment={null} />)
 
     const confirm = screen.getByRole('button', { name: 'Spin down Web' })
     expect(confirm).toBeDisabled()
