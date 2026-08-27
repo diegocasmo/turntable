@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HealthzRouteImport } from './routes/healthz'
+import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as ProjectsProjectIdEnvironmentsRouteImport } from './routes/projects_.$projectId.environments'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +24,56 @@ const HealthzRoute = HealthzRouteImport.update({
   path: '/healthz',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProjectsRoute = ProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsProjectIdEnvironmentsRoute =
+  ProjectsProjectIdEnvironmentsRouteImport.update({
+    id: '/projects_/$projectId/environments',
+    path: '/projects/$projectId/environments',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
+  '/projects': typeof ProjectsRoute
+  '/projects/$projectId/environments': typeof ProjectsProjectIdEnvironmentsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
+  '/projects': typeof ProjectsRoute
+  '/projects/$projectId/environments': typeof ProjectsProjectIdEnvironmentsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
+  '/projects': typeof ProjectsRoute
+  '/projects_/$projectId/environments': typeof ProjectsProjectIdEnvironmentsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/healthz'
+  fullPaths:
+    '/' | '/healthz' | '/projects' | '/projects/$projectId/environments'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/healthz'
-  id: '__root__' | '/' | '/healthz'
+  to: '/' | '/healthz' | '/projects' | '/projects/$projectId/environments'
+  id:
+    | '__root__'
+    | '/'
+    | '/healthz'
+    | '/projects'
+    | '/projects_/$projectId/environments'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HealthzRoute: typeof HealthzRoute
+  ProjectsRoute: typeof ProjectsRoute
+  ProjectsProjectIdEnvironmentsRoute: typeof ProjectsProjectIdEnvironmentsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +92,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HealthzRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/projects': {
+      id: '/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects_/$projectId/environments': {
+      id: '/projects_/$projectId/environments'
+      path: '/projects/$projectId/environments'
+      fullPath: '/projects/$projectId/environments'
+      preLoaderRoute: typeof ProjectsProjectIdEnvironmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HealthzRoute: HealthzRoute,
+  ProjectsRoute: ProjectsRoute,
+  ProjectsProjectIdEnvironmentsRoute: ProjectsProjectIdEnvironmentsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
