@@ -7,6 +7,7 @@ import {
   readDeploymentStatusPresentation,
 } from '@/railway/deployment-status'
 
+type DeploymentStatusIndicator = ReturnType<typeof readDeploymentStatusPresentation>['indicator']
 const statusToneCases: ReadonlyArray<
   Readonly<{ status: DeploymentStatus; tone: DeploymentStatusTone }>
 > = [
@@ -17,6 +18,24 @@ const statusToneCases: ReadonlyArray<
   { status: 'REMOVED', tone: 'neutral' },
   { status: 'unknown', tone: 'neutral' },
 ]
+const statusIndicatorCases = [
+  { indicator: 'activity', status: 'BUILDING' },
+  { indicator: null, status: 'CRASHED' },
+  { indicator: 'activity', status: 'DEPLOYING' },
+  { indicator: null, status: 'FAILED' },
+  { indicator: 'activity', status: 'INITIALIZING' },
+  { indicator: 'attention', status: 'NEEDS_APPROVAL' },
+  { indicator: 'waiting', status: 'QUEUED' },
+  { indicator: null, status: 'REMOVED' },
+  { indicator: 'activity', status: 'REMOVING' },
+  { indicator: null, status: 'SKIPPED' },
+  { indicator: null, status: 'SLEEPING' },
+  { indicator: null, status: 'SUCCESS' },
+  { indicator: 'waiting', status: 'WAITING' },
+  { indicator: null, status: 'unknown' },
+] as const satisfies ReadonlyArray<
+  Readonly<{ indicator: DeploymentStatusIndicator; status: DeploymentStatus }>
+>
 
 describe('deployment status', () => {
   it('keeps a known Railway status', () => {
@@ -30,6 +49,13 @@ describe('deployment status', () => {
   it.each(statusToneCases)('maps $status to the $tone badge', ({ status, tone }) => {
     expect(readDeploymentStatusPresentation(status).tone).toBe(tone)
   })
+
+  it.each(statusIndicatorCases)(
+    'maps $status to the $indicator indicator',
+    ({ indicator, status }) => {
+      expect(readDeploymentStatusPresentation(status).indicator).toBe(indicator)
+    },
+  )
 
   it('distinguishes transitional and terminal statuses', () => {
     expect(isDeploymentStatusTransitional('INITIALIZING')).toBe(true)
