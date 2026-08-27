@@ -1,42 +1,28 @@
 import { queryOptions } from '@tanstack/react-query'
+import { queryKeys } from '@/query-keys'
 import { isDeploymentStatusTransitional } from '@/railway/deployment-status'
 import { readEnvironments } from '@/selection/read-environments'
 import { readProjects } from '@/selection/read-projects'
 import { readServices } from '@/selection/read-services'
 
-export const selectionQueryKeys = {
-  environments: (projectId: string) => ['selection', 'environments', projectId] as const,
-  projects: ['selection', 'projects'] as const,
-  services: (projectId: string, environmentId: string) =>
-    ['selection', 'services', projectId, environmentId] as const,
-}
-
-export function createProjectsQueryOptions() {
-  return queryOptions({
+export const createProjectsQueryOptions = () =>
+  queryOptions({
     queryFn: ({ signal }) => readProjects({ signal }),
-    queryKey: selectionQueryKeys.projects,
-    retry: false,
-    staleTime: Number.POSITIVE_INFINITY,
+    queryKey: queryKeys.projects.list,
   })
-}
-
-export function createEnvironmentsQueryOptions(projectId: string) {
-  return queryOptions({
+export const createEnvironmentsQueryOptions = (projectId: string) =>
+  queryOptions({
     queryFn: ({ signal }) => readEnvironments({ data: { projectId }, signal }),
-    queryKey: selectionQueryKeys.environments(projectId),
-    retry: false,
-    staleTime: Number.POSITIVE_INFINITY,
+    queryKey: queryKeys.environments.list(projectId),
   })
-}
-
-export function createServicesQueryOptions(
+export const createServicesQueryOptions = (
   projectId: string,
   environmentId: string,
   continueSynchronizing = false,
-) {
-  return queryOptions({
+) =>
+  queryOptions({
     queryFn: ({ signal }) => readServices({ data: { environmentId, projectId }, signal }),
-    queryKey: selectionQueryKeys.services(projectId, environmentId),
+    queryKey: queryKeys.services.list(projectId, environmentId),
     refetchInterval: (query) => {
       const hasTransitionalService = query.state.data?.some(
         (service) =>
@@ -47,7 +33,4 @@ export function createServicesQueryOptions(
         ? 5_000
         : false
     },
-    retry: false,
-    staleTime: Number.POSITIVE_INFINITY,
   })
-}

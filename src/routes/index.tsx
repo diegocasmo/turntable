@@ -1,8 +1,8 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { entitySearchSchema } from '@/selection/schema'
+import { selectionSearchSchema } from '@/selection/schema'
 
 export const Route = createFileRoute('/')({
-  validateSearch: entitySearchSchema,
+  validateSearch: selectionSearchSchema,
   beforeLoad: ({ search: { q } }) => {
     throw redirect({ to: '/projects', search: q ? { q } : {}, replace: true })
   },
