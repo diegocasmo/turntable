@@ -1,5 +1,5 @@
 import { apiTokenWorkspacesQuery } from '@/gql/operations/api-token-workspaces'
-import { selectionProjectsQuery } from '@/gql/operations/selection-projects'
+import { projectsQuery } from '@/gql/operations/project-list'
 import { createRailwayClient } from '@/railway/client.server'
 import {
   railwayConnectionPageSize,
@@ -26,7 +26,7 @@ export async function readRailwayProjects(
     tokenContext.apiToken.workspaces.map(async (workspace) => {
       const readPage = (after: string | null = null) =>
         client.request({
-          document: selectionProjectsQuery,
+          document: projectsQuery,
           signal,
           token,
           variables: { after, first: railwayConnectionPageSize, workspaceId: workspace.id },

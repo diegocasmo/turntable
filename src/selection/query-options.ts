@@ -3,17 +3,10 @@ import { readEnvironments } from '@/selection/read-environments'
 import { readProjects } from '@/selection/read-projects'
 import { readServices } from '@/selection/read-services'
 
-export const selectionQueryKeys = {
-  environments: (projectId: string) => ['selection', 'environments', projectId] as const,
-  projects: ['selection', 'projects'] as const,
-  services: (projectId: string, environmentId: string) =>
-    ['selection', 'services', projectId, environmentId] as const,
-}
-
 export function createProjectsQueryOptions() {
   return queryOptions({
     queryFn: ({ signal }) => readProjects({ signal }),
-    queryKey: selectionQueryKeys.projects,
+    queryKey: ['projects'],
     retry: false,
     staleTime: Number.POSITIVE_INFINITY,
   })
@@ -22,7 +15,7 @@ export function createProjectsQueryOptions() {
 export function createEnvironmentsQueryOptions(projectId: string) {
   return queryOptions({
     queryFn: ({ signal }) => readEnvironments({ data: { projectId }, signal }),
-    queryKey: selectionQueryKeys.environments(projectId),
+    queryKey: ['projects', projectId, 'environments'],
     retry: false,
     staleTime: Number.POSITIVE_INFINITY,
   })
@@ -31,7 +24,7 @@ export function createEnvironmentsQueryOptions(projectId: string) {
 export function createServicesQueryOptions(projectId: string, environmentId: string) {
   return queryOptions({
     queryFn: ({ signal }) => readServices({ data: { environmentId, projectId }, signal }),
-    queryKey: selectionQueryKeys.services(projectId, environmentId),
+    queryKey: ['projects', projectId, 'environments', environmentId, 'services'],
     retry: false,
     staleTime: Number.POSITIVE_INFINITY,
   })

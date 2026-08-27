@@ -1,7 +1,7 @@
 import { graphql, type ResultOf } from 'gql.tada'
 
-export const selectionHierarchyQuery = graphql(`
-  query SelectionHierarchy($workspaceId: String!, $first: Int, $after: String) {
+export const projectHierarchyQuery = graphql(`
+  query ProjectHierarchy($workspaceId: String!, $first: Int, $after: String) {
     projects(workspaceId: $workspaceId, first: $first, after: $after) {
       edges {
         node {
@@ -45,7 +45,7 @@ export const selectionHierarchyQuery = graphql(`
   }
 `)
 
-export type SelectionProjectsConnection = ResultOf<typeof selectionHierarchyQuery>['projects']
+export type SelectionProjectsConnection = ResultOf<typeof projectHierarchyQuery>['projects']
 export type SelectionProjectNode = SelectionProjectsConnection['edges'][number]['node']
 export type SelectionEnvironmentsConnection = SelectionProjectNode['environments']
 export type SelectionEnvironmentNode = SelectionEnvironmentsConnection['edges'][number]['node']

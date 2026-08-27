@@ -6,7 +6,7 @@ export function useReadSelectionHierarchy() {
   const read = useServerFn(readSelectionHierarchy)
   return useQuery({
     queryFn: () => read({}),
-    queryKey: ['selection-hierarchy'],
+    queryKey: ['project-hierarchy'],
     retry: false,
   })
 }

@@ -1,4 +1,4 @@
-import { selectionEnvironmentsQuery } from '@/gql/operations/selection-environments'
+import { environmentsQuery } from '@/gql/operations/environment-list'
 import { createRailwayClient } from '@/railway/client.server'
 import {
   railwayConnectionPageSize,
@@ -17,7 +17,7 @@ export async function readRailwayEnvironments(
   const client = createRailwayClient({ apiUrl, fetch: fetchRequest })
   const readPage = (after: string | null = null) =>
     client.request({
-      document: selectionEnvironmentsQuery,
+      document: environmentsQuery,
       signal,
       token,
       variables: { after, first: railwayConnectionPageSize, projectId },
