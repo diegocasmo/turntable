@@ -7,7 +7,6 @@ export function createProjectsQueryOptions() {
   return queryOptions({
     queryFn: ({ signal }) => readProjects({ signal }),
     queryKey: ['projects'],
-    retry: false,
   })
 }
 
@@ -15,7 +14,6 @@ export function createEnvironmentsQueryOptions(projectId: string) {
   return queryOptions({
     queryFn: ({ signal }) => readEnvironments({ data: { projectId }, signal }),
     queryKey: ['projects', projectId, 'environments'],
-    retry: false,
   })
 }
 
@@ -23,6 +21,5 @@ export function createServicesQueryOptions(projectId: string, environmentId: str
   return queryOptions({
     queryFn: ({ signal }) => readServices({ data: { environmentId, projectId }, signal }),
     queryKey: ['projects', projectId, 'environments', environmentId, 'services'],
-    retry: false,
   })
 }
