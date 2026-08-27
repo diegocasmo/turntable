@@ -1,13 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { TurntablePage } from '@/components/turntable-page'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { selectionSearchSchema } from '@/selection/schema'
 
 export const Route = createFileRoute('/')({
   validateSearch: selectionSearchSchema,
-  loader: ({ context }) => context.sessionState,
-  component: IndexPage,
+  beforeLoad: () => {
+    throw redirect({ replace: true, search: {}, to: '/projects' })
+  },
 })
-
-function IndexPage() {
-  return <TurntablePage sessionState={Route.useLoaderData()} />
-}

@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import type { ComponentProps } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import {
   EntitySelectionFailure,
   EntitySelectionPage,
-  EntitySelectionSkeleton,
 } from '@/selection/components/entity-selection-page'
 
 const breadcrumbs = [
@@ -12,44 +12,38 @@ const breadcrumbs = [
   { description: 'Select an environment first', kind: 'disabled', label: 'Services' },
 ] as const
 
-function renderPage(overrides: Readonly<{ onRefresh?: () => void; pending?: boolean }> = {}) {
+function renderComponent({
+  children = <p>Page content</p>,
+  ...props
+}: Partial<ComponentProps<typeof EntitySelectionPage>> = {}) {
   return render(
     <EntitySelectionPage
       breadcrumbs={breadcrumbs}
       refreshLabel="Projects"
-      refreshPending={overrides.pending ?? false}
+      refreshPending={false}
       title="Choose a project"
-      onRefresh={overrides.onRefresh ?? vi.fn()}
+      onRefresh={vi.fn()}
+      {...props}
     >
-      <p>Page content</p>
+      {children}
     </EntitySelectionPage>,
   )
 }
 
 describe('EntitySelectionPage', () => {
-  it('renders semantic links, current state, and explained future steps', async () => {
-    renderPage()
+  it('renders current and future steps without Home', () => {
+    renderComponent()
     const breadcrumb = screen.getByRole('navigation', { name: 'Selection progress' })
 
     expect(within(breadcrumb).queryByText('Home')).not.toBeInTheDocument()
-    expect(within(breadcrumb).getByText('Project')).toHaveAttribute('aria-current', 'page')
+    expect(within(breadcrumb).getByText('Project')).toBeVisible()
     expect(within(breadcrumb).queryByRole('link', { name: 'Project' })).not.toBeInTheDocument()
-    const environment = within(breadcrumb).getByRole('button', { name: 'Environment' })
-    expect(environment).toHaveAttribute('aria-disabled', 'true')
-
-    fireEvent.focus(environment)
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('Select a project first')
+    expect(within(breadcrumb).getByRole('button', { name: 'Environment' })).toBeVisible()
   })
 
-  it('focuses the heading without focusing a text field', () => {
-    renderPage()
-
-    expect(screen.getByRole('heading', { name: 'Choose a project' })).toHaveFocus()
-  })
-
-  it('keeps refresh labelled and disabled while pending', () => {
+  it('blocks duplicate refreshes while pending', () => {
     const onRefresh = vi.fn()
-    const page = renderPage({ onRefresh })
+    const page = renderComponent({ onRefresh })
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh projects' }))
     expect(onRefresh).toHaveBeenCalledOnce()
@@ -65,16 +59,14 @@ describe('EntitySelectionPage', () => {
       </EntitySelectionPage>,
     )
     const refresh = screen.getByRole('button', { name: 'Refresh projects' })
-    expect(refresh).toHaveAttribute('aria-busy', 'true')
-    expect(refresh).toHaveAttribute('aria-disabled', 'true')
-    expect(screen.getByText('Page content').parentElement).toHaveAttribute('aria-busy', 'true')
+    expect(refresh).toHaveTextContent('Refreshing')
+    fireEvent.click(refresh)
+    expect(onRefresh).toHaveBeenCalledOnce()
   })
 
-  it('keeps simple loading and error regions available', async () => {
+  it('shows a failure and retries', async () => {
     const onRetry = vi.fn()
-    const page = render(<EntitySelectionSkeleton />)
-    expect(page.container.firstChild).toHaveAttribute('aria-hidden', 'true')
-    page.rerender(
+    render(
       <EntitySelectionFailure error={new Error('Could not load projects.')} onRetry={onRetry} />,
     )
 

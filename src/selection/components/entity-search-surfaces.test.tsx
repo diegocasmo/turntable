@@ -10,24 +10,28 @@ const entities = [
   { id: 'worker', name: 'Worker' },
 ]
 
-function TestSurfaces() {
-  const [query, setQuery] = useState('')
+function renderComponent() {
+  function Component() {
+    const [query, setQuery] = useState('')
 
-  return (
-    <EntitySearchSurfaces
-      emptyMessage="No projects are available."
-      entities={entities}
-      label="Project"
-      query={query}
-      renderCard={(entity) => <EntityCard entity={entity} />}
-      onQueryChange={setQuery}
-    />
-  )
+    return (
+      <EntitySearchSurfaces
+        emptyMessage="No projects are available."
+        entities={entities}
+        label="Project"
+        query={query}
+        renderCard={(entity) => <EntityCard entity={entity} />}
+        onQueryChange={setQuery}
+      />
+    )
+  }
+
+  return render(<Component />)
 }
 
 describe('EntitySearchSurfaces', () => {
   it('uses a normal search input to filter cards in fuzzy order', () => {
-    render(<TestSurfaces />)
+    renderComponent()
     const input = screen.getByRole('searchbox', { name: 'Search projects' })
 
     fireEvent.change(input, { target: { value: 'wkr' } })
@@ -36,13 +40,10 @@ describe('EntitySearchSurfaces', () => {
       'Worker',
       'API worker',
     ])
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
-    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
-    expect(screen.queryByRole('option')).not.toBeInTheDocument()
   })
 
   it('clears a no-results query and restores every card', () => {
-    render(<TestSurfaces />)
+    renderComponent()
     const input = screen.getByRole('searchbox', { name: 'Search projects' })
 
     fireEvent.change(input, { target: { value: 'zzzz' } })

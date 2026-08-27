@@ -10,13 +10,24 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as HealthzRouteImport } from './routes/healthz'
-import { Route as ProjectsRouteImport } from './routes/projects'
-import { Route as ProjectsProjectIdEnvironmentsRouteImport } from './routes/projects_.$projectId.environments'
+import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated.projects'
+import { Route as AuthenticatedProjectsProjectIdEnvironmentsRouteImport } from './routes/_authenticated.projects_.$projectId.environments'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectRoute = ConnectRouteImport.update({
+  id: '/connect',
+  path: '/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HealthzRoute = HealthzRouteImport.update({
@@ -24,56 +35,71 @@ const HealthzRoute = HealthzRouteImport.update({
   path: '/healthz',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProjectsRoute = ProjectsRouteImport.update({
+const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const ProjectsProjectIdEnvironmentsRoute =
-  ProjectsProjectIdEnvironmentsRouteImport.update({
+const AuthenticatedProjectsProjectIdEnvironmentsRoute =
+  AuthenticatedProjectsProjectIdEnvironmentsRouteImport.update({
     id: '/projects_/$projectId/environments',
     path: '/projects/$projectId/environments',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/connect': typeof ConnectRoute
   '/healthz': typeof HealthzRoute
-  '/projects': typeof ProjectsRoute
-  '/projects/$projectId/environments': typeof ProjectsProjectIdEnvironmentsRoute
+  '/projects': typeof AuthenticatedProjectsRoute
+  '/projects/$projectId/environments': typeof AuthenticatedProjectsProjectIdEnvironmentsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/connect': typeof ConnectRoute
   '/healthz': typeof HealthzRoute
-  '/projects': typeof ProjectsRoute
-  '/projects/$projectId/environments': typeof ProjectsProjectIdEnvironmentsRoute
+  '/projects': typeof AuthenticatedProjectsRoute
+  '/projects/$projectId/environments': typeof AuthenticatedProjectsProjectIdEnvironmentsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/connect': typeof ConnectRoute
   '/healthz': typeof HealthzRoute
-  '/projects': typeof ProjectsRoute
-  '/projects_/$projectId/environments': typeof ProjectsProjectIdEnvironmentsRoute
+  '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/projects_/$projectId/environments': typeof AuthenticatedProjectsProjectIdEnvironmentsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/healthz' | '/projects' | '/projects/$projectId/environments'
+    | '/'
+    | '/connect'
+    | '/healthz'
+    | '/projects'
+    | '/projects/$projectId/environments'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/healthz' | '/projects' | '/projects/$projectId/environments'
+  to:
+    | '/'
+    | '/connect'
+    | '/healthz'
+    | '/projects'
+    | '/projects/$projectId/environments'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/connect'
     | '/healthz'
-    | '/projects'
-    | '/projects_/$projectId/environments'
+    | '/_authenticated/projects'
+    | '/_authenticated/projects_/$projectId/environments'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  ConnectRoute: typeof ConnectRoute
   HealthzRoute: typeof HealthzRoute
-  ProjectsRoute: typeof ProjectsRoute
-  ProjectsProjectIdEnvironmentsRoute: typeof ProjectsProjectIdEnvironmentsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -85,6 +111,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connect': {
+      id: '/connect'
+      path: '/connect'
+      fullPath: '/connect'
+      preLoaderRoute: typeof ConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/healthz': {
       id: '/healthz'
       path: '/healthz'
@@ -92,28 +132,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HealthzRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/projects': {
-      id: '/projects'
+    '/_authenticated/projects': {
+      id: '/_authenticated/projects'
       path: '/projects'
       fullPath: '/projects'
-      preLoaderRoute: typeof ProjectsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/projects_/$projectId/environments': {
-      id: '/projects_/$projectId/environments'
+    '/_authenticated/projects_/$projectId/environments': {
+      id: '/_authenticated/projects_/$projectId/environments'
       path: '/projects/$projectId/environments'
       fullPath: '/projects/$projectId/environments'
-      preLoaderRoute: typeof ProjectsProjectIdEnvironmentsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedProjectsProjectIdEnvironmentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedProjectsProjectIdEnvironmentsRoute: typeof AuthenticatedProjectsProjectIdEnvironmentsRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedProjectsProjectIdEnvironmentsRoute:
+    AuthenticatedProjectsProjectIdEnvironmentsRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  ConnectRoute: ConnectRoute,
   HealthzRoute: HealthzRoute,
-  ProjectsRoute: ProjectsRoute,
-  ProjectsProjectIdEnvironmentsRoute: ProjectsProjectIdEnvironmentsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

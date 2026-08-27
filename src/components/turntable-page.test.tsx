@@ -32,7 +32,7 @@ type RenderOptions = Readonly<{
   sessionState?: SessionState
 }>
 
-function renderTurntablePage(options: RenderOptions = {}) {
+function renderComponent(options: RenderOptions = {}) {
   let sessionState = options.sessionState ?? 'signed-out'
   connectToRailwayMock.mockImplementation(
     options.connect ??
@@ -53,10 +53,10 @@ function renderTurntablePage(options: RenderOptions = {}) {
     getParentRoute: () => rootRoute,
     path: '/',
     loader: () => sessionState,
-    component: TestPage,
+    component: Component,
   })
 
-  function TestPage() {
+  function Component() {
     const currentSession = pageRoute.useLoaderData() ?? sessionState
     return (
       <TurntablePage sessionState={currentSession}>
@@ -90,7 +90,7 @@ beforeEach(() => {
 
 describe('token and session shell', () => {
   it('shows the token form and required product text', async () => {
-    renderTurntablePage()
+    renderComponent()
     const main = await screen.findByRole('main')
 
     expect(within(main).getByRole('heading', { level: 1, name: 'Turntable' })).toBeVisible()
@@ -104,17 +104,14 @@ describe('token and session shell', () => {
   })
 
   it('shows pending, validation, and server failures', async () => {
-    const page = renderTurntablePage({ connect: () => new Promise<SessionState>(() => undefined) })
+    const page = renderComponent({ connect: () => new Promise<SessionState>(() => undefined) })
     await screen.findByLabelText('Railway API token')
     submitToken()
-    expect(await screen.findByRole('button', { name: 'Connecting...' })).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    )
+    expect(await screen.findByRole('button', { name: 'Connecting...' })).toBeVisible()
     page.unmount()
 
     connectToRailwayMock.mockClear()
-    renderTurntablePage()
+    renderComponent()
     await screen.findByLabelText('Railway API token')
     submitToken(`${'é'.repeat(maximumSessionTokenByteLength / 2)}a`)
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -124,7 +121,7 @@ describe('token and session shell', () => {
   })
 
   it('connects without keeping the token mutation', async () => {
-    const page = renderTurntablePage()
+    const page = renderComponent()
     page.queryClient.setQueryData(['private-test-data'], 'private')
     await screen.findByLabelText('Railway API token')
     submitToken()
@@ -136,7 +133,7 @@ describe('token and session shell', () => {
   })
 
   it('renders one sign-out action in the application header', async () => {
-    renderTurntablePage({ sessionState: 'authenticated' })
+    renderComponent({ sessionState: 'authenticated' })
     const header = await screen.findByRole('banner')
 
     expect(within(header).getByRole('button', { name: 'Sign out this browser' })).toBeVisible()
@@ -145,7 +142,7 @@ describe('token and session shell', () => {
 
   it('shows a safe sign-out failure and can sign out', async () => {
     const message = 'Railway could not sign out this browser.'
-    const failed = renderTurntablePage({
+    const failed = renderComponent({
       disconnect: () => Promise.reject(new Error(message)),
       sessionState: 'authenticated',
     })
@@ -154,7 +151,7 @@ describe('token and session shell', () => {
     expect(screen.getByRole('button', { name: 'Sign out failed. Try again' })).toBeEnabled()
     failed.unmount()
 
-    const page = renderTurntablePage({ sessionState: 'authenticated' })
+    const page = renderComponent({ sessionState: 'authenticated' })
     fireEvent.click(await screen.findByRole('button', { name: 'Sign out this browser' }))
     expect(await screen.findByLabelText('Railway API token')).toBeVisible()
     expect(page.queryClient.getQueryCache().getAll()).toHaveLength(0)

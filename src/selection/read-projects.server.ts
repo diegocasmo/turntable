@@ -1,17 +1,15 @@
 import { apiTokenWorkspacesQuery } from '@/gql/operations/api-token-workspaces'
-import { selectionProjectsQuery } from '@/gql/operations/selection-projects'
+import { projectsQuery } from '@/gql/operations/project-list'
 import { createRailwayClient } from '@/railway/client.server'
 import {
   railwayConnectionPageSize,
   readAllConnectionNodes,
 } from '@/selection/read-all-connection-nodes.server'
 
-type FetchRequest = (request: Request) => Promise<Response>
-
 export async function readRailwayProjects(
   token: string,
   apiUrl: string,
-  fetchRequest: FetchRequest = globalThis.fetch,
+  fetchRequest: (request: Request) => Promise<Response> = globalThis.fetch,
   signal?: AbortSignal,
 ) {
   const client = createRailwayClient({ apiUrl, fetch: fetchRequest })
@@ -26,7 +24,7 @@ export async function readRailwayProjects(
     tokenContext.apiToken.workspaces.map(async (workspace) => {
       const readPage = (after: string | null = null) =>
         client.request({
-          document: selectionProjectsQuery,
+          document: projectsQuery,
           signal,
           token,
           variables: { after, first: railwayConnectionPageSize, workspaceId: workspace.id },

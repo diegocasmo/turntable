@@ -7,8 +7,8 @@ import { useSpinDownDeployment } from '@/deployment/hooks/use-spin-down-deployme
 import { useSpinUpDeployment } from '@/deployment/hooks/use-spin-up-deployment'
 import type { DeploymentTarget } from '@/deployment/schema'
 import { cn } from '@/lib/utils'
+import { queryKeys } from '@/query-keys'
 import type { DeploymentStatus } from '@/railway/deployment-status'
-import { selectionQueryKeys } from '@/selection/query-options'
 
 type DeploymentAction = 'Spin down' | 'Spin up'
 
@@ -229,7 +229,7 @@ export function ServiceActions({
     setAnnouncement(`${action} request accepted for ${serviceName}.`)
     onOperationAccepted(operation)
     void queryClient.invalidateQueries({
-      queryKey: selectionQueryKeys.services(target.projectId, target.environmentId),
+      queryKey: queryKeys.services.list(target.projectId, target.environmentId),
     })
   }
 
