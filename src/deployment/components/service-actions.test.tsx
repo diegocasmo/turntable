@@ -28,25 +28,34 @@ const target = {
   serviceId: testRailwayServiceId,
 }
 const deployment = { id: 'deployment-1', status: 'SUCCESS' as const }
+const operationAcceptedMock = vi.fn()
 
 function renderServiceCard(currentDeployment: Readonly<typeof deployment> | null = deployment) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
+  const renderCard = (nextDeployment: Readonly<typeof deployment> | null) => (
     <QueryClientProvider client={queryClient}>
       <EntityCard
         actions={
-          <ServiceActions deployment={currentDeployment} serviceName="Web" target={target} />
+          <ServiceActions
+            deployment={nextDeployment}
+            serviceName="Web"
+            target={target}
+            onOperationAccepted={operationAcceptedMock}
+          />
         }
         entity={{ id: testRailwayServiceId, name: 'Web' }}
-        meta={<StatusBadge status={currentDeployment?.status ?? null} />}
+        meta={<StatusBadge status={nextDeployment?.status ?? null} />}
       />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   )
+  const result = render(renderCard(currentDeployment))
+  return { ...result, renderCard }
 }
 
 beforeEach(() => {
   spinDownMock.mockReset().mockResolvedValue(true)
   spinUpMock.mockReset().mockResolvedValue('deployment-new')
+  operationAcceptedMock.mockReset()
 })
 
 describe('service card actions', () => {
@@ -86,6 +95,11 @@ describe('service card actions', () => {
     response.resolve('deployment-new')
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
     expect(screen.getByText('Spin up request accepted for Web.')).toBeInTheDocument()
+    expect(operationAcceptedMock).toHaveBeenCalledWith({
+      action: 'spin-up',
+      deploymentId: 'deployment-new',
+      serviceId: testRailwayServiceId,
+    })
   })
 
   it('keeps a failed spin-down request visible and retryable', async () => {
@@ -103,5 +117,18 @@ describe('service card actions', () => {
 
     await waitFor(() => expect(spinDownMock).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
+  })
+
+  it('keeps focus on spin down after the deployment changes', async () => {
+    const page = renderServiceCard()
+    fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
+
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
+    const trigger = screen.getByRole('button', { name: 'Spin down Web' })
+    expect(trigger).toHaveFocus()
+    page.rerender(page.renderCard(null))
+
+    expect(screen.getByRole('button', { name: 'Spin down Web' })).toHaveFocus()
   })
 })

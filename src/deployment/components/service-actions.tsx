@@ -12,6 +12,12 @@ import { selectionQueryKeys } from '@/selection/query-options'
 
 type DeploymentAction = 'Spin down' | 'Spin up'
 
+export type AcceptedServiceOperation = Readonly<{
+  action: 'spin-down' | 'spin-up'
+  deploymentId: string
+  serviceId: string
+}>
+
 type ActionDialogProps = Readonly<{
   action: DeploymentAction
   description: string
@@ -21,10 +27,13 @@ type ActionDialogProps = Readonly<{
   serviceName: string
   onConfirm: () => void
   onOpenChange: (open: boolean) => void
+  disabled?: boolean
+  disabledDescriptionId?: string
 }>
 
 type ServiceActionsProps = Readonly<{
   deployment: Readonly<{ id: string; status: DeploymentStatus }> | null
+  onOperationAccepted: (operation: AcceptedServiceOperation) => void
   serviceName: string
   target: DeploymentTarget
 }>
@@ -38,6 +47,8 @@ function DeploymentActionDialog({
   serviceName,
   onConfirm,
   onOpenChange,
+  disabled = false,
+  disabledDescriptionId,
 }: ActionDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null)
   const pendingLabel = action === 'Spin up' ? 'Spinning up...' : 'Spinning down...'
@@ -45,15 +56,23 @@ function DeploymentActionDialog({
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
       <AlertDialog.Trigger
+        aria-describedby={disabledDescriptionId}
         aria-label={`${action} ${serviceName}`}
-        render={<Button className="min-h-11 w-full" variant="secondary" />}
+        disabled={disabled}
+        render={
+          <Button
+            className="min-h-11 w-full"
+            focusableWhenDisabled={disabled}
+            variant={action === 'Spin down' ? 'destructive' : 'secondary'}
+          />
+        }
       >
         {action}
       </AlertDialog.Trigger>
       <AlertDialog.Portal>
         <AlertDialog.Backdrop className="fixed inset-0 z-40 min-h-dvh bg-[var(--shadow-color)]/80 transition-opacity duration-150 motion-reduce:transition-none data-ending-style:opacity-0 data-starting-style:opacity-0" />
         <AlertDialog.Popup
-          className="fixed top-1/2 left-1/2 z-50 grid w-[min(28rem,calc(100vw-3rem))] -translate-x-1/2 -translate-y-1/2 gap-6 border border-border bg-card p-6 text-foreground shadow-[10px_10px_0_var(--shadow-color)] transition-[scale,opacity] duration-100 motion-reduce:transition-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0"
+          className="fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-3rem)] w-[min(28rem,calc(100vw-3rem))] -translate-x-1/2 -translate-y-1/2 gap-6 overflow-y-auto border border-border bg-card p-6 text-foreground shadow-[10px_10px_0_var(--shadow-color)] transition-[scale,opacity] duration-100 motion-reduce:transition-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0"
           initialFocus={pending ? false : cancelRef}
         >
           <div className="grid gap-2">
@@ -70,7 +89,7 @@ function DeploymentActionDialog({
               {error?.message ?? description}
             </AlertDialog.Description>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <AlertDialog.Close
               disabled={pending}
               render={<Button ref={cancelRef} className="w-full" variant="secondary" />}
@@ -79,7 +98,7 @@ function DeploymentActionDialog({
             </AlertDialog.Close>
             <AsyncButton
               aria-label={pending ? pendingLabel : `${action} ${serviceName}`}
-              className="min-w-36"
+              className="w-full"
               pending={pending}
               variant={action === 'Spin down' ? 'destructiveConfirm' : 'primary'}
               onClick={onConfirm}
@@ -111,11 +130,15 @@ function SpinUpAction({
 }: Readonly<{
   serviceName: string
   target: DeploymentTarget
-  onRequestAccepted: (action: DeploymentAction) => void
+  onRequestAccepted: (operation: AcceptedServiceOperation) => void
 }>) {
   const [open, setOpen] = useState(false)
-  const spinUp = useSpinUpDeployment(() => {
-    onRequestAccepted('Spin up')
+  const spinUp = useSpinUpDeployment((deploymentId) => {
+    onRequestAccepted({
+      action: 'spin-up',
+      deploymentId,
+      serviceId: target.serviceId,
+    })
     setOpen(false)
   })
 
@@ -139,15 +162,25 @@ function SpinUpAction({
 function SpinDownAction({
   deploymentId,
   serviceName,
+  targetServiceId,
+  unavailableDescriptionId,
   onRequestAccepted,
 }: Readonly<{
-  deploymentId: string
+  deploymentId: string | null
   serviceName: string
-  onRequestAccepted: (action: DeploymentAction) => void
+  targetServiceId: string
+  unavailableDescriptionId: string
+  onRequestAccepted: (operation: AcceptedServiceOperation) => void
 }>) {
   const [open, setOpen] = useState(false)
   const spinDown = useSpinDownDeployment(() => {
-    onRequestAccepted('Spin down')
+    if (deploymentId) {
+      onRequestAccepted({
+        action: 'spin-down',
+        deploymentId,
+        serviceId: targetServiceId,
+      })
+    }
     setOpen(false)
   })
 
@@ -155,11 +188,15 @@ function SpinDownAction({
     <DeploymentActionDialog
       action="Spin down"
       description="This removes the running container. The service configuration stays in Railway."
+      disabled={!deploymentId}
+      disabledDescriptionId={unavailableDescriptionId}
       error={spinDown.error}
       open={open}
       pending={spinDown.isPending}
       serviceName={serviceName}
-      onConfirm={() => spinDown.mutate({ deploymentId })}
+      onConfirm={() => {
+        if (deploymentId) spinDown.mutate({ deploymentId })
+      }}
       onOpenChange={(nextOpen) => {
         if (nextOpen) spinDown.reset()
         if (!spinDown.isPending) setOpen(nextOpen)
@@ -168,14 +205,21 @@ function SpinDownAction({
   )
 }
 
-export function ServiceActions({ deployment, serviceName, target }: ServiceActionsProps) {
+export function ServiceActions({
+  deployment,
+  onOperationAccepted,
+  serviceName,
+  target,
+}: ServiceActionsProps) {
   const unavailableDescriptionId = useId()
   const [announcement, setAnnouncement] = useState('')
   const queryClient = useQueryClient()
   const deploymentId = deployment?.status === 'SUCCESS' ? deployment.id : null
 
-  function handleRequestAccepted(action: DeploymentAction) {
+  function handleRequestAccepted(operation: AcceptedServiceOperation) {
+    const action = operation.action === 'spin-up' ? 'Spin up' : 'Spin down'
     setAnnouncement(`${action} request accepted for ${serviceName}.`)
+    onOperationAccepted(operation)
     void queryClient.invalidateQueries({
       queryKey: selectionQueryKeys.services(target.projectId, target.environmentId),
     })
@@ -189,24 +233,13 @@ export function ServiceActions({ deployment, serviceName, target }: ServiceActio
           target={target}
           onRequestAccepted={handleRequestAccepted}
         />
-        {deploymentId ? (
-          <SpinDownAction
-            deploymentId={deploymentId}
-            serviceName={serviceName}
-            onRequestAccepted={handleRequestAccepted}
-          />
-        ) : (
-          <Button
-            aria-describedby={unavailableDescriptionId}
-            aria-label={`Spin down ${serviceName}`}
-            className="min-h-11 w-full"
-            disabled
-            focusableWhenDisabled
-            variant="destructive"
-          >
-            Spin down
-          </Button>
-        )}
+        <SpinDownAction
+          deploymentId={deploymentId}
+          serviceName={serviceName}
+          targetServiceId={target.serviceId}
+          unavailableDescriptionId={unavailableDescriptionId}
+          onRequestAccepted={handleRequestAccepted}
+        />
       </div>
       <p id={unavailableDescriptionId} className="min-h-5 text-xs leading-5 text-foreground-soft">
         {deploymentId ? '' : 'Spin down requires a successful deployment.'}
