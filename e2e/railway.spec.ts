@@ -74,7 +74,7 @@ test('a user can control the configured Railway service from the collection', as
       await expectNoAxeViolations()
       const serviceSearch = page.getByRole('searchbox', { name: 'Search services' })
       await serviceSearch.fill(railwayTargetNames.service)
-      await expect(page).toHaveURL(
+      await expectRailway(page).toHaveURL(
         `/projects/${projectId}/environments/${environmentId}/services?q=${railwayTargetNames.service}`,
       )
       const serviceCard = page.getByRole('article', { name: railwayTargetNames.service })
