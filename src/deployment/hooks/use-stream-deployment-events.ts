@@ -8,6 +8,7 @@ import { useServerFn } from '@tanstack/react-start'
 import type { DeploymentStreamEvent } from '@/deployment/event-stream'
 import type { DeploymentTarget } from '@/deployment/schema'
 import { streamDeploymentEvents } from '@/deployment/stream-deployment-events'
+import { queryKeys } from '@/query-keys'
 import { useDisconnectSession } from '@/session/hooks/use-disconnect-session'
 
 type DeploymentWatchState = Readonly<{
@@ -25,7 +26,7 @@ export function useStreamDeploymentEvents(target: DeploymentTarget | undefined) 
   const disconnect = useDisconnectSession()
   const stream = useServerFn(streamDeploymentEvents)
   const queryClient = useQueryClient()
-  const queryKey = ['deployment', target] as const
+  const queryKey = queryKeys.deployment.watch(target)
 
   const query = useQuery({
     queryFn:

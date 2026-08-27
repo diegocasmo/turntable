@@ -1,25 +1,21 @@
 import { queryOptions } from '@tanstack/react-query'
+import { queryKeys } from '@/query-keys'
 import { readEnvironments } from '@/selection/read-environments'
 import { readProjects } from '@/selection/read-projects'
 import { readServices } from '@/selection/read-services'
 
-export function createProjectsQueryOptions() {
-  return queryOptions({
+export const createProjectsQueryOptions = () =>
+  queryOptions({
     queryFn: ({ signal }) => readProjects({ signal }),
-    queryKey: ['projects'],
+    queryKey: queryKeys.projects.list,
   })
-}
-
-export function createEnvironmentsQueryOptions(projectId: string) {
-  return queryOptions({
+export const createEnvironmentsQueryOptions = (projectId: string) =>
+  queryOptions({
     queryFn: ({ signal }) => readEnvironments({ data: { projectId }, signal }),
-    queryKey: ['projects', projectId, 'environments'],
+    queryKey: queryKeys.environments.list(projectId),
   })
-}
-
-export function createServicesQueryOptions(projectId: string, environmentId: string) {
-  return queryOptions({
+export const createServicesQueryOptions = (projectId: string, environmentId: string) =>
+  queryOptions({
     queryFn: ({ signal }) => readServices({ data: { environmentId, projectId }, signal }),
-    queryKey: ['projects', projectId, 'environments', environmentId, 'services'],
+    queryKey: queryKeys.services.list(projectId, environmentId),
   })
-}
