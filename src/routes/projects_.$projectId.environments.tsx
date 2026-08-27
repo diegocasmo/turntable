@@ -89,13 +89,15 @@ function AuthenticatedEnvironmentRoute() {
           <EntityCard
             entity={environment}
             renderPrimaryAction={(content) => (
-              <a
+              <Link
                 aria-label={`Select ${environment.name}`}
                 className={primaryActionClassName}
-                href={`/projects/${projectId}/environments/${environment.id}/services`}
+                params={{ environmentId: environment.id, projectId }}
+                search={{}}
+                to="/projects/$projectId/environments/$environmentId/services"
               >
                 {content}
-              </a>
+              </Link>
             )}
           />
         )}
