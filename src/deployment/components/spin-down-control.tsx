@@ -1,6 +1,5 @@
 import { AlertDialog } from '@base-ui/react/alert-dialog'
 import { Menu } from '@base-ui/react/menu'
-import { ArrowClockwiseIcon } from '@phosphor-icons/react/ArrowClockwise'
 import { CaretDownIcon } from '@phosphor-icons/react/CaretDown'
 import { CircleNotchIcon } from '@phosphor-icons/react/CircleNotch'
 import { PowerIcon } from '@phosphor-icons/react/Power'
@@ -13,24 +12,38 @@ import type { DeploymentTarget } from '@/deployment/schema'
 import { cn } from '@/lib/utils'
 
 type DeploymentActionsProps = Readonly<{
-  busy: boolean
+  busy?: boolean
   deploymentId?: string | undefined
-  onDeploymentCreated: (deploymentId: string) => void
-  onRefresh: () => void
-  refreshLabel: 'Reconnect' | 'Refresh'
+  onActionSuccess?: (action: DeploymentAction) => Promise<void> | void
+  onDeploymentCreated?: (deploymentId: string) => Promise<void> | void
+  onRefresh?: () => void
+  refreshLabel?: 'Reconnect' | 'Refresh'
   target: DeploymentTarget | undefined
+  triggerLabel?: string
+  triggerText?: string
 }>
 type DeploymentAction = 'Spin down' | 'Spin up'
 
 const menuItemClassName =
-  'grid cursor-pointer grid-cols-[1rem_1fr] items-center gap-2 px-3 py-2 font-mono text-xs font-semibold uppercase tracking-[0.12em] text-foreground outline-none data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground data-[highlighted]:outline-2 data-[highlighted]:outline-offset-[-2px] data-[highlighted]:outline-primary-foreground data-[highlighted]:outline-solid [&_svg]:size-4'
+  'grid min-h-11 cursor-pointer grid-cols-[1rem_1fr] items-center gap-2 px-3 py-2 font-mono text-xs font-semibold uppercase tracking-[0.12em] text-foreground outline-none data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground data-[highlighted]:outline-2 data-[highlighted]:outline-offset-[-2px] data-[highlighted]:outline-primary-foreground data-[highlighted]:outline-solid [&_svg]:size-4'
 
 export function DeploymentActions(props: DeploymentActionsProps) {
-  const spinUp = useSpinUpDeployment(props.onDeploymentCreated)
-  const spinDown = useSpinDownDeployment()
   const [action, setAction] = useState<DeploymentAction | null>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
   const portalRef = useRef<HTMLDivElement>(null)
+
+  async function completeAction(completedAction: DeploymentAction) {
+    await props.onActionSuccess?.(completedAction)
+    setAction(null)
+  }
+
+  async function completeSpinUp(deploymentId: string) {
+    await props.onDeploymentCreated?.(deploymentId)
+    await completeAction('Spin up')
+  }
+
+  const spinUp = useSpinUpDeployment(completeSpinUp)
+  const spinDown = useSpinDownDeployment(() => completeAction('Spin down'))
   const pending = props.busy || spinUp.isPending || spinDown.isPending
   const dialogPending = action === 'Spin up' ? spinUp.isPending : spinDown.isPending
   const dialogError = action === 'Spin up' ? spinUp.error : spinDown.error
@@ -46,10 +59,9 @@ export function DeploymentActions(props: DeploymentActionsProps) {
   }
 
   function handleConfirm() {
-    const onSuccess = () => setAction(null)
-    if (action === 'Spin up' && props.target) spinUp.mutate(props.target, { onSuccess })
+    if (action === 'Spin up' && props.target) spinUp.mutate(props.target)
     if (action === 'Spin down' && props.deploymentId) {
-      spinDown.mutate({ deploymentId: props.deploymentId }, { onSuccess })
+      spinDown.mutate({ deploymentId: props.deploymentId })
     }
   }
 
@@ -57,10 +69,18 @@ export function DeploymentActions(props: DeploymentActionsProps) {
     <div ref={portalRef} className="contents">
       <Menu.Root>
         <Menu.Trigger
+          aria-label={props.triggerLabel}
           disabled={props.target === undefined || pending}
-          render={<AsyncButton className="w-28" pending={pending} size="sm" variant="secondary" />}
+          render={
+            <AsyncButton
+              className={props.triggerText ? 'min-h-11 min-w-11 sm:min-h-8' : 'w-28'}
+              pending={pending}
+              size="sm"
+              variant="secondary"
+            />
+          }
         >
-          Actions
+          {props.triggerText ?? 'Actions'}
           {pending ? (
             <span className="motion-safe:animate-spin">
               <CircleNotchIcon aria-hidden="true" weight="bold" />
@@ -72,10 +92,6 @@ export function DeploymentActions(props: DeploymentActionsProps) {
         <Menu.Portal container={portalRef}>
           <Menu.Positioner align="end" className="z-30" sideOffset={8}>
             <Menu.Popup className="min-w-[var(--anchor-width)] border border-border bg-popover shadow-[5px_5px_0_var(--shadow-color)] outline-none">
-              <Menu.Item className={menuItemClassName} onClick={props.onRefresh}>
-                <ArrowClockwiseIcon aria-hidden="true" weight="bold" />
-                {props.refreshLabel}
-              </Menu.Item>
               <Menu.Item className={menuItemClassName} onClick={() => openAction('Spin up')}>
                 <RocketLaunchIcon aria-hidden="true" weight="bold" />
                 Spin up

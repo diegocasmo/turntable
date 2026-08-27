@@ -29,7 +29,7 @@ function createSetup(
       if (signal === undefined) throw new Error('Expected a timeout signal.')
       return signal
     }),
-    readCurrentDeployment: vi.fn(async () => ({ id: snapshot.id, status: snapshot.status })),
+    readCurrentDeployment: vi.fn(async () => ({ id: snapshot.id })),
     readDeploymentStatus: options.readDeploymentStatus ?? vi.fn(async () => snapshot),
     subscribeToDeployment: vi.fn(() => ({
       close,

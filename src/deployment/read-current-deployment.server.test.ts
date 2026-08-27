@@ -37,6 +37,7 @@ describe('Railway deployment identity', () => {
 
     await expect(readCurrent(fetchRequest, configLikeTarget)).resolves.toEqual({
       id: deployment.id,
+      status: deployment.status,
     })
     const request = fetchRequest.mock.calls[0]?.[0]
     await expect(request?.clone().text()).resolves.not.toContain(testRailwayToken)
@@ -57,7 +58,10 @@ describe('Railway deployment identity', () => {
       createRailwayPage([newest]),
     )
 
-    await expect(readCurrent(fetchRequest)).resolves.toEqual({ id: newest.id })
+    await expect(readCurrent(fetchRequest)).resolves.toEqual({
+      id: newest.id,
+      status: newest.status,
+    })
     await expect(fetchRequest.mock.calls[1]?.[0].json()).resolves.toMatchObject({
       variables: { after: 'next-page' },
     })

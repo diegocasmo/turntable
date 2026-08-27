@@ -19,7 +19,7 @@ type StatusBadgeProps = Readonly<{
 
 export function StatusBadge({ status }: StatusBadgeProps) {
   const presentation = status === null ? null : readDeploymentStatusPresentation(status)
-  const label = presentation?.label ?? 'No deployment'
+  const label = presentation?.label ?? 'No active deployment'
   const tone = presentation?.tone ?? 'neutral'
 
   return (

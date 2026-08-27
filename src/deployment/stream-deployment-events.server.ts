@@ -46,12 +46,21 @@ export function subscribeToRailwayDeployment(
 const heartbeatEvent = { type: 'heartbeat' } satisfies DeploymentStreamEvent
 const defaultDependencies = {
   createTimeoutSignal: (milliseconds: number) => AbortSignal.timeout(milliseconds),
-  readCurrentDeployment: (
+  readCurrentDeployment: async (
     token: string,
     apiUrl: string,
     target: DeploymentTarget,
     signal: AbortSignal,
-  ) => readRailwayCurrentDeployment(token, apiUrl, target, globalThis.fetch, signal),
+  ) => {
+    const current = await readRailwayCurrentDeployment(
+      token,
+      apiUrl,
+      target,
+      globalThis.fetch,
+      signal,
+    )
+    return current ? { id: current.id } : null
+  },
   readDeploymentStatus: (
     token: string,
     apiUrl: string,
