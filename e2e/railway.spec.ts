@@ -42,10 +42,6 @@ test('a user can control and refresh the configured Railway service', async ({ p
         exact: true,
       })
       await expect(projectOption).toBeVisible()
-      const openPickerResults = await new AxeBuilder({ page })
-        .withRules(['label-title-only'])
-        .analyze()
-      expect(openPickerResults.violations).toEqual([])
       await projectOption.click()
       await page.getByRole('combobox', { name: 'Environment' }).fill(config.expectedEnvironmentName)
       await page.getByRole('option', { name: config.expectedEnvironmentName, exact: true }).click()

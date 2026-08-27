@@ -38,7 +38,7 @@ export function TokenForm({ expired }: TokenFormProps) {
       <p className="mt-4 leading-7 text-foreground-soft">
         Create a token on{' '}
         <a
-          className="text-warning underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          className="text-warning underline underline-offset-4 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-ring focus-visible:outline-solid"
           href={railwayTokensUrl}
           rel="noreferrer"
           target="_blank"
@@ -79,7 +79,7 @@ export function TokenForm({ expired }: TokenFormProps) {
                     session.reset()
                     field.handleChange(event.target.value)
                   }}
-                  className="h-12 border-border bg-background px-4 text-base text-foreground focus-visible:border-ring focus-visible:ring-ring/40"
+                  className="h-12 border-border bg-background px-4 text-base text-foreground focus-visible:border-ring focus-visible:ring-ring"
                 />
               </div>
 

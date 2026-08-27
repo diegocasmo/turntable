@@ -102,6 +102,7 @@ function renderOption(option: PickerOption) {
 }
 
 export function Picker({ groups, label, onSelect, options, selectedOption, state }: PickerModel) {
+  const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const entries = useMemo(() => collectPickerEntries(groups, options), [groups, options])
   const results = useMemo(() => filterPickerEntries(entries, query), [entries, query])
@@ -130,10 +131,12 @@ export function Picker({ groups, label, onSelect, options, selectedOption, state
         itemToStringValue={(option) => option.id}
         items={groups ?? options ?? []}
         limit={maximumVisibleOptions}
+        open={open}
         value={selectedOption ?? null}
         onInputValueChange={(value, details) =>
           setQuery(details.reason === 'input-change' ? value : '')
         }
+        onOpenChange={setOpen}
         onValueChange={(option) => {
           if (option) onSelect(option.id)
         }}
@@ -146,6 +149,7 @@ export function Picker({ groups, label, onSelect, options, selectedOption, state
           disabled={disabled}
           placeholder={resolvePlaceholder(state, label)}
           triggerLabel={`Show ${label.toLowerCase()} options`}
+          onFocus={() => setOpen(true)}
         />
         <ComboboxContent className="border border-border bg-popover text-foreground shadow-[3px_3px_0_var(--shadow-color)] ring-0">
           <ComboboxEmpty

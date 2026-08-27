@@ -102,7 +102,7 @@ h1 {
   --destructive-foreground: var(--background);
   --border: #706d60;
   --input: var(--muted);
-  --ring: var(--primary);
+  --ring: var(--foreground);
   --border-subtle: var(--muted);
   --foreground-soft: #c9c5b9;
   --surface-hover: #30312d;

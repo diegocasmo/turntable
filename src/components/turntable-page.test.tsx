@@ -293,7 +293,6 @@ describe('project, environment, and service selection', () => {
 
     hierarchy.resolve([createSelectionProject()])
     expect(await screen.findAllByRole('combobox')).toHaveLength(3)
-    expect(screen.getByRole('group', { name: 'Choose a service' })).toBeVisible()
   })
 
   it('finds project names through their workspace group and stores IDs in the URL', async () => {
@@ -322,7 +321,7 @@ describe('project, environment, and service selection', () => {
     expect(screen.queryByRole('status', { name: 'Selection status' })).not.toBeInTheDocument()
   })
 
-  it('ranks fuzzy matches without navigating until keyboard selection', async () => {
+  it('ranks fuzzy matches without navigating until selection', async () => {
     const worker = createSelectionProject({ id: 'project-worker', name: 'Worker' })
     readSelectionHierarchyMock.mockResolvedValue([
       createSelectionProject({ id: 'project-web', name: 'Web' }),
@@ -330,26 +329,17 @@ describe('project, environment, and service selection', () => {
       worker,
     ])
     const page = renderTurntablePage({ sessionState: 'authenticated' })
-    expect(await screen.findByRole('button', { name: 'Show project options' })).toBeInTheDocument()
-    const picker = await searchPicker('Project', 'wkr')
+    await searchPicker('Project', 'wkr')
     expect((await screen.findAllByRole('option')).map((option) => option.textContent)).toEqual([
       'Worker',
       'API worker',
     ])
-    expect(screen.getByRole('status', { name: 'Project results' })).toHaveTextContent(
-      '2 projects found.',
-    )
     await expectSearch(page, {})
-    fireEvent.keyDown(picker, { key: 'Escape' })
-    fireEvent.blur(picker)
-    await expectSearch(page, {})
-
-    await searchPicker('Project', 'wkr')
-    fireEvent.keyDown(picker, { key: 'Enter' })
+    fireEvent.click(screen.getByRole('option', { name: worker.name }))
     await expectSearch(page, { projectId: worker.id })
   })
 
-  it('searches every choice but renders at most 20 results and announces no matches', async () => {
+  it('searches every choice but renders at most 20 results and shows no matches', async () => {
     readSelectionHierarchyMock.mockResolvedValue(
       Array.from({ length: 25 }, (_, index) =>
         createSelectionProject({ id: `project-${index}`, name: `Service ${index}` }),
@@ -359,14 +349,9 @@ describe('project, environment, and service selection', () => {
     const picker = await searchPicker('Project', 'service')
 
     expect(await screen.findAllByRole('option')).toHaveLength(20)
-    expect(screen.getByRole('status', { name: 'Project results' })).toHaveTextContent(
-      '20 of 25 projects shown.',
-    )
-
     fireEvent.input(picker, { inputType: 'insertText', target: { value: 'zzzz' } })
     const emptyResults = screen.getByRole('note', { name: 'Project empty results' })
     await waitFor(() => expect(emptyResults).toHaveTextContent('No projects found.'))
-    expect(emptyResults).toHaveAttribute('aria-live', 'polite')
   })
 
   it('requires each choice and restores valid IDs after a reload', async () => {

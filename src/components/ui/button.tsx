@@ -5,7 +5,7 @@ import type { ComponentProps } from 'react'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center rounded-none border bg-clip-padding font-mono text-xs font-semibold whitespace-nowrap uppercase tracking-[0.12em] shadow-[3px_3px_0_var(--shadow-color)] transition-[background-color,border-color,color,box-shadow,transform] duration-100 outline-none select-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_var(--shadow-color)] disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50 aria-invalid:border-destructive aria-invalid:outline-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center rounded-none border bg-clip-padding font-mono text-xs font-semibold whitespace-nowrap uppercase tracking-[0.12em] shadow-[3px_3px_0_var(--shadow-color)] transition-[background-color,border-color,color,box-shadow,transform] duration-100 outline-none select-none focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-ring focus-visible:outline-solid active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_var(--shadow-color)] disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50 aria-invalid:border-destructive aria-invalid:outline-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {

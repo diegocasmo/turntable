@@ -23,7 +23,7 @@ type DeploymentActionsProps = Readonly<{
 type DeploymentAction = 'Spin down' | 'Spin up'
 
 const menuItemClassName =
-  'grid cursor-pointer grid-cols-[1rem_1fr] items-center gap-2 px-3 py-2 font-mono text-xs font-semibold uppercase tracking-[0.12em] text-foreground outline-none data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground [&_svg]:size-4'
+  'grid cursor-pointer grid-cols-[1rem_1fr] items-center gap-2 px-3 py-2 font-mono text-xs font-semibold uppercase tracking-[0.12em] text-foreground outline-none data-[highlighted]:bg-primary data-[highlighted]:text-primary-foreground data-[highlighted]:outline-2 data-[highlighted]:outline-offset-[-2px] data-[highlighted]:outline-primary-foreground data-[highlighted]:outline-solid [&_svg]:size-4'
 
 export function DeploymentActions(props: DeploymentActionsProps) {
   const spinUp = useSpinUpDeployment(props.onDeploymentCreated)
