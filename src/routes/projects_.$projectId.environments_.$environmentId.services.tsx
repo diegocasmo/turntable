@@ -1,10 +1,9 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useRouter, useRouterState } from '@tanstack/react-router'
 import { TurntablePage } from '@/components/turntable-page'
-import { ServiceActionsMenu } from '@/deployment/components/service-actions-menu'
+import { ServiceActions } from '@/deployment/components/service-actions'
 import { StatusBadge } from '@/deployment/components/status-badge'
 import { EntityCard } from '@/selection/components/entity-card-grid'
-import { SelectionHomeLink } from '@/selection/components/selection-breadcrumbs'
 import { SelectionListPage } from '@/selection/components/selection-list-page'
 import {
   SelectionRouteError,
@@ -43,7 +42,8 @@ function AuthenticatedServiceRoute() {
   const { environmentId, projectId } = Route.useParams()
   const projects = useSuspenseQuery(createProjectsQueryOptions()).data
   const environments = useSuspenseQuery(createEnvironmentsQueryOptions(projectId)).data
-  const services = useSuspenseQuery(createServicesQueryOptions(projectId, environmentId)).data
+  const servicesQuery = useSuspenseQuery(createServicesQueryOptions(projectId, environmentId))
+  const services = servicesQuery.data
   const navigate = Route.useNavigate()
   const router = useRouter()
   const { q = '' } = Route.useSearch()
@@ -56,11 +56,6 @@ function AuthenticatedServiceRoute() {
     <TurntablePage sessionState="authenticated">
       <SelectionListPage
         breadcrumbs={[
-          {
-            kind: 'link',
-            label: 'Home',
-            link: <SelectionHomeLink />,
-          },
           {
             kind: 'link',
             label: `Project: ${projectName}`,
@@ -89,13 +84,14 @@ function AuthenticatedServiceRoute() {
         ]}
         emptyMessage="No services are available."
         entities={services}
+        dataError={servicesQuery.error}
         label="Service"
         notice={notice}
         query={q}
         renderCard={(service) => (
           <EntityCard
             actions={
-              <ServiceActionsMenu
+              <ServiceActions
                 deployment={service.deployment}
                 serviceName={service.name}
                 target={{ environmentId, projectId, serviceId: service.id }}

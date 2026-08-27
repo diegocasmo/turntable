@@ -116,6 +116,7 @@ describe('service collection route', () => {
     expect(await screen.findByRole('heading', { name: 'Services' })).toBeVisible()
     expect(screen.getByRole('article', { name: 'Web' })).toBeVisible()
     const breadcrumb = screen.getByRole('navigation', { name: 'Selection progress' })
+    expect(within(breadcrumb).queryByText('Home')).not.toBeInTheDocument()
     expect(within(breadcrumb).getByText('Services')).toHaveAttribute('aria-current', 'page')
     expect(readProjectsMock).toHaveBeenCalledOnce()
     expect(readEnvironmentsMock).toHaveBeenCalledOnce()
@@ -227,18 +228,15 @@ describe('service collection route', () => {
     const card = await screen.findByRole('article', { name: 'Web' })
 
     expect(card).toHaveTextContent('Success')
-    fireEvent.click(screen.getByRole('button', { name: 'Actions for Web' }))
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Spin down' }))
-    const confirm = screen.getByRole('button', { name: 'Spin down' })
+    fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
+    const confirm = screen.getByRole('button', { name: 'Spin down Web' })
     fireEvent.click(confirm)
 
-    await waitFor(() => expect(confirm).toHaveAttribute('aria-disabled', 'true'))
-    fireEvent.click(confirm)
-    expect(spinDownMock).toHaveBeenCalledOnce()
+    await waitFor(() => expect(spinDownMock).toHaveBeenCalledOnce())
     refreshedServices.resolve([createService('service-web', 'Web', null)])
     await waitFor(() => expect(card).toHaveTextContent('No active deployment'))
     expect(readServicesMock).toHaveBeenCalledTimes(2)
-    expect(screen.queryByRole('menuitem', { name: 'Refresh' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Refresh Web/ })).not.toBeInTheDocument()
   })
 
   it('shows a recoverable error when post-action synchronization fails', async () => {
@@ -249,13 +247,10 @@ describe('service collection route', () => {
       `/projects/${testRailwayProjectId}/environments/${testRailwayEnvironmentId}/services?q=web`,
     )
     await screen.findByRole('article', { name: 'Web' })
-    fireEvent.click(screen.getByRole('button', { name: 'Actions for Web' }))
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Spin down' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Spin down' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Spin down completed, but Turntable could not update Web. Reload the page.',
-    )
+    expect(await screen.findByRole('alert')).toHaveTextContent('Railway could not reload services.')
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
   })
 
@@ -284,10 +279,10 @@ describe('service collection route', () => {
   })
 
   it('replaces the root route with project selection', async () => {
-    const page = renderRoutes('/')
+    const page = renderRoutes('/?q=web')
     expect(await screen.findByRole('heading', { name: 'Choose a project' })).toBeVisible()
-    expect(page.router.state.location.href).toBe('/projects')
+    expect(page.router.state.location.href).toBe('/projects?q=web')
     page.router.history.back()
-    await waitFor(() => expect(page.router.state.location.href).toBe('/projects'))
+    await waitFor(() => expect(page.router.state.location.href).toBe('/projects?q=web'))
   })
 })

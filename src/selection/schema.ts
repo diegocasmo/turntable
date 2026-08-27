@@ -12,6 +12,7 @@ export const readServicesInputSchema = z.object({
 export const selectionSearchSchema = z.object({
   environmentId: optionalRailwayIdSchema,
   projectId: optionalRailwayIdSchema,
+  q: z.string().optional().catch(undefined),
   serviceId: optionalRailwayIdSchema,
 })
 
