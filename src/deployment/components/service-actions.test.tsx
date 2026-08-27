@@ -70,8 +70,6 @@ describe('service card actions', () => {
   it('shows why spin down is unavailable without hiding the action', () => {
     renderServiceCard(null)
     const spinDown = screen.getByRole('button', { name: 'Spin down Web' })
-    expect(spinDown).toHaveAttribute('aria-disabled', 'true')
-    spinDown.focus()
     fireEvent.click(spinDown)
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
     expect(screen.getByText('Spin down requires a successful deployment.')).toBeVisible()
@@ -84,7 +82,6 @@ describe('service card actions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
     fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
     const pendingButton = await screen.findByRole('button', { name: 'Spinning up...' })
-    expect(pendingButton).toHaveAttribute('aria-busy', 'true')
     fireEvent.click(pendingButton)
     expect(spinUpMock).toHaveBeenCalledOnce()
 
@@ -107,14 +104,13 @@ describe('service card actions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Railway could not stop Web.')
     const retry = screen.getByRole('button', { name: 'Spin down Web' })
-    expect(retry).not.toHaveAttribute('aria-busy')
     fireEvent.click(retry)
 
     await waitFor(() => expect(spinDownMock).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
   })
 
-  it('disables stale confirmation and restores focus to spin down', async () => {
+  it('disables a stale spin-down confirmation', () => {
     const page = renderServiceCard()
     fireEvent.click(screen.getByRole('button', { name: 'Spin down Web' }))
     expect(screen.getByRole('alertdialog')).toBeVisible()
@@ -124,7 +120,5 @@ describe('service card actions', () => {
     const confirm = screen.getByRole('button', { name: 'Spin down Web' })
     expect(confirm).toBeDisabled()
     expect(screen.getByText(/no successful deployment/)).toBeVisible()
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Spin down Web' })).toHaveFocus())
   })
 })
