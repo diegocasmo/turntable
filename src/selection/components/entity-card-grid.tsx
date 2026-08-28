@@ -18,7 +18,7 @@ type EntityCardProps<Entity extends SelectionEntity> = Readonly<{
 }>
 
 const primaryActionClassName =
-  'block min-h-24 min-w-0 cursor-pointer px-5 py-4 text-left outline-none focus-visible:outline-[3px] focus-visible:outline-offset-[-4px] focus-visible:outline-ring'
+  'block min-h-24 min-w-0 cursor-pointer px-5 py-4 text-left outline-none focus-visible:outline-[3px] focus-visible:outline-offset-[-4px] focus-visible:outline-focus'
 
 export function EntityCard<Entity extends SelectionEntity>({
   actions,
@@ -28,9 +28,9 @@ export function EntityCard<Entity extends SelectionEntity>({
 }: EntityCardProps<Entity>) {
   const content = (
     <>
-      <span className="block break-words font-semibold text-foreground">{entity.name}</span>
+      <span className="block break-words font-semibold text-text">{entity.name}</span>
       {entity.description ? (
-        <span className="mt-2 block break-words font-mono text-xs text-foreground-soft">
+        <span className="mt-2 block break-words font-label text-xs text-text-soft">
           {entity.description}
         </span>
       ) : null}
@@ -42,9 +42,9 @@ export function EntityCard<Entity extends SelectionEntity>({
     <article
       aria-label={entity.name}
       className={cn(
-        'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] border border-border bg-card shadow-[3px_3px_0_var(--shadow-color)]',
+        'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] rounded-panel border border-border bg-panel shadow-[3px_3px_0_var(--color-shadow)]',
         renderPrimaryAction &&
-          'transition-[border-color,box-shadow,transform] focus-within:border-primary hover:border-foreground-soft active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_var(--shadow-color)]',
+          'transition-[border-color,box-shadow,transform] focus-within:border-accent hover:border-text-soft active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_var(--color-shadow)]',
       )}
     >
       {renderPrimaryAction ? (
@@ -70,8 +70,8 @@ export function EntityCardGrid<Entity extends SelectionEntity>({
     const hasNoMatches = allEntityCount > 0 && query.trim() !== ''
 
     return (
-      <div className="flex min-h-40 items-center border border-dashed border-border px-5 py-8">
-        <p role="status" className="text-sm text-foreground-soft">
+      <div className="flex min-h-40 items-center rounded-panel border border-dashed border-border px-5 py-8">
+        <p role="status" className="text-sm text-text-soft">
           {hasNoMatches ? `No results for “${query.trim()}”.` : emptyMessage}
         </p>
       </div>

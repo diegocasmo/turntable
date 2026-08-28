@@ -32,10 +32,10 @@ export function TokenForm({ expired }: TokenFormProps) {
       <h2 id="connect-title" className="text-3xl leading-tight sm:text-4xl">
         Connect to Railway
       </h2>
-      <p className="mt-4 leading-7 text-foreground-soft">
+      <p className="mt-4 leading-7 text-text-soft">
         Create a token on{' '}
         <a
-          className="text-warning underline underline-offset-4 hover:text-foreground focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-ring focus-visible:outline-solid"
+          className="text-warning underline underline-offset-4 hover:text-text focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-focus focus-visible:outline-solid"
           href={railwayTokensUrl}
           rel="noreferrer"
           target="_blank"
@@ -57,7 +57,7 @@ export function TokenForm({ expired }: TokenFormProps) {
               <div className="mt-8 grid gap-3">
                 <Label
                   htmlFor="railway-token"
-                  className="uppercase tracking-[0.12em] text-foreground-soft"
+                  className="uppercase tracking-[0.12em] text-text-soft"
                 >
                   Railway API token
                 </Label>
@@ -76,7 +76,7 @@ export function TokenForm({ expired }: TokenFormProps) {
                     session.reset()
                     field.handleChange(event.target.value)
                   }}
-                  className="h-12 border-border bg-background px-4 text-base text-foreground focus-visible:border-ring focus-visible:ring-ring"
+                  className="h-12 border-border bg-canvas px-4 text-base text-text focus-visible:border-focus focus-visible:ring-focus"
                 />
               </div>
 
@@ -92,14 +92,14 @@ export function TokenForm({ expired }: TokenFormProps) {
 
               <div className="mt-4 min-h-12">
                 {validationError ? (
-                  <p id={errorId} role="alert" className="text-sm leading-6 text-danger-foreground">
+                  <p id={errorId} role="alert" className="text-sm leading-6 text-danger-text">
                     {validationError.message}
                   </p>
                 ) : null}
                 {!validationError && session.error ? (
                   <p
                     role="alert"
-                    className="border-l-2 border-destructive pl-3 text-sm leading-6 text-danger-foreground"
+                    className="border-l-2 border-danger pl-3 text-sm leading-6 text-danger-text"
                   >
                     {session.error.message}
                   </p>
@@ -107,13 +107,13 @@ export function TokenForm({ expired }: TokenFormProps) {
                 {!validationError && !session.error && expired ? (
                   <p
                     role="alert"
-                    className="border-l-2 border-warning pl-3 text-sm leading-6 text-warning-foreground"
+                    className="border-l-2 border-warning pl-3 text-sm leading-6 text-warning-text"
                   >
                     Your session expired. Enter your Railway API token again.
                   </p>
                 ) : null}
                 {!validationError && !session.error && !expired && session.isPending ? (
-                  <p role="status" className="text-sm leading-6 text-foreground-soft">
+                  <p role="status" className="text-sm leading-6 text-text-soft">
                     Railway is checking the token.
                   </p>
                 ) : null}

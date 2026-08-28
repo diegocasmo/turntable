@@ -10,10 +10,10 @@ import {
 } from '@/railway/deployment-status'
 
 const badgeToneClasses: Record<DeploymentStatusTone, string> = {
-  danger: 'border-destructive bg-danger-surface text-danger-foreground',
-  neutral: 'border-border bg-secondary text-foreground-soft',
-  positive: 'border-positive bg-positive-surface text-positive-foreground',
-  progress: 'border-warning bg-warning-surface text-warning-foreground',
+  danger: 'border-danger bg-danger-panel text-danger-text',
+  neutral: 'border-border bg-panel-raised text-text-soft',
+  positive: 'border-positive bg-positive-panel text-positive-text',
+  progress: 'border-warning bg-warning-panel text-warning-text',
 }
 
 type StatusBadgeProps = Readonly<{
@@ -29,7 +29,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
     <Badge
       aria-atomic="true"
       aria-live="polite"
-      className={cn('font-mono font-semibold uppercase tracking-[0.12em]', badgeToneClasses[tone])}
+      className={cn('font-label font-semibold uppercase tracking-[0.12em]', badgeToneClasses[tone])}
       role="status"
     >
       {presentation?.indicator === 'activity' ? (
