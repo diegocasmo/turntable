@@ -6,7 +6,7 @@ const testOrigin = 'http://127.0.0.1:3100'
 
 export default defineConfig({
   testDir: './e2e',
-  testMatch: 'build.spec.ts',
+  testMatch: ['build.spec.ts', 'routes.spec.ts'],
   forbidOnly: Boolean(process.env.CI),
   use: {
     baseURL: testOrigin,

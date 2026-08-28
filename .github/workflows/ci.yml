@@ -47,6 +47,9 @@ jobs:
       - name: Run unit tests
         run: pnpm test
 
+      - name: Install browser
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Test production server
         run: pnpm test:build
 
