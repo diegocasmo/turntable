@@ -56,6 +56,8 @@ export function TokenForm({ expired }: TokenFormProps) {
           const tokenErrorMessage =
             validationError?.message ?? (tokenRejected ? rejectedRailwayTokenMessage : undefined)
           const errorId = `${field.name}-error`
+          const hasAlert = Boolean(tokenErrorMessage) || session.error !== null
+          const alertMessage = tokenErrorMessage || session.error?.message
 
           return (
             <>
@@ -96,26 +98,17 @@ export function TokenForm({ expired }: TokenFormProps) {
               </AsyncButton>
 
               <div className="mt-4 min-h-12">
-                {tokenErrorMessage ? (
+                {hasAlert ? (
                   <p
-                    id={errorId}
+                    id={tokenErrorMessage ? errorId : undefined}
                     role="alert"
                     className="flex min-h-12 items-center gap-3 border border-danger bg-danger-panel px-3 py-2 text-sm leading-5 text-danger-text"
                   >
                     <WarningIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
-                    <span>{tokenErrorMessage}</span>
+                    <span>{alertMessage}</span>
                   </p>
                 ) : null}
-                {!tokenErrorMessage && session.error ? (
-                  <p
-                    role="alert"
-                    className="flex min-h-12 items-center gap-3 border border-danger bg-danger-panel px-3 py-2 text-sm leading-5 text-danger-text"
-                  >
-                    <WarningIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
-                    <span>{session.error.message}</span>
-                  </p>
-                ) : null}
-                {!tokenErrorMessage && !session.error && expired ? (
+                {!hasAlert && expired ? (
                   <p
                     role="alert"
                     className="border-l-2 border-warning pl-3 text-sm leading-6 text-warning-text"
@@ -123,7 +116,7 @@ export function TokenForm({ expired }: TokenFormProps) {
                     Your session expired. Enter your Railway API token again.
                   </p>
                 ) : null}
-                {!tokenErrorMessage && !session.error && !expired && session.isPending ? (
+                {!hasAlert && !expired && session.isPending ? (
                   <p role="status" className="text-sm leading-6 text-text-soft">
                     Railway is checking the token.
                   </p>
