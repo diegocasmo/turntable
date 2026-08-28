@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { RefreshAction } from '@/selection/components/refresh-action'
 import {
   SelectionBreadcrumbs,
   type SelectionProgress,
@@ -10,9 +9,6 @@ type EntitySelectionPageProps = Readonly<{
   children: ReactNode
   feedback?: string
   feedbackKind?: 'alert' | 'status'
-  onRefresh?: () => void
-  refreshLabel?: string
-  refreshPending?: boolean
   selectionProgress: SelectionProgress
   title: string
 }>
@@ -27,32 +23,24 @@ export function EntitySelectionPage({
   children,
   feedback,
   feedbackKind = 'status',
-  onRefresh,
-  refreshLabel,
-  refreshPending = false,
   selectionProgress,
   title,
 }: EntitySelectionPageProps) {
   return (
     <section aria-labelledby="selection-page-title" className="grid min-w-0 gap-6">
       <SelectionBreadcrumbs progress={selectionProgress} />
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <p className="font-label text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-            Railway selection
-          </p>
-          <h1
-            ref={focusHeading}
-            id="selection-page-title"
-            tabIndex={-1}
-            className="mt-2 break-words text-4xl leading-none tracking-[-0.04em] outline-none sm:text-5xl"
-          >
-            {title}
-          </h1>
-        </div>
-        {onRefresh && refreshLabel ? (
-          <RefreshAction label={refreshLabel} pending={refreshPending} onRefresh={onRefresh} />
-        ) : null}
+      <div className="min-w-0">
+        <p className="font-label text-xs font-semibold uppercase tracking-[0.2em] text-accent">
+          Railway selection
+        </p>
+        <h1
+          ref={focusHeading}
+          id="selection-page-title"
+          tabIndex={-1}
+          className="mt-2 break-words text-4xl leading-none tracking-[-0.04em] outline-none sm:text-5xl"
+        >
+          {title}
+        </h1>
       </div>
       <p
         aria-live="polite"
@@ -61,9 +49,7 @@ export function EntitySelectionPage({
       >
         {feedback}
       </p>
-      <div aria-busy={refreshPending || undefined} className="grid min-w-0 gap-6">
-        {children}
-      </div>
+      <div className="grid min-w-0 gap-6">{children}</div>
     </section>
   )
 }

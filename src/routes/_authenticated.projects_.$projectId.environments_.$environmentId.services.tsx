@@ -1,10 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import {
-  createFileRoute,
-  type ErrorComponentProps,
-  useRouter,
-  useRouterState,
-} from '@tanstack/react-router'
+import { createFileRoute, type ErrorComponentProps, useRouterState } from '@tanstack/react-router'
 import { useState } from 'react'
 import {
   type AcceptedServiceOperation,
@@ -19,7 +14,7 @@ import {
 } from '@/selection/components/selection-route-state'
 import { findEntityById } from '@/selection/find-entity-by-id'
 import { createServicesQueryOptions } from '@/selection/queries'
-import { loadServicesRoute, refreshServicesRoute } from '@/selection/route-loaders'
+import { loadServicesRoute } from '@/selection/route-loaders'
 import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
 
 type PendingServiceOperation = AcceptedServiceOperation &
@@ -74,7 +69,6 @@ export const Route = createFileRoute(
 })
 
 function ServiceRoute() {
-  const { queryClient } = Route.useRouteContext()
   const { environment, project } = Route.useLoaderData()
   const { environmentId, projectId } = Route.useParams()
   const [pendingOperations, setPendingOperations] = useState<PendingServiceOperation[]>([])
@@ -89,7 +83,6 @@ function ServiceRoute() {
     setPendingOperations(unresolvedOperations)
   }
   const navigate = Route.useNavigate()
-  const router = useRouter()
   const { q = '' } = Route.useSearch()
   const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
   return (
@@ -110,39 +103,6 @@ function ServiceRoute() {
       onQueryChange={(query) =>
         void navigate({ replace: true, search: query === '' ? {} : { q: query } })
       }
-      onRefresh={async () => {
-        const validity = await refreshServicesRoute(queryClient, projectId, environmentId)
-        const routeIsCurrent = router.matchRoute(
-          {
-            params: { environmentId, projectId },
-            to: '/projects/$projectId/environments/$environmentId/services',
-          },
-          { pending: false },
-        )
-        if (routeIsCurrent && validity === 'project-missing') {
-          await navigate({
-            replace: true,
-            search: {},
-            state: (state) => ({
-              ...state,
-              selectionNotice: 'The selected project is no longer available.',
-            }),
-            to: '/projects',
-          })
-        }
-        if (routeIsCurrent && validity === 'environment-missing') {
-          await navigate({
-            params: { projectId },
-            replace: true,
-            search: {},
-            state: (state) => ({
-              ...state,
-              selectionNotice: 'The selected environment is no longer available.',
-            }),
-            to: '/projects/$projectId/environments',
-          })
-        }
-      }}
       renderCard={(service) => (
         <EntityCard
           actions={

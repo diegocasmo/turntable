@@ -7,11 +7,7 @@ import {
   createProjectQueryOptions,
   createProjectsQueryOptions,
 } from '@/selection/queries'
-import {
-  loadEnvironmentsRoute,
-  loadServicesRoute,
-  refreshServicesRoute,
-} from '@/selection/route-loaders'
+import { loadEnvironmentsRoute, loadServicesRoute } from '@/selection/route-loaders'
 import {
   createRailwayEnvironment,
   createRailwayProject,
@@ -168,21 +164,5 @@ describe('selection route loaders', () => {
       replace: true,
     })
     expect(readServicesMock).not.toHaveBeenCalled()
-  })
-
-  it('refreshes targeted parents before the visible Services collection', async () => {
-    await expect(
-      refreshServicesRoute(
-        createContext().queryClient,
-        testRailwayProjectId,
-        testRailwayEnvironmentId,
-      ),
-    ).resolves.toBe('valid')
-
-    expect(readProjectMock).toHaveBeenCalledOnce()
-    expect(readEnvironmentMock).toHaveBeenCalledOnce()
-    expect(readProjectsMock).not.toHaveBeenCalled()
-    expect(readEnvironmentsMock).not.toHaveBeenCalled()
-    expect(readServicesMock).toHaveBeenCalledOnce()
   })
 })
