@@ -39,20 +39,12 @@ describe('framework session', () => {
   })
 
   it('round trips a valid session without renewal', async () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(currentDate)
     const created = await runServerRequest(() => writeSession(testRailwayToken, testSessionSecret))
     const read = await runServerRequest(() => readSession(testSessionSecret), {
       Cookie: readFirstCookie(created.response),
     })
 
-    expect(read.result).toEqual({
-      ok: true,
-      value: {
-        expiresAtUnixSeconds: Math.floor(currentDate.getTime() / 1_000) + sessionLifetimeSeconds,
-        token: testRailwayToken,
-      },
-    })
+    expect(read.result).toEqual({ ok: true, value: testRailwayToken })
     expect(read.response.headers.getSetCookie()).toEqual([])
   })
 
