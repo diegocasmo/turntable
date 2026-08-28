@@ -17,7 +17,7 @@ export class RailwayGraphQLError extends Error {
 export class RailwayRateLimitError extends Error {
   override readonly name = 'RailwayRateLimitError'
 
-  constructor(readonly retryAfterSeconds: number | undefined) {
+  constructor() {
     super('Railway rate limit exceeded.')
   }
 }

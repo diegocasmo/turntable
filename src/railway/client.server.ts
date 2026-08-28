@@ -21,15 +21,6 @@ type RailwayRequest<Result, Variables> = Readonly<{
   variables: NoInfer<Variables>
 }>
 
-function readRetryAfterSeconds(value: string | null) {
-  if (value === null || !/^\d+$/.test(value)) {
-    return undefined
-  }
-
-  const seconds = Number(value)
-  return Number.isSafeInteger(seconds) ? seconds : undefined
-}
-
 function createRequest(
   apiUrl: string,
   document: DocumentNode,
@@ -83,7 +74,7 @@ export function createRailwayClient({
       const body = await readResponseBody(response)
 
       if (response.status === 429) {
-        throw new RailwayRateLimitError(readRetryAfterSeconds(response.headers.get('retry-after')))
+        throw new RailwayRateLimitError()
       }
 
       if (response.status !== 200) {
