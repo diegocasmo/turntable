@@ -2,7 +2,6 @@ import { vi } from 'vitest'
 import type { RailwayEnvironment } from '@/gql/operations/environment-list'
 import type { RailwayService } from '@/gql/operations/environment-services'
 import type { ProjectsConnection, RailwayProject } from '@/gql/operations/project-list'
-import { createJsonResponse } from '@/test/response'
 
 export const testRailwayApiUrl = 'https://backboard.railway.test/graphql/v2'
 export const testRailwayEnvironmentId = 'environment-1'
@@ -59,7 +58,7 @@ export function createRailwayFetch(...bodies: readonly unknown[]) {
       throw new Error('The test did not provide a Railway response.')
     }
 
-    return createJsonResponse(body)
+    return Response.json(body)
   })
 }
 
