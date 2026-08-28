@@ -1,19 +1,19 @@
 import { expect, test } from '@playwright/test'
 import {
   railwayTargetNames,
-  readRailwayE2EConfig,
-  restoreRailwayE2ETarget,
-  runWithRailwayE2ETarget,
-} from './railway'
+  readRailwayTargetConfig,
+  restoreRailwayTarget,
+  runWithRailwayTarget,
+} from './railway-target'
 
 const railwayOperationTimeout = 2 * 60_000
 test.describe.configure({ timeout: 4 * railwayOperationTimeout })
 
 test('a user can control the configured Railway service from the collection', async ({ page }) => {
-  const config = readRailwayE2EConfig()
+  const config = readRailwayTargetConfig()
   const { environmentId, projectId } = config.target
 
-  await runWithRailwayE2ETarget(config, async () => {
+  await runWithRailwayTarget(config, async () => {
     let spinDownAttempted = false
 
     try {
@@ -73,7 +73,7 @@ test('a user can control the configured Railway service from the collection', as
 
       spinDownAttempted = false
     } finally {
-      if (spinDownAttempted) await restoreRailwayE2ETarget(config)
+      if (spinDownAttempted) await restoreRailwayTarget(config)
     }
   })
 })
