@@ -13,7 +13,7 @@ import {
   SelectionRoutePending,
 } from '@/selection/components/selection-route-state'
 import { createProjectsQueryOptions } from '@/selection/queries'
-import { loadProjectsRoute, refreshProjectsRoute } from '@/selection/route-loaders'
+import { loadProjectsRoute } from '@/selection/route-loaders'
 import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
 
 const projectSelectionProgress: SelectionProgress = { step: 'project' }
@@ -43,7 +43,6 @@ export const Route = createFileRoute('/_authenticated/projects')({
 })
 
 function ProjectRoute() {
-  const { queryClient } = Route.useRouteContext()
   const projects = useSuspenseQuery(createProjectsQueryOptions()).data
   const navigate = Route.useNavigate()
   const { q = '' } = Route.useSearch()
@@ -64,7 +63,6 @@ function ProjectRoute() {
       onQueryChange={(query) =>
         void navigate({ replace: true, search: query === '' ? {} : { q: query } })
       }
-      onRefresh={() => refreshProjectsRoute(queryClient)}
       renderCard={(project) => (
         <EntityCard
           entity={project}

@@ -3,7 +3,6 @@ import {
   createFileRoute,
   type ErrorComponentProps,
   Link,
-  useRouter,
   useRouterState,
 } from '@tanstack/react-router'
 import { EntityCard, primaryActionClassName } from '@/selection/components/entity-card-grid'
@@ -14,7 +13,7 @@ import {
   SelectionRoutePending,
 } from '@/selection/components/selection-route-state'
 import { createEnvironmentsQueryOptions } from '@/selection/queries'
-import { loadEnvironmentsRoute, refreshEnvironmentsRoute } from '@/selection/route-loaders'
+import { loadEnvironmentsRoute } from '@/selection/route-loaders'
 import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
 
 const environmentRouteStateProgress: SelectionProgress = { step: 'environment' }
@@ -47,12 +46,10 @@ export const Route = createFileRoute('/_authenticated/projects_/$projectId/envir
 })
 
 function EnvironmentRoute() {
-  const { queryClient } = Route.useRouteContext()
   const { projectId } = Route.useParams()
   const { project } = Route.useLoaderData()
   const environments = useSuspenseQuery(createEnvironmentsQueryOptions(projectId)).data
   const navigate = Route.useNavigate()
-  const router = useRouter()
   const { q = '' } = Route.useSearch()
   const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
   return (
@@ -67,24 +64,6 @@ function EnvironmentRoute() {
       onQueryChange={(query) =>
         void navigate({ replace: true, search: query === '' ? {} : { q: query } })
       }
-      onRefresh={async () => {
-        const validity = await refreshEnvironmentsRoute(queryClient, projectId)
-        const routeIsCurrent = router.matchRoute(
-          { params: { projectId }, to: '/projects/$projectId/environments' },
-          { pending: false },
-        )
-        if (routeIsCurrent && validity === 'project-missing') {
-          await navigate({
-            replace: true,
-            search: {},
-            state: (state) => ({
-              ...state,
-              selectionNotice: 'The selected project is no longer available.',
-            }),
-            to: '/projects',
-          })
-        }
-      }}
       renderCard={(environment) => (
         <EntityCard
           entity={environment}

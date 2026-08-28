@@ -141,41 +141,4 @@ describe('progressive project and environment routes', () => {
       '/projects/project-two/environments',
     )
   })
-
-  it('refreshes cards without changing q or starting a duplicate request', async () => {
-    const refreshedProjects = Promise.withResolvers<ReturnType<typeof createRailwayProject>[]>()
-    readProjectsMock
-      .mockResolvedValueOnce([createRailwayProject({ name: 'Web' })])
-      .mockReturnValueOnce(refreshedProjects.promise)
-    const page = renderRoutes('/projects?q=work')
-    expect(await screen.findByText('No results for “work”.')).toBeVisible()
-    const refresh = screen.getByRole('button', { name: 'Refresh projects' })
-
-    fireEvent.click(refresh)
-    await waitFor(() => expect(readProjectsMock).toHaveBeenCalledTimes(2))
-    fireEvent.click(refresh)
-    expect(readProjectsMock).toHaveBeenCalledTimes(2)
-    refreshedProjects.resolve([createRailwayProject({ name: 'Worker' })])
-
-    expect(
-      await screen.findByRole('link', { name: 'Select Worker in Railway workspace' }),
-    ).toBeVisible()
-    expect(page.router.state.location.href).toBe('/projects?q=work')
-    expect(screen.getByText('Projects refreshed.')).toBeVisible()
-  })
-
-  it('refreshes the selected project before its environments', async () => {
-    readEnvironmentsMock
-      .mockResolvedValueOnce([createRailwayEnvironment({ name: 'Production' })])
-      .mockResolvedValueOnce([createRailwayEnvironment({ name: 'Staging' })])
-    const page = renderRoutes('/projects/project-worker/environments?q=stag')
-    expect(await screen.findByText('No results for “stag”.')).toBeVisible()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh environments' }))
-
-    expect(await screen.findByRole('link', { name: 'Select Staging' })).toBeVisible()
-    expect(page.router.state.location.href).toBe('/projects/project-worker/environments?q=stag')
-    expect(readProjectMock).toHaveBeenCalledTimes(2)
-    expect(readProjectsMock).not.toHaveBeenCalled()
-  })
 })

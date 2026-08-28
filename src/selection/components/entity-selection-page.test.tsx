@@ -14,14 +14,7 @@ function renderComponent({
   ...props
 }: Partial<ComponentProps<typeof EntitySelectionPage>> = {}) {
   return render(
-    <EntitySelectionPage
-      refreshLabel="Projects"
-      refreshPending={false}
-      selectionProgress={selectionProgress}
-      title="Choose a project"
-      onRefresh={vi.fn()}
-      {...props}
-    >
+    <EntitySelectionPage selectionProgress={selectionProgress} title="Choose a project" {...props}>
       {children}
     </EntitySelectionPage>,
   )
@@ -36,29 +29,7 @@ describe('EntitySelectionPage', () => {
     expect(within(breadcrumb).getByText('Project')).toBeVisible()
     expect(within(breadcrumb).queryByRole('link', { name: 'Project' })).not.toBeInTheDocument()
     expect(within(breadcrumb).getByRole('button', { name: 'Environment' })).toBeVisible()
-  })
-
-  it('blocks duplicate refreshes while pending', () => {
-    const onRefresh = vi.fn()
-    const page = renderComponent({ onRefresh })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh projects' }))
-    expect(onRefresh).toHaveBeenCalledOnce()
-    page.rerender(
-      <EntitySelectionPage
-        refreshLabel="Projects"
-        refreshPending
-        selectionProgress={selectionProgress}
-        title="Choose a project"
-        onRefresh={onRefresh}
-      >
-        <p>Page content</p>
-      </EntitySelectionPage>,
-    )
-    const refresh = screen.getByRole('button', { name: 'Refresh projects' })
-    expect(refresh).toHaveTextContent('Refreshing')
-    fireEvent.click(refresh)
-    expect(onRefresh).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('button', { name: /refresh/i })).not.toBeInTheDocument()
   })
 
   it('shows a failure and retries', async () => {

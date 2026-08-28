@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { EntitySearchSurfaces } from '@/selection/components/entity-search-surfaces'
 import { EntitySelectionPage } from '@/selection/components/entity-selection-page'
@@ -12,7 +11,6 @@ type SelectionListPageProps<Entity extends SelectionEntity> = Readonly<{
   label: string
   notice: string | undefined
   onQueryChange: (query: string) => void
-  onRefresh: () => Promise<void>
   query: string
   renderCard: (entity: Entity) => ReactNode
   selectionProgress: SelectionProgress
@@ -26,28 +24,19 @@ export function SelectionListPage<Entity extends SelectionEntity>({
   label,
   notice,
   onQueryChange,
-  onRefresh,
   query,
   renderCard,
   selectionProgress,
   title,
 }: SelectionListPageProps<Entity>) {
-  const refresh = useMutation({ mutationFn: onRefresh })
   let feedback = notice
-  if (refresh.isSuccess) feedback = `${label}s refreshed.`
   if (dataError) feedback = dataError.message
-  if (refresh.error) feedback = refresh.error.message
 
   return (
     <EntitySelectionPage
-      feedbackKind={refresh.error || dataError ? 'alert' : 'status'}
-      refreshLabel={`${label}s`}
-      refreshPending={refresh.isPending}
+      feedbackKind={dataError ? 'alert' : 'status'}
       selectionProgress={selectionProgress}
       title={title}
-      onRefresh={() => {
-        if (!refresh.isPending) refresh.mutate()
-      }}
       {...(feedback ? { feedback } : {})}
     >
       <EntitySearchSurfaces
