@@ -1,38 +1,37 @@
 import type { ErrorComponentProps } from '@tanstack/react-router'
-import { TurntablePage } from '@/components/turntable-page'
 import {
   EntitySelectionFailure,
   EntitySelectionPage,
   EntitySelectionSkeleton,
 } from '@/selection/components/entity-selection-page'
-import type { SelectionBreadcrumbStep } from '@/selection/components/selection-breadcrumbs'
+import type { SelectionProgress } from '@/selection/components/selection-breadcrumbs'
 
 type SelectionRouteStateProps = Readonly<{
-  breadcrumbs: readonly SelectionBreadcrumbStep[]
+  selectionProgress: SelectionProgress
   title: string
 }>
 
-export function SelectionRoutePending({ breadcrumbs, title }: SelectionRouteStateProps) {
+export function SelectionRoutePending({ selectionProgress, title }: SelectionRouteStateProps) {
   return (
-    <TurntablePage sessionState="authenticated">
-      <EntitySelectionPage breadcrumbs={breadcrumbs} feedback="Loading choices." title={title}>
-        <EntitySelectionSkeleton />
-      </EntitySelectionPage>
-    </TurntablePage>
+    <EntitySelectionPage
+      feedback="Loading choices."
+      selectionProgress={selectionProgress}
+      title={title}
+    >
+      <EntitySelectionSkeleton />
+    </EntitySelectionPage>
   )
 }
 
 export function SelectionRouteError({
-  breadcrumbs,
   error,
   reset,
+  selectionProgress,
   title,
 }: ErrorComponentProps & SelectionRouteStateProps) {
   return (
-    <TurntablePage sessionState="authenticated">
-      <EntitySelectionPage breadcrumbs={breadcrumbs} title={title}>
-        <EntitySelectionFailure error={error} onRetry={reset} />
-      </EntitySelectionPage>
-    </TurntablePage>
+    <EntitySelectionPage selectionProgress={selectionProgress} title={title}>
+      <EntitySelectionFailure error={error} onRetry={reset} />
+    </EntitySelectionPage>
   )
 }

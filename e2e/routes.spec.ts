@@ -33,6 +33,8 @@ test('the token route is accessible', async ({ page }) => {
   const rawHtml = (await response?.body())?.toString() ?? ''
 
   await expect(page.getByLabel('Railway API token')).toBeVisible()
+  expect(new URL(page.url()).pathname).toBe('/connect')
+  expect(new URL(page.url()).searchParams.get('redirect')).toBe('/projects')
 
   const policy = response?.headers()['content-security-policy'] ?? ''
   const nonce = readNonce(policy)
@@ -56,6 +58,15 @@ test('the token route is accessible', async ({ page }) => {
   expect(results.violations).toEqual([])
   expect(browserErrors).toEqual([])
   expect(cspViolations).toEqual([])
+})
+
+test('a signed-out selection route keeps its return address', async ({ page }) => {
+  await page.goto('/projects?projectId=project-1')
+
+  await expect(page.getByLabel('Railway API token')).toBeVisible()
+  const location = new URL(page.url())
+  expect(location.pathname).toBe('/connect')
+  expect(location.searchParams.get('redirect')).toBe('/projects?projectId=project-1')
 })
 
 test('the health check returns only ok', async ({ request }) => {

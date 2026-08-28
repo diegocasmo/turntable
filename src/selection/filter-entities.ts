@@ -10,11 +10,11 @@ export function filterEntities<Entity extends SelectionEntity>(
   entities: readonly Entity[],
   query: string,
 ) {
-  const normalizedQuery = query.trim()
+  const trimmedQuery = query.trim()
 
-  if (normalizedQuery === '') {
-    return [...entities]
+  if (trimmedQuery === '') {
+    return entities
   }
 
-  return fuzzysort.go(normalizedQuery, entities, { key: 'name' }).map((result) => result.obj)
+  return fuzzysort.go(trimmedQuery, entities, { key: 'name' }).map((result) => result.obj)
 }

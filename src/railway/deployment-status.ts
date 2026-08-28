@@ -34,25 +34,26 @@ export const deploymentStatusSchema = z.string().transform((value) => {
 export type DeploymentStatus = z.infer<typeof deploymentStatusSchema>
 export type DeploymentStatusTone = 'danger' | 'neutral' | 'positive' | 'progress'
 type DeploymentStatusPresentation = Readonly<{
+  indicator: 'activity' | 'attention' | 'waiting' | null
   label: string
   tone: DeploymentStatusTone
 }>
 
 const deploymentStatusPresentations: Record<DeploymentStatus, DeploymentStatusPresentation> = {
-  BUILDING: { label: 'Building', tone: 'progress' },
-  CRASHED: { label: 'Crashed', tone: 'danger' },
-  DEPLOYING: { label: 'Deploying', tone: 'progress' },
-  FAILED: { label: 'Failed', tone: 'danger' },
-  INITIALIZING: { label: 'Initializing', tone: 'progress' },
-  NEEDS_APPROVAL: { label: 'Needs approval', tone: 'progress' },
-  QUEUED: { label: 'Queued', tone: 'progress' },
-  REMOVED: { label: 'Removed', tone: 'neutral' },
-  REMOVING: { label: 'Removing', tone: 'progress' },
-  SKIPPED: { label: 'Skipped', tone: 'neutral' },
-  SLEEPING: { label: 'Sleeping', tone: 'neutral' },
-  SUCCESS: { label: 'Success', tone: 'positive' },
-  WAITING: { label: 'Waiting', tone: 'progress' },
-  unknown: { label: 'Unknown', tone: 'neutral' },
+  BUILDING: { indicator: 'activity', label: 'Building', tone: 'progress' },
+  CRASHED: { indicator: null, label: 'Crashed', tone: 'danger' },
+  DEPLOYING: { indicator: 'activity', label: 'Deploying', tone: 'progress' },
+  FAILED: { indicator: null, label: 'Failed', tone: 'danger' },
+  INITIALIZING: { indicator: 'activity', label: 'Initializing', tone: 'progress' },
+  NEEDS_APPROVAL: { indicator: 'attention', label: 'Needs approval', tone: 'progress' },
+  QUEUED: { indicator: 'waiting', label: 'Queued', tone: 'progress' },
+  REMOVED: { indicator: null, label: 'Removed', tone: 'neutral' },
+  REMOVING: { indicator: 'activity', label: 'Removing', tone: 'progress' },
+  SKIPPED: { indicator: null, label: 'Skipped', tone: 'neutral' },
+  SLEEPING: { indicator: null, label: 'Sleeping', tone: 'neutral' },
+  SUCCESS: { indicator: null, label: 'Success', tone: 'positive' },
+  WAITING: { indicator: 'waiting', label: 'Waiting', tone: 'progress' },
+  unknown: { indicator: null, label: 'Unknown', tone: 'neutral' },
 }
 
 export function readDeploymentStatusPresentation(status: DeploymentStatus) {

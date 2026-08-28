@@ -1,7 +1,17 @@
 import { QueryClient } from '@tanstack/react-query'
 import { isRedirect } from '@tanstack/react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { loadEnvironmentsRoute, loadServicesRoute } from '@/selection/route-loaders'
+import {
+  createEnvironmentQueryOptions,
+  createEnvironmentsQueryOptions,
+  createProjectQueryOptions,
+  createProjectsQueryOptions,
+} from '@/selection/queries'
+import {
+  loadEnvironmentsRoute,
+  loadServicesRoute,
+  refreshServicesRoute,
+} from '@/selection/route-loaders'
 import {
   createRailwayEnvironment,
   createRailwayProject,
@@ -10,24 +20,33 @@ import {
   testRailwayProjectId,
 } from '@/test/railway'
 
-const { readEnvironmentsMock, readProjectsMock, readServicesMock } = vi.hoisted(() => ({
+const {
+  readEnvironmentMock,
+  readEnvironmentsMock,
+  readProjectMock,
+  readProjectsMock,
+  readServicesMock,
+} = vi.hoisted(() => ({
+  readEnvironmentMock: vi.fn(),
   readEnvironmentsMock: vi.fn(),
+  readProjectMock: vi.fn(),
   readProjectsMock: vi.fn(),
   readServicesMock: vi.fn(),
 }))
 
+vi.mock('@/selection/read-project', () => ({ readProject: readProjectMock }))
 vi.mock('@/selection/read-projects', () => ({ readProjects: readProjectsMock }))
+vi.mock('@/selection/read-environment', () => ({ readEnvironment: readEnvironmentMock }))
 vi.mock('@/selection/read-environments', () => ({ readEnvironments: readEnvironmentsMock }))
 vi.mock('@/selection/read-services', () => ({ readServices: readServicesMock }))
 
 function createContext() {
   return {
     queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }),
-    sessionState: 'authenticated' as const,
   }
 }
 
-async function catchRedirect(operation: () => Promise<void>) {
+async function catchRedirect(operation: () => Promise<unknown>) {
   try {
     await operation()
   } catch (error) {
@@ -38,19 +57,32 @@ async function catchRedirect(operation: () => Promise<void>) {
 }
 
 beforeEach(() => {
+  readProjectMock.mockReset().mockResolvedValue(createRailwayProject())
   readProjectsMock.mockReset().mockResolvedValue([createRailwayProject()])
+  readEnvironmentMock.mockReset().mockResolvedValue({
+    ...createRailwayEnvironment(),
+    projectId: testRailwayProjectId,
+  })
   readEnvironmentsMock.mockReset().mockResolvedValue([createRailwayEnvironment()])
   readServicesMock.mockReset().mockResolvedValue([createRailwayService()])
 })
 
 describe('selection route loaders', () => {
-  it('loads the services deep link with its stable parent IDs', async () => {
+  it('uses one targeted project read for a cold Environment deep link', async () => {
+    await loadEnvironmentsRoute(createContext(), testRailwayProjectId)
+
+    expect(readProjectMock).toHaveBeenCalledOnce()
+    expect(readProjectsMock).not.toHaveBeenCalled()
+    expect(readEnvironmentsMock).toHaveBeenCalledOnce()
+  })
+
+  it('uses targeted parent reads for a cold Services deep link', async () => {
     await loadServicesRoute(createContext(), testRailwayProjectId, testRailwayEnvironmentId)
 
-    expect(readProjectsMock).toHaveBeenCalledOnce()
-    expect(readEnvironmentsMock).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { projectId: testRailwayProjectId } }),
-    )
+    expect(readProjectMock).toHaveBeenCalledOnce()
+    expect(readEnvironmentMock).toHaveBeenCalledOnce()
+    expect(readProjectsMock).not.toHaveBeenCalled()
+    expect(readEnvironmentsMock).not.toHaveBeenCalled()
     expect(readServicesMock).toHaveBeenCalledWith(
       expect.objectContaining({
         data: {
@@ -61,8 +93,53 @@ describe('selection route loaders', () => {
     )
   })
 
-  it('replaces a missing project only after a successful project read', async () => {
-    readProjectsMock.mockResolvedValue([])
+  it('reuses positive parent collection entries during forward navigation', async () => {
+    const context = createContext()
+    const staleProject = createRailwayProject({ name: 'Old name' })
+    context.queryClient.setQueryData(
+      createProjectQueryOptions(testRailwayProjectId).queryKey,
+      staleProject,
+    )
+    context.queryClient.setQueryData(createProjectsQueryOptions().queryKey, [
+      createRailwayProject(),
+    ])
+    context.queryClient.setQueryData(
+      createEnvironmentsQueryOptions(testRailwayProjectId).queryKey,
+      [createRailwayEnvironment()],
+    )
+
+    const result = await loadServicesRoute(context, testRailwayProjectId, testRailwayEnvironmentId)
+
+    expect(result.project.name).toBe('Turntable')
+    expect(readProjectMock).not.toHaveBeenCalled()
+    expect(readEnvironmentMock).not.toHaveBeenCalled()
+    expect(readServicesMock).toHaveBeenCalledOnce()
+  })
+
+  it('revalidates a cached missing project', async () => {
+    const context = createContext()
+    context.queryClient.setQueryData(createProjectQueryOptions(testRailwayProjectId).queryKey, null)
+
+    await loadEnvironmentsRoute(context, testRailwayProjectId)
+
+    expect(readProjectMock).toHaveBeenCalledOnce()
+  })
+
+  it('revalidates a cached missing environment', async () => {
+    const context = createContext()
+    const key = createEnvironmentQueryOptions(
+      testRailwayProjectId,
+      testRailwayEnvironmentId,
+    ).queryKey
+    context.queryClient.setQueryData(key, null)
+
+    await loadServicesRoute(context, testRailwayProjectId, testRailwayEnvironmentId)
+
+    expect(readEnvironmentMock).toHaveBeenCalledOnce()
+  })
+
+  it('replaces a missing project only after its detail read succeeds', async () => {
+    readProjectMock.mockResolvedValue(null)
 
     const missing = await catchRedirect(() =>
       loadEnvironmentsRoute(createContext(), 'missing-project'),
@@ -72,15 +149,15 @@ describe('selection route loaders', () => {
     expect(readEnvironmentsMock).not.toHaveBeenCalled()
   })
 
-  it('keeps a network failure as an error instead of a not-found redirect', async () => {
-    const failure = new Error('Railway could not load projects.')
-    readProjectsMock.mockRejectedValue(failure)
+  it('keeps a parent network failure as an error', async () => {
+    const failure = new Error('Railway could not load the project.')
+    readProjectMock.mockRejectedValue(failure)
 
     await expect(loadEnvironmentsRoute(createContext(), testRailwayProjectId)).rejects.toBe(failure)
   })
 
-  it('falls back to the valid project when an environment is missing', async () => {
-    readEnvironmentsMock.mockResolvedValue([])
+  it('falls back to the valid project when the environment is missing', async () => {
+    readEnvironmentMock.mockResolvedValue(null)
 
     const missing = await catchRedirect(() =>
       loadServicesRoute(createContext(), testRailwayProjectId, 'missing-environment'),
@@ -91,5 +168,21 @@ describe('selection route loaders', () => {
       replace: true,
     })
     expect(readServicesMock).not.toHaveBeenCalled()
+  })
+
+  it('refreshes targeted parents before the visible Services collection', async () => {
+    await expect(
+      refreshServicesRoute(
+        createContext().queryClient,
+        testRailwayProjectId,
+        testRailwayEnvironmentId,
+      ),
+    ).resolves.toBe('valid')
+
+    expect(readProjectMock).toHaveBeenCalledOnce()
+    expect(readEnvironmentMock).toHaveBeenCalledOnce()
+    expect(readProjectsMock).not.toHaveBeenCalled()
+    expect(readEnvironmentsMock).not.toHaveBeenCalled()
+    expect(readServicesMock).toHaveBeenCalledOnce()
   })
 })

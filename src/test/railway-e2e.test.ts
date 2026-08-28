@@ -5,7 +5,11 @@ import {
   testRailwayApiUrl,
   testRailwayToken,
 } from '@/test/railway'
-import { type RailwayE2EConfig, restoreRailwayE2ETarget, runWithRailwayE2ETarget } from './railway'
+import {
+  type RailwayE2EConfig,
+  restoreRailwayE2ETarget,
+  runWithRailwayE2ETarget,
+} from '../../e2e/railway'
 
 describe('Railway E2E target guard', () => {
   it('does not run against self-consistent IDs for the wrong target', async () => {
