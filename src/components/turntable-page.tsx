@@ -11,18 +11,18 @@ type TurntablePageProps = Readonly<{
 export function TurntablePage({ children, sessionState }: TurntablePageProps) {
   const authenticated = sessionState === 'authenticated'
   return (
-    <div className="relative grid min-h-dvh grid-rows-[auto_1fr_auto] overflow-x-hidden bg-background text-foreground">
+    <div className="relative grid min-h-dvh grid-rows-[auto_1fr_auto] overflow-x-hidden bg-canvas text-text">
       <p aria-label="Session status" className="sr-only" role="status">
         {authenticated ? 'Connected to Railway.' : null}
       </p>
       <div
         aria-hidden="true"
-        className="absolute inset-0 opacity-40 [background-image:linear-gradient(var(--grid-line)_1px,transparent_1px),linear-gradient(90deg,var(--grid-line)_1px,transparent_1px)] [background-size:42px_42px]"
+        className="absolute inset-0 opacity-40 [background-image:linear-gradient(var(--color-grid)_1px,transparent_1px),linear-gradient(90deg,var(--color-grid)_1px,transparent_1px)] [background-size:42px_42px]"
       />
 
       {authenticated ? (
-        <header className="relative flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card/95 px-5 py-4 sm:px-8">
-          <p className="min-w-0 break-words font-mono text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+        <header className="relative flex flex-wrap items-center justify-between gap-3 border-b border-border bg-panel/95 px-5 py-4 sm:px-8">
+          <p className="min-w-0 break-words font-label text-xs font-semibold uppercase tracking-[0.2em] text-accent">
             Turntable / Railway control
           </p>
           <SignOutAction />
@@ -31,7 +31,7 @@ export function TurntablePage({ children, sessionState }: TurntablePageProps) {
 
       <main className="relative flex min-h-0 items-stretch justify-center px-4 py-5 sm:px-6 sm:py-8 lg:py-12">
         <div
-          className={`${authenticated ? 'flex max-w-7xl flex-col' : 'max-w-5xl'} w-full border border-border bg-card/95 shadow-[14px_14px_0_var(--shadow-color)]`}
+          className={`${authenticated ? 'flex max-w-7xl flex-col' : 'max-w-5xl'} w-full rounded-panel border border-border bg-panel/95 shadow-[14px_14px_0_var(--color-shadow)]`}
         >
           {authenticated ? (
             <div className="flex flex-1 p-5 sm:p-8 lg:p-10">
@@ -45,7 +45,7 @@ export function TurntablePage({ children, sessionState }: TurntablePageProps) {
           ) : (
             <div className="grid lg:grid-cols-[1.05fr_0.95fr]">
               <header className="relative overflow-hidden border-b border-border p-6 sm:p-8 lg:border-r lg:border-b-0 lg:p-12">
-                <p className="font-mono text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+                <p className="font-label text-xs font-semibold uppercase tracking-[0.24em] text-accent">
                   Railway container control
                 </p>
                 <h1
@@ -54,7 +54,7 @@ export function TurntablePage({ children, sessionState }: TurntablePageProps) {
                 >
                   Turntable
                 </h1>
-                <p className="mt-4 max-w-md text-base leading-7 text-foreground-soft sm:text-lg lg:mt-7 lg:leading-8">
+                <p className="mt-4 max-w-md text-base leading-7 text-text-soft sm:text-lg lg:mt-7 lg:leading-8">
                   Spin Railway containers up and down.
                 </p>
 
@@ -63,8 +63,8 @@ export function TurntablePage({ children, sessionState }: TurntablePageProps) {
                   className="relative mt-14 hidden aspect-square w-52 rounded-full border border-border lg:block"
                 >
                   <div className="absolute inset-4 rounded-full border border-border" />
-                  <div className="absolute inset-1/2 h-px w-[120%] -translate-x-1/2 -translate-y-1/2 rotate-[-18deg] bg-primary" />
-                  <div className="absolute inset-1/2 size-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary bg-card" />
+                  <div className="absolute inset-1/2 h-px w-[120%] -translate-x-1/2 -translate-y-1/2 rotate-[-18deg] bg-accent" />
+                  <div className="absolute inset-1/2 size-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent bg-panel" />
                 </div>
               </header>
 
@@ -76,7 +76,7 @@ export function TurntablePage({ children, sessionState }: TurntablePageProps) {
         </div>
       </main>
 
-      <footer className="relative px-6 pb-8 text-center font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground">
+      <footer className="relative px-6 pb-8 text-center font-label text-xs uppercase tracking-[0.16em] text-text-muted">
         Unofficial. Not a Railway product.
       </footer>
     </div>

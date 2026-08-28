@@ -25,7 +25,7 @@ export function EntitySearchInput({
     <div>
       <label
         htmlFor={inputId}
-        className="block font-mono text-xs uppercase tracking-[0.16em] text-foreground-soft"
+        className="block font-label text-xs uppercase tracking-[0.16em] text-text-soft"
       >
         Search {entityName}s
       </label>
@@ -34,7 +34,7 @@ export function EntitySearchInput({
           ref={inputRef}
           id={inputId}
           aria-describedby={resultsId}
-          className="h-10 border-border bg-popover pr-11 text-sm text-foreground [&::-webkit-search-cancel-button]:hidden"
+          className="h-10 border-border bg-panel-raised pr-11 text-sm text-text [&::-webkit-search-cancel-button]:hidden"
           placeholder={`Filter ${entityName}s`}
           type="search"
           value={query}

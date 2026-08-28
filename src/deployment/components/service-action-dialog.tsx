@@ -61,7 +61,7 @@ export function ServiceActionDialog({
             <Tooltip.Popup
               id={disabledDescriptionId}
               role="tooltip"
-              className="max-w-56 border border-border bg-popover px-3 py-2 font-mono text-xs text-foreground shadow-[3px_3px_0_var(--shadow-color)]"
+              className="max-w-56 rounded-panel border border-border bg-panel-raised px-3 py-2 font-label text-xs text-text shadow-[3px_3px_0_var(--color-shadow)]"
             >
               {description}
             </Tooltip.Popup>
@@ -69,9 +69,9 @@ export function ServiceActionDialog({
         </Tooltip.Portal>
       </Tooltip.Root>
       <AlertDialog.Portal>
-        <AlertDialog.Backdrop className="fixed inset-0 z-40 min-h-dvh bg-[var(--shadow-color)]/80 transition-opacity duration-150 motion-reduce:transition-none data-ending-style:opacity-0 data-starting-style:opacity-0" />
+        <AlertDialog.Backdrop className="fixed inset-0 z-40 min-h-dvh bg-shadow/80 transition-opacity duration-150 motion-reduce:transition-none data-ending-style:opacity-0 data-starting-style:opacity-0" />
         <AlertDialog.Popup
-          className="fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-3rem)] w-[min(28rem,calc(100vw-3rem))] -translate-x-1/2 -translate-y-1/2 gap-6 overflow-y-auto border border-border bg-card p-6 text-foreground shadow-[10px_10px_0_var(--shadow-color)] transition-[scale,opacity] duration-100 motion-reduce:transition-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0"
+          className="fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-3rem)] w-[min(28rem,calc(100vw-3rem))] -translate-x-1/2 -translate-y-1/2 gap-6 overflow-y-auto rounded-panel border border-border bg-panel p-6 text-text shadow-[10px_10px_0_var(--color-shadow)] transition-[scale,opacity] duration-100 motion-reduce:transition-none data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0"
           initialFocus={pending ? false : cancelRef}
           finalFocus={triggerRef}
         >
@@ -81,8 +81,8 @@ export function ServiceActionDialog({
             </AlertDialog.Title>
             <AlertDialog.Description
               className={cn(
-                'min-h-12 text-sm leading-6 text-foreground-soft',
-                error && 'text-danger-foreground',
+                'min-h-12 text-sm leading-6 text-text-soft',
+                error && 'text-danger-text',
               )}
               role={error ? 'alert' : undefined}
             >

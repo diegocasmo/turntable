@@ -5,20 +5,19 @@ import type { ComponentProps } from 'react'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center rounded-none border bg-clip-padding font-mono text-xs font-semibold whitespace-nowrap uppercase tracking-[0.12em] shadow-[3px_3px_0_var(--shadow-color)] transition-[background-color,border-color,color,box-shadow,transform] duration-100 outline-none select-none focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-ring focus-visible:outline-solid active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_var(--shadow-color)] disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50 aria-invalid:border-destructive aria-invalid:outline-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 cursor-pointer items-center justify-center rounded-control border bg-clip-padding font-label text-xs font-semibold whitespace-nowrap uppercase tracking-[0.12em] shadow-[3px_3px_0_var(--color-shadow)] transition-[background-color,border-color,color,box-shadow,transform] duration-100 outline-none select-none focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-focus focus-visible:outline-solid active:translate-x-px active:translate-y-px active:shadow-[1px_1px_0_var(--color-shadow)] disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50 aria-invalid:border-danger aria-invalid:outline-danger [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         primary:
-          'border-primary bg-primary text-primary-foreground hover:border-primary-hover hover:bg-primary-hover',
+          'border-accent bg-accent text-accent-contrast hover:border-accent-hover hover:bg-accent-hover',
         secondary:
-          'border-border bg-secondary text-secondary-foreground hover:border-foreground-soft hover:bg-surface-hover',
-        ghost:
-          'border-transparent bg-transparent text-foreground shadow-none hover:bg-surface-hover',
+          'border-border bg-panel-raised text-text hover:border-text-soft hover:bg-panel-hover',
+        ghost: 'border-transparent bg-transparent text-text shadow-none hover:bg-panel-hover',
         destructive:
-          'border-destructive bg-secondary text-danger-foreground hover:bg-danger-surface hover:text-danger-foreground',
+          'border-danger bg-panel-raised text-danger-text hover:bg-danger-panel hover:text-danger-text',
         destructiveConfirm:
-          'border-destructive bg-destructive text-destructive-foreground hover:border-danger-foreground hover:bg-danger-foreground',
+          'border-danger bg-danger text-danger-contrast hover:border-danger-text hover:bg-danger-text',
       },
       size: {
         sm: "h-8 gap-1.5 px-2.5 [&_svg:not([class*='size-'])]:size-3.5",
