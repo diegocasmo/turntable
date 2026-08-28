@@ -1,6 +1,7 @@
 import { apiTokenWorkspacesQuery } from '@/gql/operations/api-token-workspaces'
 import { createRailwayClient } from '@/railway/client.server'
 import { RailwayGraphQLError, RailwayRateLimitError } from '@/railway/errors'
+import { rejectedRailwayTokenMessage } from '@/session/connection-errors'
 import { writeSession } from '@/session/cookie.server'
 
 export class SessionConnectionError extends Error {
@@ -16,7 +17,9 @@ type SessionConnectionConfig = Readonly<{
 
 function createTokenVerificationError(error: unknown) {
   if (error instanceof RailwayGraphQLError) {
-    return new SessionConnectionError(error.message)
+    return new SessionConnectionError(
+      error.isUnauthorized ? rejectedRailwayTokenMessage : error.message,
+    )
   }
 
   if (error instanceof RailwayRateLimitError) {

@@ -10,6 +10,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TurntablePage } from '@/components/turntable-page'
+import { rejectedRailwayTokenMessage } from '@/session/connection-errors'
 import { maximumSessionTokenByteLength, type SessionState } from '@/session/schema'
 import { testRailwayToken } from '@/test/railway'
 
@@ -103,7 +104,7 @@ describe('token and session shell', () => {
     expect(tokenLink).toHaveAttribute('rel', 'noreferrer')
   })
 
-  it('shows pending, validation, and server failures', async () => {
+  it('shows pending and validation feedback', async () => {
     const page = renderComponent({ connect: () => new Promise<SessionState>(() => undefined) })
     await screen.findByLabelText('Railway API token')
     submitToken()
@@ -118,6 +119,28 @@ describe('token and session shell', () => {
       'The Railway token must contain 1 to 512 UTF-8 bytes.',
     )
     expect(connectToRailwayMock).not.toHaveBeenCalled()
+  })
+
+  it('links a rejected token error to the token field', async () => {
+    renderComponent({
+      connect: () => Promise.reject(new Error(rejectedRailwayTokenMessage)),
+    })
+    const tokenInput = await screen.findByLabelText('Railway API token')
+    submitToken()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(rejectedRailwayTokenMessage)
+    expect(tokenInput).toBeInvalid()
+    expect(tokenInput).toHaveAccessibleDescription(rejectedRailwayTokenMessage)
+  })
+
+  it('does not mark the token invalid for another connection error', async () => {
+    const connectionError = 'Railway rate limit exceeded.'
+    renderComponent({ connect: () => Promise.reject(new Error(connectionError)) })
+    const tokenInput = await screen.findByLabelText('Railway API token')
+    submitToken()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(connectionError)
+    expect(tokenInput).not.toHaveAttribute('aria-invalid')
   })
 
   it('connects without keeping the token mutation', async () => {

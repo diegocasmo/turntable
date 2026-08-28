@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { connectRailwaySession, SessionConnectionError } from '@/session/connect.server'
+import { rejectedRailwayTokenMessage } from '@/session/connection-errors'
 import { sessionCookieName } from '@/session/cookie.server'
 import { testSessionSecret } from '@/test/fixtures'
 import {
@@ -39,7 +40,7 @@ describe('connect Railway session', () => {
     })
   })
 
-  it('returns a Railway authorization error', async () => {
+  it('returns clear guidance for a rejected token', async () => {
     const fetchRequest = vi.fn(async () =>
       createJsonResponse({ errors: [{ message: 'Not Authorized' }] }),
     )
@@ -48,7 +49,7 @@ describe('connect Railway session', () => {
     )
 
     expect(result).toEqual({
-      error: new SessionConnectionError('Not Authorized'),
+      error: new SessionConnectionError(rejectedRailwayTokenMessage),
       ok: false,
     })
   })
