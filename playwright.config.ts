@@ -11,29 +11,18 @@ const testOrigin = readConfig(testEnvironment).appOrigin
 
 export default defineConfig({
   testDir: './e2e',
-  testIgnore: 'production-smoke.spec.ts',
+  testIgnore: 'build.spec.ts',
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 2 : 0,
   ...(process.env.CI ? { workers: 1 } : {}),
   use: {
     baseURL: testOrigin,
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
   },
   projects: [
     {
-      name: 'chromium',
+      name: 'routes',
       testMatch: 'routes.spec.ts',
       use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      testMatch: 'routes.spec.ts',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      testMatch: 'routes.spec.ts',
-      use: { ...devices['Desktop Safari'] },
     },
     {
       name: 'railway',

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('Nitro serves the token form from the production build', async ({ request }) => {
+test('the production build starts and serves Turntable', async ({ request }) => {
   const response = await request.get('/')
 
   expect(response).toBeOK()

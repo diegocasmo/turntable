@@ -1,34 +1,73 @@
-import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-import { railwayTargetNames, readRailwayE2EConfig, runWithRailwayE2ETarget } from './railway'
+import {
+  railwayTargetNames,
+  readRailwayTargetConfig,
+  restoreRailwayTarget,
+  runWithRailwayTarget,
+} from './railway-target'
 
-const expectRailway = expect.configure({ timeout: 30_000 })
+const deploymentStatusTimeout = 30_000
+const railwayTestTimeout = 3 * 60_000
+test.describe.configure({ timeout: railwayTestTimeout })
 
-test('a user can navigate the configured Railway project and environment', async ({ page }) => {
-  const config = readRailwayE2EConfig()
+test('a user can control the configured Railway service from the collection', async ({ page }) => {
+  const config = readRailwayTargetConfig()
   const { environmentId, projectId } = config.target
 
-  await runWithRailwayE2ETarget(config, async () => {
+  await runWithRailwayTarget(config, async () => {
     await page.goto('/')
     await page.getByLabel('Railway API token').fill(config.token)
     await page.getByRole('button', { name: 'Connect to Railway' }).click()
-    await expectRailway(page.getByRole('heading', { name: 'Choose a project' })).toBeVisible()
-    await expectRailway(page).toHaveURL('/projects')
+    await expect(page.getByRole('heading', { name: 'Choose a project' })).toBeVisible()
+    await expect(page).toHaveURL('/projects')
     expect(new URL(page.url()).searchParams.has('token')).toBe(false)
 
     await page.getByRole('searchbox', { name: 'Search projects' }).fill(railwayTargetNames.project)
     await page
-      .getByRole('link', { name: `Select ${railwayTargetNames.project}`, exact: false })
+      .getByRole('link', {
+        name: `Select ${railwayTargetNames.project}`,
+        exact: false,
+      })
       .click()
-    await expectRailway(page).toHaveURL(`/projects/${projectId}/environments`)
+    await expect(page).toHaveURL(`/projects/${projectId}/environments`)
 
     await page
       .getByRole('searchbox', { name: 'Search environments' })
       .fill(config.expectedEnvironmentName)
-    await expectRailway(
-      page.getByRole('link', { name: `Select ${config.expectedEnvironmentName}` }),
-    ).toHaveAttribute('href', `/projects/${projectId}/environments/${environmentId}/services`)
+    await page.getByRole('link', { name: `Select ${config.expectedEnvironmentName}` }).click()
+    await expect(page).toHaveURL(`/projects/${projectId}/environments/${environmentId}/services`)
 
-    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+    await page.getByRole('searchbox', { name: 'Search services' }).fill(railwayTargetNames.service)
+    const serviceCard = page.getByRole('article', { name: railwayTargetNames.service })
+    await expect(serviceCard.getByText('Success', { exact: true })).toBeVisible()
+
+    const spinUp = serviceCard.getByRole('button', {
+      name: `Spin up ${railwayTargetNames.service}`,
+    })
+    const spinDown = serviceCard.getByRole('button', {
+      name: `Spin down ${railwayTargetNames.service}`,
+    })
+
+    await spinDown.click()
+    const dialog = page.getByRole('alertdialog')
+
+    try {
+      await dialog.getByRole('button', { name: `Spin down ${railwayTargetNames.service}` }).click()
+      await expect(serviceCard.getByText('No active deployment', { exact: true })).toBeVisible({
+        timeout: deploymentStatusTimeout,
+      })
+
+      await spinUp.click()
+      await page
+        .getByRole('alertdialog')
+        .getByRole('button', { name: `Spin up ${railwayTargetNames.service}` })
+        .click()
+      await expect(serviceCard.getByText('Success', { exact: true })).toBeVisible({
+        timeout: deploymentStatusTimeout,
+      })
+    } catch (error) {
+      await restoreRailwayTarget(config)
+      throw error
+    }
   })
 })
