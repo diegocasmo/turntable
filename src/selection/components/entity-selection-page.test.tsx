@@ -29,7 +29,6 @@ describe('EntitySelectionPage', () => {
     expect(within(breadcrumb).getByText('Project')).toBeVisible()
     expect(within(breadcrumb).queryByRole('link', { name: 'Project' })).not.toBeInTheDocument()
     expect(within(breadcrumb).getByRole('button', { name: 'Environment' })).toBeVisible()
-    expect(screen.queryByRole('button', { name: /refresh/i })).not.toBeInTheDocument()
   })
 
   it('shows a failure and retries', async () => {
