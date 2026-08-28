@@ -1,5 +1,5 @@
 import type { TadaDocumentNode } from 'gql.tada'
-import { type DocumentNode, print } from 'graphql'
+import { print } from 'graphql'
 import { formatRequestLog } from '@/logging'
 import { RailwayHttpError, RailwayRateLimitError } from '@/railway/errors'
 import { readRailwayGraphQLData } from '@/railway/graphql-response'
@@ -20,24 +20,6 @@ type RailwayRequest<Result, Variables> = Readonly<{
   token: string
   variables: NoInfer<Variables>
 }>
-
-function createRequest(
-  apiUrl: string,
-  document: DocumentNode,
-  token: string,
-  variables: unknown,
-  signal: AbortSignal | undefined,
-) {
-  return new Request(apiUrl, {
-    body: JSON.stringify({ query: print(document), variables }),
-    headers: {
-      authorization: `Bearer ${token}`,
-      'content-type': 'application/json',
-    },
-    method: 'POST',
-    signal: signal ?? null,
-  })
-}
 
 function decodeResponseBody(text: string): unknown {
   try {
@@ -60,13 +42,15 @@ export function createRailwayClient({
 }: RailwayClientOptions) {
   return {
     async request<Result, Variables>(input: RailwayRequest<Result, Variables>): Promise<Result> {
-      const request = createRequest(
-        apiUrl,
-        input.document,
-        input.token,
-        input.variables,
-        input.signal,
-      )
+      const request = new Request(apiUrl, {
+        body: JSON.stringify({ query: print(input.document), variables: input.variables }),
+        headers: {
+          authorization: `Bearer ${input.token}`,
+          'content-type': 'application/json',
+        },
+        method: 'POST',
+        signal: input.signal ?? null,
+      })
       const response = await fetchRequest(request)
       const body = await readResponseBody(response)
 
