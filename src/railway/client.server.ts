@@ -25,14 +25,11 @@ function createRequest(
   apiUrl: string,
   document: DocumentNode,
   token: string,
-  variables: unknown | undefined,
+  variables: unknown,
   signal: AbortSignal | undefined,
 ) {
-  const body =
-    variables === undefined ? { query: print(document) } : { query: print(document), variables }
-
   return new Request(apiUrl, {
-    body: JSON.stringify(body),
+    body: JSON.stringify({ query: print(document), variables }),
     headers: {
       authorization: `Bearer ${token}`,
       'content-type': 'application/json',
