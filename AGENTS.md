@@ -1,8 +1,8 @@
 # Turntable: instructions for agents
 
-Turntable is a web application. [VISION.md](./VISION.md) describes it.
+Turntable is a web application.
 
-Read VISION.md before you make a design decision. Read the [issues](https://github.com/diegocasmo/turntable/issues) before you start work. Each issue is one pull request. Do them in the order that the blocked-by links give.
+Read the [issues](https://github.com/diegocasmo/turntable/issues) before you start work. Each issue is one pull request. Do them in the order that the blocked-by links give.
 
 <!-- intent-skills:start -->
 ## Skill Loading
