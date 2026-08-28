@@ -29,28 +29,15 @@ export function ServiceActions({
   const queryClient = useQueryClient()
   const deploymentId = deployment?.status === 'SUCCESS' ? deployment.id : null
 
-  function handleRequestAccepted(operation: AcceptedServiceOperation) {
-    const action = operation.action === 'spin-up' ? 'Spin up' : 'Spin down'
-    setAnnouncement(`${action} request accepted for ${serviceName}.`)
-    onOperationAccepted(operation)
+  function handleRequestAccepted(
+    action: AcceptedServiceOperation['action'],
+    acceptedDeploymentId: string,
+  ) {
+    const label = action === 'spin-up' ? 'Spin up' : 'Spin down'
+    setAnnouncement(`${label} request accepted for ${serviceName}.`)
+    onOperationAccepted({ action, deploymentId: acceptedDeploymentId, serviceId: target.serviceId })
     void queryClient.invalidateQueries({
       queryKey: queryKeys.services.list(target.projectId, target.environmentId),
-    })
-  }
-
-  function handleSpinUpAccepted(acceptedDeploymentId: string) {
-    handleRequestAccepted({
-      action: 'spin-up',
-      deploymentId: acceptedDeploymentId,
-      serviceId: target.serviceId,
-    })
-  }
-
-  function handleSpinDownAccepted(acceptedDeploymentId: string) {
-    handleRequestAccepted({
-      action: 'spin-down',
-      deploymentId: acceptedDeploymentId,
-      serviceId: target.serviceId,
     })
   }
 
@@ -60,12 +47,16 @@ export function ServiceActions({
         <SpinUpAction
           serviceName={serviceName}
           target={target}
-          onRequestAccepted={handleSpinUpAccepted}
+          onRequestAccepted={(acceptedDeploymentId) =>
+            handleRequestAccepted('spin-up', acceptedDeploymentId)
+          }
         />
         <SpinDownAction
           deploymentId={deploymentId}
           serviceName={serviceName}
-          onRequestAccepted={handleSpinDownAccepted}
+          onRequestAccepted={(acceptedDeploymentId) =>
+            handleRequestAccepted('spin-down', acceptedDeploymentId)
+          }
         />
       </div>
       <p aria-live="polite" className="sr-only" role="status">
