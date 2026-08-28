@@ -28,7 +28,7 @@ const restoreDelays = [1_000, 2_000, 4_000] as const
 const restoreSteadyDelay = 5_000
 const restoreTimeout = 2 * 60_000
 
-export function readRailwayE2EConfig() {
+export function readRailwayTargetConfig() {
   const environment = environmentSchema.parse(
     loadEnv('development', process.cwd(), ['RAILWAY_API_URL', 'RAILWAY_TEST_']),
   )
@@ -45,7 +45,7 @@ export function readRailwayE2EConfig() {
   }
 }
 
-export type RailwayE2EConfig = ReturnType<typeof readRailwayE2EConfig>
+export type RailwayTargetConfig = ReturnType<typeof readRailwayTargetConfig>
 
 const defaultGuardDependencies = {
   readEnvironments: readRailwayEnvironments,
@@ -55,8 +55,8 @@ const defaultGuardDependencies = {
 
 type GuardDependencies = Readonly<typeof defaultGuardDependencies>
 
-export async function runWithRailwayE2ETarget<Value>(
-  config: RailwayE2EConfig,
+export async function runWithRailwayTarget<Value>(
+  config: RailwayTargetConfig,
   run: () => Promise<Value>,
   dependencies: GuardDependencies = defaultGuardDependencies,
 ) {
@@ -85,7 +85,7 @@ export async function runWithRailwayE2ETarget<Value>(
   return run()
 }
 
-async function spinUpRailwayRestoreDeployment(config: RailwayE2EConfig) {
+async function spinUpRailwayRestoreDeployment(config: RailwayTargetConfig) {
   const client = createRailwayClient({ apiUrl: config.apiUrl })
   const result = await client.request({
     document: serviceInstanceDeployMutation,
@@ -98,7 +98,7 @@ async function spinUpRailwayRestoreDeployment(config: RailwayE2EConfig) {
   return z.string().min(1).parse(result.serviceInstanceDeployV2)
 }
 
-async function readRailwayRestoreStatus(config: RailwayE2EConfig, deploymentId: string) {
+async function readRailwayRestoreStatus(config: RailwayTargetConfig, deploymentId: string) {
   const client = createRailwayClient({ apiUrl: config.apiUrl })
   const result = await client.request({
     document: deploymentStatusSnapshotQuery,
@@ -121,8 +121,8 @@ const defaultRestoreDependencies = {
 
 type RestoreDependencies = Readonly<typeof defaultRestoreDependencies>
 
-export async function restoreRailwayE2ETarget(
-  config: RailwayE2EConfig,
+export async function restoreRailwayTarget(
+  config: RailwayTargetConfig,
   dependencies: RestoreDependencies = defaultRestoreDependencies,
 ) {
   const deploymentId = await dependencies.spinUp(config)

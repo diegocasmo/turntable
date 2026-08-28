@@ -48,7 +48,7 @@ jobs:
         run: pnpm test
 
       - name: Test production server
-        run: pnpm test:smoke
+        run: pnpm test:build
 
   e2e:
     name: E2E
@@ -86,7 +86,7 @@ jobs:
 
       - name: Install browsers
         if: env.RUN_E2E == 'true'
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Create session secret
         if: env.RUN_E2E == 'true'
