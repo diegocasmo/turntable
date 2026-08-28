@@ -84,10 +84,6 @@ async function readRailwayRestoreStatus(config: RailwayTargetConfig, deploymentI
   return deploymentStatusSchema.parse(result.deployment.status)
 }
 
-function waitForRestoreDelay(delay: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, delay))
-}
-
 export async function restoreRailwayTarget(config: RailwayTargetConfig) {
   const deploymentId = await spinUpRailwayDeployment(config.token, config.apiUrl, config.target)
   const startedAt = Date.now()
@@ -96,7 +92,7 @@ export async function restoreRailwayTarget(config: RailwayTargetConfig) {
   while (Date.now() - startedAt < restoreTimeout) {
     const delay = restoreDelays[attempt] ?? restoreSteadyDelay
     if (Date.now() - startedAt + delay > restoreTimeout) break
-    await waitForRestoreDelay(delay)
+    await new Promise<void>((resolve) => setTimeout(resolve, delay))
     const status = await readRailwayRestoreStatus(config, deploymentId).catch(() => null)
     if (status === 'SUCCESS') return
     if (status !== null && terminalRestoreStatuses.has(status)) {
