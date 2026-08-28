@@ -1,7 +1,13 @@
 # Turntable
 
-Turntable starts and stops Railway containers. It shows the current status for each service. See
-[VISION.md](./VISION.md) for the product scope and design.
+Turntable starts and stops Railway containers. The deployed application is available at
+[turntable-production.up.railway.app](https://turntable-production.up.railway.app/). Connect with a
+Railway API token, select a project and environment, then search the services in that environment.
+Each service shows its current deployment status and lets you spin it down or back up.
+
+After Turntable connects, it removes the plaintext token from the page and stores the session in an
+encrypted cookie. The application confirms each action and follows the status that Railway reports
+while the service changes state.
 
 ## Install
 
