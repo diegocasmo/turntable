@@ -14,7 +14,6 @@ import {
   testRailwayToken,
   testRailwayWorkspaceId,
 } from '@/test/railway'
-import { createJsonResponse } from '@/test/response'
 
 const query = print(projectsQuery)
 const variables = { workspaceId: testRailwayWorkspaceId }
@@ -38,7 +37,7 @@ function sendRequest(client: ReturnType<typeof createRailwayClient>) {
 
 describe('Railway HTTP client', () => {
   it('sends an authorized GraphQL request and returns valid data', async () => {
-    const { client, fetchRequest } = setUpClient(createJsonResponse({ data: validData }))
+    const { client, fetchRequest } = setUpClient(Response.json({ data: validData }))
 
     await expect(sendRequest(client)).resolves.toEqual(validData)
 
@@ -57,7 +56,7 @@ describe('Railway HTTP client', () => {
 
   it('stops on GraphQL errors and identifies the pinned authorization message', async () => {
     const notAuthorizedMessage = `Not Authorized: ${testRailwayToken}`
-    const response = createJsonResponse({
+    const response = Response.json({
       data: { project: { id: 'partial-project' } },
       errors: [{ message: notAuthorizedMessage }, { message: 'A second Railway error' }],
     })
@@ -71,7 +70,7 @@ describe('Railway HTTP client', () => {
   })
 
   it('rejects a 200 body that is not a GraphQL response', async () => {
-    const { client } = setUpClient(createJsonResponse({ message: 'Problem processing request' }))
+    const { client } = setUpClient(Response.json({ message: 'Problem processing request' }))
 
     await expect(sendRequest(client)).rejects.toBeInstanceOf(RailwayResponseError)
   })
@@ -80,7 +79,7 @@ describe('Railway HTTP client', () => {
     ['missing', {}],
     ['null', { data: null }],
   ])('rejects a GraphQL response with %s data', async (_name, body) => {
-    const { client } = setUpClient(createJsonResponse(body))
+    const { client } = setUpClient(Response.json(body))
 
     await expect(sendRequest(client)).rejects.toBeInstanceOf(RailwayResponseError)
   })

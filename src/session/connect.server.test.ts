@@ -9,7 +9,6 @@ import {
   testRailwayToken,
   testRailwayWorkspaceId,
 } from '@/test/railway'
-import { createJsonResponse } from '@/test/response'
 import { runServerRequest } from '@/test/start-request'
 
 const sessionConfig = {
@@ -22,7 +21,7 @@ const validRailwayBody = createRailwayResponse({
 
 describe('connect Railway session', () => {
   it('verifies a token and stores only its encrypted session', async () => {
-    const fetchRequest = vi.fn(async (_request: Request) => createJsonResponse(validRailwayBody))
+    const fetchRequest = vi.fn(async (_request: Request) => Response.json(validRailwayBody))
     const { response, result } = await runServerRequest(() =>
       connectRailwaySession(testRailwayToken, sessionConfig, fetchRequest),
     )
@@ -42,7 +41,7 @@ describe('connect Railway session', () => {
 
   it('returns clear guidance for a rejected token', async () => {
     const fetchRequest = vi.fn(async () =>
-      createJsonResponse({ errors: [{ message: 'Not Authorized' }] }),
+      Response.json({ errors: [{ message: 'Not Authorized' }] }),
     )
     const { result } = await runServerRequest(() =>
       connectRailwaySession(testRailwayToken, sessionConfig, fetchRequest),
@@ -55,9 +54,7 @@ describe('connect Railway session', () => {
   })
 
   it('hides an invalid Railway response', async () => {
-    const fetchRequest = vi.fn(async () =>
-      createJsonResponse({ message: 'Problem processing request' }),
-    )
+    const fetchRequest = vi.fn(async () => Response.json({ message: 'Problem processing request' }))
     const { result } = await runServerRequest(() =>
       connectRailwaySession(testRailwayToken, sessionConfig, fetchRequest),
     )
