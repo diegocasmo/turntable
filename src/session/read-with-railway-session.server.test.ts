@@ -68,7 +68,7 @@ describe('read with Railway session', () => {
 
   it.each([
     ['another GraphQL error', new RailwayGraphQLError(['Deployment not found'])],
-    ['a rate limit', new RailwayRateLimitError(30)],
+    ['a rate limit', new RailwayRateLimitError()],
   ])('keeps %s on the normal error path', async (_name, railwayError) => {
     const cookie = await createSessionCookie()
     const { response, result } = await runServerRequest(

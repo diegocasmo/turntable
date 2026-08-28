@@ -85,28 +85,14 @@ describe('Railway HTTP client', () => {
     await expect(sendRequest(client)).rejects.toBeInstanceOf(RailwayResponseError)
   })
 
-  it('reads whole Retry-After seconds from a 429 response', async () => {
-    const response = new Response(null, { headers: { 'retry-after': '12' }, status: 429 })
-    const { client } = setUpClient(response)
+  it('maps a 429 response to the pinned rate limit error', async () => {
+    const { client } = setUpClient(new Response(null, { status: 429 }))
 
     await expect(sendRequest(client)).rejects.toMatchObject({
+      message: 'Railway rate limit exceeded.',
       name: RailwayRateLimitError.name,
-      retryAfterSeconds: 12,
     })
   })
-
-  it.each([undefined, '1.5', 'after lunch', '999999999999999999999'])(
-    'leaves the retry delay empty for an invalid Retry-After value: %s',
-    async (retryAfter) => {
-      const response =
-        retryAfter === undefined
-          ? new Response(null, { status: 429 })
-          : new Response(null, { headers: { 'retry-after': retryAfter }, status: 429 })
-      const { client } = setUpClient(response)
-
-      await expect(sendRequest(client)).rejects.toMatchObject({ retryAfterSeconds: undefined })
-    },
-  )
 
   it.each([
     [400, JSON.stringify({ message: 'Problem processing request' })],
