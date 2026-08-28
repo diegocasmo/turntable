@@ -7,35 +7,28 @@ import {
   readDeploymentStatusPresentation,
 } from '@/railway/deployment-status'
 
-type DeploymentStatusIndicator = ReturnType<typeof readDeploymentStatusPresentation>['indicator']
-const statusToneCases: ReadonlyArray<
-  Readonly<{ status: DeploymentStatus; tone: DeploymentStatusTone }>
-> = [
-  { status: 'SUCCESS', tone: 'positive' },
-  { status: 'BUILDING', tone: 'progress' },
-  { status: 'NEEDS_APPROVAL', tone: 'progress' },
-  { status: 'CRASHED', tone: 'danger' },
-  { status: 'REMOVED', tone: 'neutral' },
-  { status: 'unknown', tone: 'neutral' },
-]
-const statusIndicatorCases = [
-  { indicator: 'activity', status: 'BUILDING' },
-  { indicator: null, status: 'CRASHED' },
-  { indicator: 'activity', status: 'DEPLOYING' },
-  { indicator: null, status: 'FAILED' },
-  { indicator: 'activity', status: 'INITIALIZING' },
-  { indicator: 'attention', status: 'NEEDS_APPROVAL' },
-  { indicator: 'waiting', status: 'QUEUED' },
-  { indicator: null, status: 'REMOVED' },
-  { indicator: 'activity', status: 'REMOVING' },
-  { indicator: null, status: 'SKIPPED' },
-  { indicator: null, status: 'SLEEPING' },
-  { indicator: null, status: 'SUCCESS' },
-  { indicator: 'waiting', status: 'WAITING' },
-  { indicator: null, status: 'unknown' },
-] as const satisfies ReadonlyArray<
-  Readonly<{ indicator: DeploymentStatusIndicator; status: DeploymentStatus }>
->
+type DeploymentStatusPresentationCase = Readonly<{
+  indicator: ReturnType<typeof readDeploymentStatusPresentation>['indicator']
+  status: DeploymentStatus
+  tone: DeploymentStatusTone
+}>
+
+const presentationCases = [
+  { indicator: 'activity', status: 'BUILDING', tone: 'progress' },
+  { indicator: null, status: 'CRASHED', tone: 'danger' },
+  { indicator: 'activity', status: 'DEPLOYING', tone: 'progress' },
+  { indicator: null, status: 'FAILED', tone: 'danger' },
+  { indicator: 'activity', status: 'INITIALIZING', tone: 'progress' },
+  { indicator: 'attention', status: 'NEEDS_APPROVAL', tone: 'progress' },
+  { indicator: 'waiting', status: 'QUEUED', tone: 'progress' },
+  { indicator: null, status: 'REMOVED', tone: 'neutral' },
+  { indicator: 'activity', status: 'REMOVING', tone: 'progress' },
+  { indicator: null, status: 'SKIPPED', tone: 'neutral' },
+  { indicator: null, status: 'SLEEPING', tone: 'neutral' },
+  { indicator: null, status: 'SUCCESS', tone: 'positive' },
+  { indicator: 'waiting', status: 'WAITING', tone: 'progress' },
+  { indicator: null, status: 'unknown', tone: 'neutral' },
+] as const satisfies readonly DeploymentStatusPresentationCase[]
 
 describe('deployment status', () => {
   it('keeps a known Railway status', () => {
@@ -46,14 +39,13 @@ describe('deployment status', () => {
     expect(deploymentStatusSchema.parse('A_NEW_RAILWAY_STATUS')).toBe('unknown')
   })
 
-  it.each(statusToneCases)('maps $status to the $tone badge', ({ status, tone }) => {
-    expect(readDeploymentStatusPresentation(status).tone).toBe(tone)
-  })
+  it.each(presentationCases)(
+    'maps $status to the $tone badge with the $indicator indicator',
+    ({ indicator, status, tone }) => {
+      const presentation = readDeploymentStatusPresentation(status)
 
-  it.each(statusIndicatorCases)(
-    'maps $status to the $indicator indicator',
-    ({ indicator, status }) => {
-      expect(readDeploymentStatusPresentation(status).indicator).toBe(indicator)
+      expect(presentation.tone).toBe(tone)
+      expect(presentation.indicator).toBe(indicator)
     },
   )
 
