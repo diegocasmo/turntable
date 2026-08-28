@@ -1,10 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import {
-  createFileRoute,
-  type ErrorComponentProps,
-  Link,
-  useRouterState,
-} from '@tanstack/react-router'
+import { createFileRoute, type ErrorComponentProps, Link } from '@tanstack/react-router'
 import { EntityCard, primaryActionClassName } from '@/selection/components/entity-card-grid'
 import type { SelectionProgress } from '@/selection/components/selection-breadcrumbs'
 import { SelectionListPage } from '@/selection/components/selection-list-page'
@@ -14,7 +9,7 @@ import {
 } from '@/selection/components/selection-route-state'
 import { createProjectsQueryOptions } from '@/selection/queries'
 import { loadProjectsRoute } from '@/selection/route-loaders'
-import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
+import { entitySearchSchema } from '@/selection/schema'
 
 const projectSelectionProgress: SelectionProgress = { step: 'project' }
 
@@ -45,8 +40,7 @@ export const Route = createFileRoute('/_authenticated/projects')({
 function ProjectRoute() {
   const projects = useSuspenseQuery(createProjectsQueryOptions()).data
   const navigate = Route.useNavigate()
-  const { q = '' } = Route.useSearch()
-  const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
+  const { notice, q = '' } = Route.useSearch()
 
   return (
     <SelectionListPage
@@ -56,7 +50,7 @@ function ProjectRoute() {
         ...(project.workspace ? { description: project.workspace.name } : {}),
       }))}
       label="Project"
-      notice={notice}
+      notice={notice ? 'The selected project is not available.' : undefined}
       query={q}
       selectionProgress={projectSelectionProgress}
       title="Choose a project"

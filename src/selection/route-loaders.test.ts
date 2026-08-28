@@ -141,7 +141,11 @@ describe('selection route loaders', () => {
       loadEnvironmentsRoute(createContext(), 'missing-project'),
     )
 
-    expect(missing.options).toMatchObject({ href: '/projects', replace: true })
+    expect(missing.options).toMatchObject({
+      replace: true,
+      search: { notice: 'unavailable' },
+      to: '/projects',
+    })
     expect(readEnvironmentsMock).not.toHaveBeenCalled()
   })
 
@@ -160,8 +164,10 @@ describe('selection route loaders', () => {
     )
 
     expect(missing.options).toMatchObject({
-      href: `/projects/${testRailwayProjectId}/environments`,
+      params: { projectId: testRailwayProjectId },
       replace: true,
+      search: { notice: 'unavailable' },
+      to: '/projects/$projectId/environments',
     })
     expect(readServicesMock).not.toHaveBeenCalled()
   })
