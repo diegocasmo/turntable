@@ -73,7 +73,7 @@ export function TokenForm({ expired }: TokenFormProps) {
                   aria-describedby={tokenErrorMessage ? errorId : undefined}
                   aria-invalid={tokenErrorMessage ? true : undefined}
                   autoComplete="off"
-                  disabled={!hydrated || session.isPending}
+                  disabled={session.isPending}
                   spellCheck={false}
                   value={field.state.value}
                   onBlur={field.handleBlur}
