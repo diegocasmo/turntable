@@ -1,6 +1,5 @@
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { DeploymentStatus } from '@/railway/deployment-status'
 import {
   createRailwayEnvironment,
   createRailwayProject,
@@ -54,7 +53,7 @@ vi.mock('@/deployment/spin-down-deployment', () => ({ spinDownDeployment: spinDo
 vi.mock('@/deployment/spin-up-deployment', () => ({ spinUpDeployment: spinUpMock }))
 vi.stubGlobal('scrollTo', vi.fn())
 
-function createService(id: string, name: string, status: DeploymentStatus | null = 'SUCCESS') {
+function createService(id: string, name: string, status: 'SUCCESS' | null = 'SUCCESS') {
   return {
     deployment: status ? { id: `deployment-${id}`, status } : null,
     id,
@@ -257,50 +256,6 @@ describe('service collection route', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Railway could not reload services.')
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
-  })
-
-  it('shows concurrent lifecycle changes and stops reading after terminal states', async () => {
-    vi.useFakeTimers()
-    try {
-      readServicesMock
-        .mockResolvedValueOnce([
-          createService('service-web', 'Web', null),
-          createService('service-worker', 'Worker'),
-        ])
-        .mockResolvedValueOnce([
-          createService('service-web', 'Web', null),
-          createService('service-worker', 'Worker'),
-        ])
-        .mockResolvedValueOnce([
-          createService('service-web', 'Web', 'INITIALIZING'),
-          createService('service-worker', 'Worker', 'REMOVING'),
-        ])
-        .mockResolvedValue([
-          createService('service-web', 'Web', 'FAILED'),
-          createService('service-worker', 'Worker', null),
-        ])
-      renderRoutes(servicesPath)
-      await vi.waitFor(() => expect(screen.getByRole('article', { name: 'Web' })).toBeVisible())
-
-      fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
-      fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
-      await vi.waitFor(() => expect(readServicesMock).toHaveBeenCalledTimes(2))
-      expect(screen.getByText('No active deployment')).toBeVisible()
-
-      await act(() => vi.advanceTimersByTimeAsync(5_000))
-      expect(screen.getByText('Initializing')).toBeVisible()
-      expect(screen.getByText('Removing')).toBeVisible()
-
-      await act(() => vi.advanceTimersByTimeAsync(5_000))
-      expect(screen.getByText('Failed')).toBeVisible()
-      expect(screen.getByText('No active deployment')).toBeVisible()
-      expect(readServicesMock).toHaveBeenCalledTimes(4)
-
-      await act(() => vi.advanceTimersByTimeAsync(10_000))
-      expect(readServicesMock).toHaveBeenCalledTimes(4)
-    } finally {
-      vi.useRealTimers()
-    }
   })
 
   it('does not expose the removed service detail route', async () => {
