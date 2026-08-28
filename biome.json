@@ -20,6 +20,12 @@
     "rules": {
       "preset": "recommended",
       "a11y": "error",
+      "complexity": {
+        "noExcessiveCognitiveComplexity": {
+          "level": "error",
+          "options": { "maxAllowedComplexity": 10 }
+        }
+      },
       "style": { "noNestedTernary": "error" }
     }
   },
