@@ -7,7 +7,6 @@ export function useSpinUpDeployment(onSuccess: (deploymentId: string) => Promise
   const requestSpinUp = useServerFn(spinUpDeployment)
 
   return useMutation({
-    mutationKey: ['deployment-lifecycle'],
     mutationFn: (input: DeploymentTarget) => requestSpinUp({ data: input }),
     onSuccess,
   })
