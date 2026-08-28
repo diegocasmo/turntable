@@ -58,13 +58,12 @@ export function TurntablePage({ children, sessionState }: TurntablePageProps) {
                   Spin Railway containers up and down.
                 </p>
 
-                <div
-                  aria-hidden="true"
-                  className="relative mt-14 hidden aspect-square w-52 rounded-full border border-border lg:block"
-                >
-                  <div className="absolute inset-4 rounded-full border border-border" />
-                  <div className="absolute inset-1/2 h-px w-[120%] -translate-x-1/2 -translate-y-1/2 rotate-[-18deg] bg-accent" />
-                  <div className="absolute inset-1/2 size-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent bg-panel" />
+                <div className="relative mt-14 hidden size-52 lg:block">
+                  <img
+                    alt=""
+                    className="absolute top-1/2 left-1/2 size-[120%] max-w-none -translate-x-1/2 -translate-y-1/2"
+                    src="/turntable.svg"
+                  />
                 </div>
               </header>
 
