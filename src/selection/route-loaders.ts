@@ -1,6 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { redirect } from '@tanstack/react-router'
-import { findEntityById } from '@/selection/find-entity-by-id'
 import {
   createEnvironmentQueryOptions,
   createEnvironmentsQueryOptions,
@@ -23,7 +22,7 @@ function throwMissingSelection(href: string, message: string): never {
 
 async function readProjectForRoute(queryClient: QueryClient, projectId: string) {
   const projects = queryClient.getQueryData(createProjectsQueryOptions().queryKey)
-  const project = findEntityById(projects, projectId)
+  const project = projects?.find(({ id }) => id === projectId)
   if (project) return project
 
   const detailOptions = createProjectQueryOptions(projectId)
@@ -39,7 +38,7 @@ async function readEnvironmentForRoute(
   environmentId: string,
 ) {
   const environments = queryClient.getQueryData(createEnvironmentsQueryOptions(projectId).queryKey)
-  const environment = findEntityById(environments, environmentId)
+  const environment = environments?.find(({ id }) => id === environmentId)
   if (environment) return environment
 
   const detailOptions = createEnvironmentQueryOptions(projectId, environmentId)
