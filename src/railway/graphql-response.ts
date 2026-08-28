@@ -2,12 +2,10 @@ import { RailwayGraphQLError, RailwayResponseError } from '@/railway/errors'
 import { redactToken } from '@/railway/token-redaction'
 import { z } from '@/zod'
 
-export const graphQLErrorSchema = z.object({ message: z.string() })
-
 const graphQLResponseSchema = z
   .looseObject({
     data: z.record(z.string(), z.unknown()).nullable().optional(),
-    errors: z.array(graphQLErrorSchema).optional(),
+    errors: z.array(z.object({ message: z.string() })).optional(),
   })
   .refine(
     (value) =>
