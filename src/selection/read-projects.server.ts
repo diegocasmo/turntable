@@ -21,20 +21,17 @@ export async function readRailwayProjects(
   })
 
   const workspaces = await Promise.all(
-    tokenContext.apiToken.workspaces.map(async (workspace) => {
-      const readPage = (after: string | null = null) =>
-        client.request({
+    tokenContext.apiToken.workspaces.map((workspace) =>
+      readAllConnectionNodes(async (after) => {
+        const page = await client.request({
           document: projectsQuery,
           signal,
           token,
           variables: { after, first: railwayConnectionPageSize, workspaceId: workspace.id },
         })
-      const firstPage = await readPage()
-      return readAllConnectionNodes(firstPage.projects, async (after) => {
-        const page = await readPage(after)
         return page.projects
-      })
-    }),
+      }),
+    ),
   )
 
   return workspaces.flat()

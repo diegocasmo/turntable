@@ -10,25 +10,23 @@ type RailwayConnection = EnvironmentsConnection | EnvironmentServicesConnection 
 type ConnectionNode<Connection extends RailwayConnection> = Connection['edges'][number]['node']
 
 export async function readAllConnectionNodes<Connection extends RailwayConnection>(
-  firstPage: Connection,
-  readNextPage: (after: string) => Promise<Connection>,
+  readPage: (after: string | null) => Promise<Connection>,
 ) {
   const nodes: ConnectionNode<Connection>[] = []
-  let page = firstPage
+  let after: string | null = null
 
   while (true) {
+    const page = await readPage(after)
     nodes.push(...page.edges.map((edge) => edge.node))
 
     if (!page.pageInfo.hasNextPage) {
       return nodes
     }
 
-    const { endCursor } = page.pageInfo
-
-    if (endCursor === null) {
+    if (page.pageInfo.endCursor === null) {
       throw new RailwayResponseError()
     }
 
-    page = await readNextPage(endCursor)
+    after = page.pageInfo.endCursor
   }
 }

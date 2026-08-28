@@ -13,16 +13,13 @@ export async function readRailwayEnvironments(
   signal?: AbortSignal,
 ) {
   const client = createRailwayClient({ apiUrl, fetch: fetchRequest })
-  const readPage = (after: string | null = null) =>
-    client.request({
+  return readAllConnectionNodes(async (after) => {
+    const page = await client.request({
       document: environmentsQuery,
       signal,
       token,
       variables: { after, first: railwayConnectionPageSize, projectId },
     })
-  const firstPage = await readPage()
-  return readAllConnectionNodes(firstPage.project.environments, async (after) => {
-    const page = await readPage(after)
     return page.project.environments
   })
 }
