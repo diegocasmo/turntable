@@ -13,15 +13,11 @@ export const testRailwayWorkspaceId = 'workspace-1'
 
 type PageInfo = ProjectsConnection['pageInfo']
 
-export function createRailwayEdge<Node>(node: Node) {
-  return { node }
-}
-
 export function createRailwayPage<Node>(
   nodes: readonly Node[],
   pageInfo: PageInfo = { endCursor: null, hasNextPage: false },
 ) {
-  return { edges: nodes.map(createRailwayEdge), pageInfo }
+  return { edges: nodes.map((node) => ({ node })), pageInfo }
 }
 
 export function createRailwayProject(overrides: Partial<RailwayProject> = {}): RailwayProject {
