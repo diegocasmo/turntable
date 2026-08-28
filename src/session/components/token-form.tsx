@@ -15,9 +15,51 @@ type TokenFormProps = Readonly<{
   expired: boolean
 }>
 
+function renderFeedback(
+  tokenErrorMessage: string | undefined,
+  error: Error | null,
+  errorId: string,
+  expired: boolean,
+  pending: boolean,
+) {
+  const hasAlert = Boolean(tokenErrorMessage) || error !== null
+  const alertMessage = tokenErrorMessage || error?.message
+  if (hasAlert) {
+    return (
+      <p
+        id={tokenErrorMessage ? errorId : undefined}
+        role="alert"
+        className="flex min-h-12 items-center gap-3 border border-danger bg-danger-panel px-3 py-2 text-sm leading-5 text-danger-text"
+      >
+        <WarningIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
+        <span>{alertMessage}</span>
+      </p>
+    )
+  }
+  if (expired) {
+    return (
+      <p
+        role="alert"
+        className="border-l-2 border-warning pl-3 text-sm leading-6 text-warning-text"
+      >
+        Your session expired. Enter your Railway API token again.
+      </p>
+    )
+  }
+  if (pending) {
+    return (
+      <p role="status" className="text-sm leading-6 text-text-soft">
+        Railway is checking the token.
+      </p>
+    )
+  }
+  return null
+}
+
 export function TokenForm({ expired }: TokenFormProps) {
   const hydrated = useHydrated()
   const session = useConnectSession()
+  const pending = session.isPending
   const form = useForm({
     defaultValues: { token: '' },
     onSubmit: ({ value }) => session.connect(value.token),
@@ -56,8 +98,6 @@ export function TokenForm({ expired }: TokenFormProps) {
           const tokenErrorMessage =
             validationError?.message ?? (tokenRejected ? rejectedRailwayTokenMessage : undefined)
           const errorId = `${field.name}-error`
-          const hasAlert = Boolean(tokenErrorMessage) || session.error !== null
-          const alertMessage = tokenErrorMessage || session.error?.message
 
           return (
             <>
@@ -75,7 +115,7 @@ export function TokenForm({ expired }: TokenFormProps) {
                   aria-describedby={tokenErrorMessage ? errorId : undefined}
                   aria-invalid={tokenErrorMessage ? true : undefined}
                   autoComplete="off"
-                  disabled={!hydrated || session.isPending}
+                  disabled={!hydrated || pending}
                   spellCheck={false}
                   value={field.state.value}
                   onBlur={field.handleBlur}
@@ -90,37 +130,14 @@ export function TokenForm({ expired }: TokenFormProps) {
               <AsyncButton
                 type="submit"
                 disabled={!hydrated}
-                pending={session.isPending}
+                pending={pending}
                 size="lg"
                 className="mt-5 w-full"
               >
-                {session.isPending ? 'Connecting...' : 'Connect to Railway'}
+                {pending ? 'Connecting...' : 'Connect to Railway'}
               </AsyncButton>
-
               <div className="mt-4 min-h-12">
-                {hasAlert ? (
-                  <p
-                    id={tokenErrorMessage ? errorId : undefined}
-                    role="alert"
-                    className="flex min-h-12 items-center gap-3 border border-danger bg-danger-panel px-3 py-2 text-sm leading-5 text-danger-text"
-                  >
-                    <WarningIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
-                    <span>{alertMessage}</span>
-                  </p>
-                ) : null}
-                {!hasAlert && expired ? (
-                  <p
-                    role="alert"
-                    className="border-l-2 border-warning pl-3 text-sm leading-6 text-warning-text"
-                  >
-                    Your session expired. Enter your Railway API token again.
-                  </p>
-                ) : null}
-                {!hasAlert && !expired && session.isPending ? (
-                  <p role="status" className="text-sm leading-6 text-text-soft">
-                    Railway is checking the token.
-                  </p>
-                ) : null}
+                {renderFeedback(tokenErrorMessage, session.error, errorId, expired, pending)}
               </div>
             </>
           )

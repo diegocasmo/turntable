@@ -90,13 +90,14 @@ beforeEach(() => {
 })
 
 describe('token and session shell', () => {
-  it('shows the token form and required product text', async () => {
-    renderComponent()
+  it('shows the token form and expired session feedback', async () => {
+    renderComponent({ sessionState: 'expired' })
     const main = await screen.findByRole('main')
 
     expect(within(main).getByRole('heading', { level: 1, name: 'Turntable' })).toBeVisible()
     expect(within(main).getByLabelText('Railway API token')).toBeRequired()
     expect(within(main).getByRole('button', { name: 'Connect to Railway' })).toBeEnabled()
+    expect(within(main).getByRole('alert')).toHaveTextContent(/session expired/i)
     const tokenLink = within(main).getByRole('link', {
       name: "Railway's token page (opens in a new tab)",
     })
