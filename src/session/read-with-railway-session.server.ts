@@ -19,8 +19,8 @@ export async function readWithRailwaySession<Value>(
   readValue: (token: string) => Promise<Value>,
 ) {
   try {
-    const session = await readSession(sessionSecret)
-    return await readValue(session.token)
+    const token = await readSession(sessionSecret)
+    return await readValue(token)
   } catch (error) {
     if (error instanceof InvalidSessionError) {
       throw createConnectRedirect()

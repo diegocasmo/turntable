@@ -5,11 +5,6 @@ import { z } from '@/zod'
 export const sessionCookieName = '__Host-turntable'
 export const sessionLifetimeSeconds = 60 * 60
 
-export type TurntableSession = Readonly<{
-  expiresAtUnixSeconds: number
-  token: string
-}>
-
 export class InvalidSessionError extends Error {
   override readonly name = 'InvalidSessionError'
 
@@ -46,13 +41,6 @@ function checkToken(token: string) {
   }
 }
 
-function createTurntableSession(token: string, createdAt: number): TurntableSession {
-  return {
-    expiresAtUnixSeconds: Math.floor(createdAt / 1_000) + sessionLifetimeSeconds,
-    token,
-  }
-}
-
 export async function writeSession(token: string, sessionSecret: string) {
   checkToken(token)
   const config = createSessionConfig(sessionSecret)
@@ -72,7 +60,7 @@ export async function readSession(sessionSecret: string) {
     throw new InvalidSessionError()
   }
 
-  return createTurntableSession(data.data.railwayToken, session.createdAt)
+  return data.data.railwayToken
 }
 
 export function clearSessionCookie(sessionSecret: string) {
