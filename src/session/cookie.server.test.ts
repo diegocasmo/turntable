@@ -13,16 +13,6 @@ import { readFirstCookie, runServerRequest } from '@/test/start-request'
 
 const currentDate = new Date('2027-01-15T08:00:00.000Z')
 
-function readCookieValue(cookie: string) {
-  const separatorIndex = cookie.indexOf('=')
-
-  if (separatorIndex < 0) {
-    throw new Error('The cookie did not contain a value.')
-  }
-
-  return cookie.slice(separatorIndex + 1)
-}
-
 function changeLastCharacter(value: string) {
   const lastCharacter = value.at(-1)
 
@@ -109,8 +99,9 @@ describe('framework session', () => {
   it('does not accept the H3 session header', async () => {
     const created = await runServerRequest(() => writeSession(testRailwayToken, testSessionSecret))
     const cookie = readFirstCookie(created.response)
+    const cookieValue = cookie.slice(`${sessionCookieName}=`.length)
     const { result } = await runServerRequest(() => readSession(testSessionSecret), {
-      [`x-${sessionCookieName.toLowerCase()}-session`]: readCookieValue(cookie),
+      [`x-${sessionCookieName.toLowerCase()}-session`]: cookieValue,
     })
 
     expect(result).toEqual({ error: expect.any(InvalidSessionError), ok: false })
