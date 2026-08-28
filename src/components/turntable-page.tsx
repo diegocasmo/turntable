@@ -58,11 +58,13 @@ export function TurntablePage({ children, sessionState }: TurntablePageProps) {
                   Spin Railway containers up and down.
                 </p>
 
-                <img
-                  alt=""
-                  className="mt-14 hidden aspect-square w-52 lg:block"
-                  src="/turntable.svg"
-                />
+                <div className="relative mt-14 hidden size-52 lg:block">
+                  <img
+                    alt=""
+                    className="absolute top-1/2 left-1/2 size-[120%] max-w-none -translate-x-1/2 -translate-y-1/2"
+                    src="/turntable.svg"
+                  />
+                </div>
               </header>
 
               <div className="flex items-start p-6 sm:p-8 lg:min-h-[30rem] lg:items-center lg:p-12">
