@@ -47,28 +47,17 @@ export function readRailwayTargetConfig() {
 
 export type RailwayTargetConfig = ReturnType<typeof readRailwayTargetConfig>
 
-const defaultGuardDependencies = {
-  readEnvironments: readRailwayEnvironments,
-  readProjects: readRailwayProjects,
-  readServices: readRailwayServices,
-}
-
-type GuardDependencies = Readonly<typeof defaultGuardDependencies>
-
 export async function runWithRailwayTarget<Value>(
   config: RailwayTargetConfig,
   run: () => Promise<Value>,
-  dependencies: GuardDependencies = defaultGuardDependencies,
 ) {
   const { apiUrl, expectedEnvironmentName, target, token } = config
-  const projects = await dependencies.readProjects(token, apiUrl)
+  const projects = await readRailwayProjects(token, apiUrl)
   const project = projects.find(({ id }) => id === target.projectId)
-  const environments = project
-    ? await dependencies.readEnvironments(token, apiUrl, target.projectId)
-    : []
+  const environments = project ? await readRailwayEnvironments(token, apiUrl, target.projectId) : []
   const environment = environments.find(({ id }) => id === target.environmentId)
   const services = environment
-    ? await dependencies.readServices(token, apiUrl, target.projectId, target.environmentId)
+    ? await readRailwayServices(token, apiUrl, target.projectId, target.environmentId)
     : []
   const service = services.find(({ id }) => id === target.serviceId)
   const knownTarget =
@@ -112,28 +101,16 @@ function waitForRestoreDelay(delay: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, delay))
 }
 
-const defaultRestoreDependencies = {
-  readNow: Date.now,
-  readStatus: readRailwayRestoreStatus,
-  spinUp: spinUpRailwayRestoreDeployment,
-  wait: waitForRestoreDelay,
-}
-
-type RestoreDependencies = Readonly<typeof defaultRestoreDependencies>
-
-export async function restoreRailwayTarget(
-  config: RailwayTargetConfig,
-  dependencies: RestoreDependencies = defaultRestoreDependencies,
-) {
-  const deploymentId = await dependencies.spinUp(config)
-  const startedAt = dependencies.readNow()
+export async function restoreRailwayTarget(config: RailwayTargetConfig) {
+  const deploymentId = await spinUpRailwayRestoreDeployment(config)
+  const startedAt = Date.now()
   let attempt = 0
 
-  while (dependencies.readNow() - startedAt < restoreTimeout) {
+  while (Date.now() - startedAt < restoreTimeout) {
     const delay = restoreDelays[attempt] ?? restoreSteadyDelay
-    if (dependencies.readNow() - startedAt + delay > restoreTimeout) break
-    await dependencies.wait(delay)
-    const status = await dependencies.readStatus(config, deploymentId).catch(() => null)
+    if (Date.now() - startedAt + delay > restoreTimeout) break
+    await waitForRestoreDelay(delay)
+    const status = await readRailwayRestoreStatus(config, deploymentId).catch(() => null)
     if (status === 'SUCCESS') return
     if (status !== null && terminalRestoreStatuses.has(status)) {
       throw new Error(`The Railway E2E target reached ${status} during cleanup.`)
