@@ -35,14 +35,11 @@ const sessionDataSchema = z.object({
 
 type SessionData = z.infer<typeof sessionDataSchema>
 
-function checkToken(token: string) {
+export async function writeSession(token: string, sessionSecret: string) {
   if (!railwayTokenSchema.safeParse(token).success) {
     throw new RangeError(invalidRailwayTokenMessage)
   }
-}
 
-export async function writeSession(token: string, sessionSecret: string) {
-  checkToken(token)
   const config = createSessionConfig(sessionSecret)
 
   await clearSession(config)
