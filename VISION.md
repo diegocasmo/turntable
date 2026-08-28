@@ -168,7 +168,7 @@ Sign out is in the application header. The shell uses CSS to fill at least the d
 height. Content can grow and scroll when the card list is long.
 
 The interface uses semantic HTML, visible focus, labelled controls, and polite
-status messages. Biome checks accessibility rules. Playwright uses axe on rendered routes.
+status messages. Biome checks accessibility rules.
 
 ## Tests
 

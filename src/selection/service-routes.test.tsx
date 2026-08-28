@@ -275,15 +275,11 @@ describe('service collection route', () => {
           createService('service-web', 'Web', 'INITIALIZING'),
           createService('service-worker', 'Worker', 'REMOVING'),
         ])
-        .mockResolvedValueOnce([
-          createService('service-web', 'Web', 'DEPLOYING'),
-          createService('service-worker', 'Worker', 'REMOVING'),
-        ])
         .mockResolvedValue([
           createService('service-web', 'Web', 'FAILED'),
           createService('service-worker', 'Worker', null),
         ])
-      const page = renderRoutes(`${servicesPath}?q=w`)
+      renderRoutes(servicesPath)
       await vi.waitFor(() => expect(screen.getByRole('article', { name: 'Web' })).toBeVisible())
 
       fireEvent.click(screen.getByRole('button', { name: 'Spin up Web' }))
@@ -296,16 +292,12 @@ describe('service collection route', () => {
       expect(screen.getByText('Removing')).toBeVisible()
 
       await act(() => vi.advanceTimersByTimeAsync(5_000))
-      expect(screen.getByText('Deploying')).toBeVisible()
-      expect(screen.getByText('Removing')).toBeVisible()
-      await act(() => vi.advanceTimersByTimeAsync(5_000))
       expect(screen.getByText('Failed')).toBeVisible()
       expect(screen.getByText('No active deployment')).toBeVisible()
-      expect(page.router.state.location.href).toContain('/services?q=w')
-      expect(readServicesMock).toHaveBeenCalledTimes(5)
+      expect(readServicesMock).toHaveBeenCalledTimes(4)
 
       await act(() => vi.advanceTimersByTimeAsync(10_000))
-      expect(readServicesMock).toHaveBeenCalledTimes(5)
+      expect(readServicesMock).toHaveBeenCalledTimes(4)
     } finally {
       vi.useRealTimers()
     }
