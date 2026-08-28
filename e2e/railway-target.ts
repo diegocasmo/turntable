@@ -1,6 +1,6 @@
 import { loadEnv } from 'vite'
+import { spinUpRailwayDeployment } from '@/deployment/spin-up-deployment.server'
 import { deploymentStatusSnapshotQuery } from '@/gql/operations/deployment-status-snapshot'
-import { serviceInstanceDeployMutation } from '@/gql/operations/service-instance-deploy'
 import { createRailwayClient } from '@/railway/client.server'
 import { type DeploymentStatus, deploymentStatusSchema } from '@/railway/deployment-status'
 import { railwayHttpsUrlSchema } from '@/railway/url-schema'
@@ -74,19 +74,6 @@ export async function runWithRailwayTarget<Value>(
   return run()
 }
 
-async function spinUpRailwayRestoreDeployment(config: RailwayTargetConfig) {
-  const client = createRailwayClient({ apiUrl: config.apiUrl })
-  const result = await client.request({
-    document: serviceInstanceDeployMutation,
-    token: config.token,
-    variables: {
-      environmentId: config.target.environmentId,
-      serviceId: config.target.serviceId,
-    },
-  })
-  return z.string().min(1).parse(result.serviceInstanceDeployV2)
-}
-
 async function readRailwayRestoreStatus(config: RailwayTargetConfig, deploymentId: string) {
   const client = createRailwayClient({ apiUrl: config.apiUrl })
   const result = await client.request({
@@ -102,7 +89,7 @@ function waitForRestoreDelay(delay: number) {
 }
 
 export async function restoreRailwayTarget(config: RailwayTargetConfig) {
-  const deploymentId = await spinUpRailwayRestoreDeployment(config)
+  const deploymentId = await spinUpRailwayDeployment(config.token, config.apiUrl, config.target)
   const startedAt = Date.now()
   let attempt = 0
 
