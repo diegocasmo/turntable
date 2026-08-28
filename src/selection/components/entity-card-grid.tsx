@@ -70,11 +70,9 @@ export function EntityCardGrid<Entity extends SelectionEntity>({
     const hasNoMatches = allEntityCount > 0 && query.trim() !== ''
 
     return (
-      <div className="flex min-h-40 items-center rounded-panel border border-dashed border-border px-5 py-8">
-        <p role="status" className="text-sm text-text-soft">
-          {hasNoMatches ? `No results for “${query.trim()}”.` : emptyMessage}
-        </p>
-      </div>
+      <p role="status" className="text-sm text-text-soft">
+        {hasNoMatches ? `No results for “${query.trim()}”.` : emptyMessage}
+      </p>
     )
   }
 
