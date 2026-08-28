@@ -32,6 +32,7 @@ test('the signed-out page renders with its security policy', async ({ page }) =>
   const rawHtml = (await response?.body())?.toString() ?? ''
 
   await expect(page.getByLabel('Railway API token')).toBeVisible()
+  await expect(page.getByLabel('Railway API token')).toBeEnabled()
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/turntable.svg')
   expect(new URL(page.url()).pathname).toBe('/connect')
   expect(new URL(page.url()).searchParams.get('redirect')).toBe('/projects')
@@ -42,6 +43,8 @@ test('the signed-out page renders with its security policy', async ({ page }) =>
   expect(nonce).toBeTruthy()
   expect(rawHtml).toContain(`nonce="${nonce}"`)
   expect(policy).toContain("frame-ancestors 'none'")
+  expect(policy).toContain("'strict-dynamic'")
+  expect(policy).not.toContain("'unsafe-inline'")
   expect(policy).not.toContain("'unsafe-eval'")
   expect(response?.headers()['referrer-policy']).toBe('no-referrer')
   expect(response?.headers()['x-content-type-options']).toBe('nosniff')

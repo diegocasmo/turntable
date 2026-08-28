@@ -11,7 +11,7 @@ export function createSecurityHeaders(nonce: string) {
   return {
     'Content-Security-Policy': [
       "default-src 'self'",
-      `script-src 'nonce-${nonce}'`,
+      `script-src 'nonce-${nonce}' 'strict-dynamic' 'self'`,
       `style-src 'self' 'nonce-${nonce}'`,
       `connect-src ${connectSources}`,
       "object-src 'none'",
