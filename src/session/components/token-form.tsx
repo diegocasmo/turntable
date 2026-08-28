@@ -1,4 +1,5 @@
 import { ArrowSquareOutIcon } from '@phosphor-icons/react/ArrowSquareOut'
+import { WarningIcon } from '@phosphor-icons/react/Warning'
 import { useForm } from '@tanstack/react-form'
 import { useHydrated } from '@tanstack/react-router'
 import type { SubmitEvent } from 'react'
@@ -6,6 +7,7 @@ import { AsyncButton } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { railwayTokensUrl } from '@/railway/urls'
+import { rejectedRailwayTokenMessage } from '@/session/connection-errors'
 import { useConnectSession } from '@/session/hooks/use-connect-session'
 import { sessionInputSchema } from '@/session/schema'
 
@@ -50,6 +52,9 @@ export function TokenForm({ expired }: TokenFormProps) {
       <form.Field name="token">
         {(field) => {
           const validationError = field.state.meta.errors[0]
+          const tokenRejected = session.error?.message === rejectedRailwayTokenMessage
+          const tokenErrorMessage =
+            validationError?.message ?? (tokenRejected ? rejectedRailwayTokenMessage : undefined)
           const errorId = `${field.name}-error`
 
           return (
@@ -65,8 +70,8 @@ export function TokenForm({ expired }: TokenFormProps) {
                   id="railway-token"
                   type="password"
                   required
-                  aria-describedby={validationError ? errorId : undefined}
-                  aria-invalid={validationError ? true : undefined}
+                  aria-describedby={tokenErrorMessage ? errorId : undefined}
+                  aria-invalid={tokenErrorMessage ? true : undefined}
                   autoComplete="off"
                   disabled={!hydrated || session.isPending}
                   spellCheck={false}
@@ -91,20 +96,26 @@ export function TokenForm({ expired }: TokenFormProps) {
               </AsyncButton>
 
               <div className="mt-4 min-h-12">
-                {validationError ? (
-                  <p id={errorId} role="alert" className="text-sm leading-6 text-danger-text">
-                    {validationError.message}
+                {tokenErrorMessage ? (
+                  <p
+                    id={errorId}
+                    role="alert"
+                    className="flex min-h-12 items-center gap-3 border border-danger bg-danger-panel px-3 py-2 text-sm leading-5 text-danger-text"
+                  >
+                    <WarningIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
+                    <span>{tokenErrorMessage}</span>
                   </p>
                 ) : null}
-                {!validationError && session.error ? (
+                {!tokenErrorMessage && session.error ? (
                   <p
                     role="alert"
-                    className="border-l-2 border-danger pl-3 text-sm leading-6 text-danger-text"
+                    className="flex min-h-12 items-center gap-3 border border-danger bg-danger-panel px-3 py-2 text-sm leading-5 text-danger-text"
                   >
-                    {session.error.message}
+                    <WarningIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
+                    <span>{session.error.message}</span>
                   </p>
                 ) : null}
-                {!validationError && !session.error && expired ? (
+                {!tokenErrorMessage && !session.error && expired ? (
                   <p
                     role="alert"
                     className="border-l-2 border-warning pl-3 text-sm leading-6 text-warning-text"
@@ -112,7 +123,7 @@ export function TokenForm({ expired }: TokenFormProps) {
                     Your session expired. Enter your Railway API token again.
                   </p>
                 ) : null}
-                {!validationError && !session.error && !expired && session.isPending ? (
+                {!tokenErrorMessage && !session.error && !expired && session.isPending ? (
                   <p role="status" className="text-sm leading-6 text-text-soft">
                     Railway is checking the token.
                   </p>
