@@ -27,7 +27,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: 'Start and stop Railway containers from one clear service view.',
       },
     ],
-    links: [{ rel: 'stylesheet', href: appCss }],
+    links: [
+      { rel: 'stylesheet', href: appCss },
+      { rel: 'icon', href: '/turntable.svg', type: 'image/svg+xml' },
+    ],
   }),
   notFoundComponent: NotFoundPage,
   shellComponent: RootDocument,

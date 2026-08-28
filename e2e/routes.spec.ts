@@ -32,6 +32,7 @@ test('the signed-out page renders with its security policy', async ({ page }) =>
   const rawHtml = (await response?.body())?.toString() ?? ''
 
   await expect(page.getByLabel('Railway API token')).toBeVisible()
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/turntable.svg')
   expect(new URL(page.url()).pathname).toBe('/connect')
   expect(new URL(page.url()).searchParams.get('redirect')).toBe('/projects')
 
