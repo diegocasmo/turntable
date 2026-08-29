@@ -16,7 +16,7 @@ export const sessionInputSchema = z.object({ token: railwayTokenSchema })
 export const connectSearchSchema = z.object({
   redirect: z
     .string()
-    .refine((path) => /^\/projects(?:[/?]|$)/u.test(path))
+    .regex(/^\/projects(?:[/?]|$)/u)
     .catch('/projects'),
 })
 
