@@ -4,6 +4,7 @@ import { RailwayGraphQLError, RailwayHttpError, RailwayRateLimitError } from '@/
 import { writeSession } from '@/session/cookie.server'
 import { readSessionState } from '@/session/read-state.server'
 import { readWithRailwaySession } from '@/session/read-with-railway-session.server'
+import type { SessionNotice } from '@/session/schema'
 import { testSessionSecret } from '@/test/fixtures'
 import { testRailwayToken } from '@/test/railway'
 import { readFirstCookie, runServerRequest } from '@/test/start-request'
@@ -13,14 +14,18 @@ async function createSessionCookie() {
   return readFirstCookie(created.response)
 }
 
-function expectConnectRedirect(error: unknown) {
+function expectConnectRedirect(error: unknown, notice: SessionNotice) {
   expect(isRedirect(error)).toBe(true)
 
   if (!isRedirect(error)) {
     throw new Error('Expected a connect redirect.')
   }
 
-  expect(error.options).toMatchObject({ reloadDocument: true, search: true, to: '/' })
+  expect(error.options).toMatchObject({
+    reloadDocument: true,
+    search: { notice, redirect: '/projects' },
+    to: '/connect',
+  })
 }
 
 describe('read with Railway session', () => {
@@ -43,7 +48,7 @@ describe('read with Railway session', () => {
     if (result.ok) {
       throw new Error('Expected the session read to fail.')
     }
-    expectConnectRedirect(result.error)
+    expectConnectRedirect(result.error, 'expired')
     const state = await runServerRequest(() => readSessionState(testSessionSecret, true), {
       cookie: readFirstCookie(response),
     })
@@ -64,7 +69,7 @@ describe('read with Railway session', () => {
     if (result.ok) {
       throw new Error('Expected the Railway read to fail.')
     }
-    expectConnectRedirect(result.error)
+    expectConnectRedirect(result.error, 'token-rejected')
     const state = await runServerRequest(() => readSessionState(testSessionSecret, true), {
       cookie: readFirstCookie(response),
     })
