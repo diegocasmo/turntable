@@ -1,5 +1,4 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import type { ComponentProps } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import {
   EntitySelectionFailure,
@@ -9,20 +8,13 @@ import type { SelectionProgress } from '@/selection/components/selection-breadcr
 
 const selectionProgress: SelectionProgress = { step: 'project' }
 
-function renderComponent({
-  children = <p>Page content</p>,
-  ...props
-}: Partial<ComponentProps<typeof EntitySelectionPage>> = {}) {
-  return render(
-    <EntitySelectionPage selectionProgress={selectionProgress} title="Choose a project" {...props}>
-      {children}
-    </EntitySelectionPage>,
-  )
-}
-
 describe('EntitySelectionPage', () => {
   it('renders current and future steps without Home', () => {
-    renderComponent()
+    render(
+      <EntitySelectionPage selectionProgress={selectionProgress} title="Choose a project">
+        <p>Page content</p>
+      </EntitySelectionPage>,
+    )
     const breadcrumb = screen.getByRole('navigation', { name: 'Selection progress' })
 
     expect(within(breadcrumb).queryByText('Home')).not.toBeInTheDocument()
