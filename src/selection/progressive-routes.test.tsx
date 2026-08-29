@@ -85,6 +85,29 @@ describe('progressive project and environment routes', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('shows the missing project notice from the URL until the user searches', async () => {
+    const page = renderRoutes('/projects?notice=unavailable')
+
+    expect(await screen.findByRole('heading', { name: 'Choose a project' })).toBeVisible()
+    const selection = screen.getByRole('region', { name: 'Choose a project' })
+    expect(within(selection).getByText('The selected project is not available.')).toBeVisible()
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search projects' }), {
+      target: { value: 'worker' },
+    })
+
+    await waitFor(() => expect(page.router.state.location.href).toBe('/projects?q=worker'))
+    expect(within(selection).queryByText('The selected project is not available.')).toBeNull()
+  })
+
+  it('rejects an unknown notice value', async () => {
+    const page = renderRoutes('/projects?notice=unknown')
+
+    expect(await screen.findByRole('heading', { name: 'Choose a project' })).toBeVisible()
+    expect(page.router.state.location.href).toBe('/projects')
+    const selection = screen.getByRole('region', { name: 'Choose a project' })
+    expect(within(selection).queryByText('The selected project is not available.')).toBeNull()
+  })
+
   it('replaces q while typing and clears it for normal card navigation', async () => {
     const page = renderRoutes('/projects')
     const input = await screen.findByRole('searchbox', { name: 'Search projects' })

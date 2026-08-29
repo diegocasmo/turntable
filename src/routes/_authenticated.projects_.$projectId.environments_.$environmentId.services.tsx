@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, type ErrorComponentProps, useRouterState } from '@tanstack/react-router'
+import { createFileRoute, type ErrorComponentProps } from '@tanstack/react-router'
 import { useState } from 'react'
 import {
   type AcceptedServiceOperation,
@@ -14,7 +14,7 @@ import {
 } from '@/selection/components/selection-route-state'
 import { createServicesQueryOptions } from '@/selection/queries'
 import { loadServicesRoute } from '@/selection/route-loaders'
-import { entitySearchSchema, readSelectionNotice } from '@/selection/schema'
+import { entitySearchSchema } from '@/selection/schema'
 
 type PendingServiceOperation = AcceptedServiceOperation &
   Readonly<{ previousDeploymentId: string | null }>
@@ -83,14 +83,13 @@ function ServiceRoute() {
   }
   const navigate = Route.useNavigate()
   const { q = '' } = Route.useSearch()
-  const notice = useRouterState({ select: (state) => readSelectionNotice(state.location.state) })
   return (
     <SelectionListPage
       dataError={servicesQuery.error}
       emptyMessage="No services are available."
       entities={services}
       label="Service"
-      notice={notice}
+      notice={undefined}
       query={q}
       selectionProgress={{
         environmentName: environment.name,

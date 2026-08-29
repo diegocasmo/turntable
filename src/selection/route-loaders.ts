@@ -12,11 +12,20 @@ type LoaderContext = Readonly<{
   queryClient: QueryClient
 }>
 
-function throwMissingSelection(href: string, message: string): never {
+function throwMissingProject(): never {
   throw redirect({
-    href,
     replace: true,
-    state: (state) => ({ ...state, selectionNotice: message }),
+    search: { notice: 'unavailable' },
+    to: '/projects',
+  })
+}
+
+function throwMissingEnvironment(projectId: string): never {
+  throw redirect({
+    params: { projectId },
+    replace: true,
+    search: { notice: 'unavailable' },
+    to: '/projects/$projectId/environments',
   })
 }
 
@@ -55,7 +64,7 @@ export async function loadProjectsRoute(context: LoaderContext) {
 export async function loadEnvironmentsRoute(context: LoaderContext, projectId: string) {
   const project = await readProjectForRoute(context.queryClient, projectId)
   if (!project) {
-    throwMissingSelection('/projects', 'The selected project is no longer available.')
+    throwMissingProject()
   }
   await context.queryClient.ensureQueryData(createEnvironmentsQueryOptions(projectId))
   return { project }
@@ -68,14 +77,11 @@ export async function loadServicesRoute(
 ) {
   const project = await readProjectForRoute(context.queryClient, projectId)
   if (!project) {
-    throwMissingSelection('/projects', 'The selected project is no longer available.')
+    throwMissingProject()
   }
   const environment = await readEnvironmentForRoute(context.queryClient, projectId, environmentId)
   if (!environment) {
-    throwMissingSelection(
-      `/projects/${projectId}/environments`,
-      'The selected environment is no longer available.',
-    )
+    throwMissingEnvironment(projectId)
   }
   await context.queryClient.ensureQueryData(createServicesQueryOptions(projectId, environmentId))
   return { environment, project }

@@ -119,6 +119,27 @@ describe('service collection route', () => {
     expect(within(breadcrumbs).getByText('Services')).toBeVisible()
   })
 
+  it('shows a missing environment notice until the user selects an environment', async () => {
+    readEnvironmentMock.mockResolvedValueOnce(null)
+    const page = renderRoutes(servicesPath)
+
+    expect(await screen.findByRole('heading', { name: 'Choose an environment' })).toBeVisible()
+    expect(page.router.state.location.href).toBe(
+      `/projects/${testRailwayProjectId}/environments?notice=unavailable`,
+    )
+    const selection = screen.getByRole('region', { name: 'Choose an environment' })
+    expect(within(selection).getByText('The selected environment is not available.')).toBeVisible()
+    fireEvent.click(screen.getByRole('link', { name: 'Select Production' }))
+
+    await waitFor(() => expect(page.router.state.location.href).toBe(servicesPath))
+    expect(await screen.findByRole('heading', { name: 'Services' })).toBeVisible()
+    expect(
+      within(screen.getByRole('region', { name: 'Services' })).queryByText(
+        'The selected environment is not available.',
+      ),
+    ).toBeNull()
+  })
+
   it('restores fuzzy search and renders non-navigating service cards', async () => {
     const listUrl = `${servicesPath}?q=wkr`
     renderRoutes(listUrl)
