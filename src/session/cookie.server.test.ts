@@ -13,16 +13,6 @@ import { readFirstCookie, runServerRequest } from '@/test/start-request'
 
 const currentDate = new Date('2027-01-15T08:00:00.000Z')
 
-function changeLastCharacter(value: string) {
-  const lastCharacter = value.at(-1)
-
-  if (lastCharacter === undefined) {
-    throw new Error('The value was empty.')
-  }
-
-  return `${value.slice(0, -1)}${lastCharacter === 'A' ? 'B' : 'A'}`
-}
-
 describe('framework session', () => {
   afterEach(() => {
     vi.useRealTimers()
@@ -73,7 +63,8 @@ describe('framework session', () => {
 
   it('rejects a changed cookie', async () => {
     const created = await runServerRequest(() => writeSession(testRailwayToken, testSessionSecret))
-    const changedCookie = changeLastCharacter(readFirstCookie(created.response))
+    const cookie = readFirstCookie(created.response)
+    const changedCookie = `${cookie.slice(0, -1)}${cookie.endsWith('A') ? 'B' : 'A'}`
     const { response, result } = await runServerRequest(() => readSession(testSessionSecret), {
       Cookie: changedCookie,
     })
