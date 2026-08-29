@@ -1,5 +1,11 @@
 import { clearSession, getSession, updateSession } from '@tanstack/react-start/server'
-import { invalidRailwayTokenMessage, railwayTokenSchema } from '@/session/schema'
+import {
+  invalidRailwayTokenMessage,
+  railwayTokenSchema,
+  type SessionNotice,
+  type SessionState,
+  sessionNoticeSchema,
+} from '@/session/schema'
 import { z } from '@/zod'
 
 export const sessionCookieName = '__Host-turntable'
@@ -10,6 +16,14 @@ export class InvalidSessionError extends Error {
 
   constructor() {
     super('The session is invalid or expired.')
+  }
+}
+
+export class SessionNoticeError extends Error {
+  override readonly name = 'SessionNoticeError'
+
+  constructor(readonly notice: SessionNotice) {
+    super('The session ended.')
   }
 }
 
@@ -29,11 +43,17 @@ function createSessionConfig(sessionSecret: string): Parameters<typeof getSessio
   }
 }
 
-const sessionDataSchema = z.object({
-  railwayToken: railwayTokenSchema,
-})
+const sessionDataSchema = z.union([
+  z.object({ railwayToken: railwayTokenSchema }),
+  z.object({ notice: sessionNoticeSchema }),
+])
 
 type SessionData = z.infer<typeof sessionDataSchema>
+
+function replaceSessionData(data: Record<string, unknown>, replacement: SessionData) {
+  for (const key of Object.keys(data)) delete data[key]
+  return replacement
+}
 
 export async function writeSession(token: string, sessionSecret: string) {
   if (!railwayTokenSchema.safeParse(token).success) {
@@ -43,10 +63,21 @@ export async function writeSession(token: string, sessionSecret: string) {
   const config = createSessionConfig(sessionSecret)
 
   await clearSession(config)
-  await updateSession<SessionData>(config, { railwayToken: token })
+  await updateSession<Record<string, unknown>>(config, (data) =>
+    replaceSessionData(data, { railwayToken: token }),
+  )
 }
 
-export async function readSession(sessionSecret: string) {
+export async function writeSessionNotice(notice: SessionNotice, sessionSecret: string) {
+  const config = createSessionConfig(sessionSecret)
+
+  await clearSession(config)
+  await updateSession<Record<string, unknown>>(config, (data) =>
+    replaceSessionData(data, { notice }),
+  )
+}
+
+async function readSessionData(sessionSecret: string) {
   const config = createSessionConfig(sessionSecret)
   const session = await getSession<SessionData>(config)
   const data = sessionDataSchema.safeParse(session.data)
@@ -57,7 +88,30 @@ export async function readSession(sessionSecret: string) {
     throw new InvalidSessionError()
   }
 
-  return data.data.railwayToken
+  return data.data
+}
+
+export async function readSession(sessionSecret: string) {
+  const data = await readSessionData(sessionSecret)
+
+  if ('notice' in data) {
+    throw new SessionNoticeError(data.notice)
+  }
+
+  return data.railwayToken
+}
+
+export async function readStoredSessionState(
+  sessionSecret: string,
+): Promise<Exclude<SessionState, 'signed-out'>> {
+  const data = await readSessionData(sessionSecret)
+
+  if ('railwayToken' in data) {
+    return 'authenticated'
+  }
+
+  await clearSessionCookie(sessionSecret)
+  return data.notice
 }
 
 export function clearSessionCookie(sessionSecret: string) {

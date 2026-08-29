@@ -1,13 +1,12 @@
 import { isRedirect } from '@tanstack/react-router'
 import { describe, expect, it } from 'vitest'
-import { RailwayGraphQLError, RailwayRateLimitError } from '@/railway/errors'
-import { sessionCookieName, writeSession } from '@/session/cookie.server'
+import { RailwayGraphQLError, RailwayHttpError, RailwayRateLimitError } from '@/railway/errors'
+import { writeSession } from '@/session/cookie.server'
+import { readSessionState } from '@/session/read-state.server'
 import { readWithRailwaySession } from '@/session/read-with-railway-session.server'
 import { testSessionSecret } from '@/test/fixtures'
 import { testRailwayToken } from '@/test/railway'
 import { readFirstCookie, runServerRequest } from '@/test/start-request'
-
-const clearedSessionCookie = `${sessionCookieName}=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Strict`
 
 async function createSessionCookie() {
   const created = await runServerRequest(() => writeSession(testRailwayToken, testSessionSecret))
@@ -45,16 +44,19 @@ describe('read with Railway session', () => {
       throw new Error('Expected the session read to fail.')
     }
     expectConnectRedirect(result.error)
-    expect(response.headers.get('set-cookie')).toBe(clearedSessionCookie)
+    const state = await runServerRequest(() => readSessionState(testSessionSecret, true), {
+      cookie: readFirstCookie(response),
+    })
+    expect(state.result).toEqual({ ok: true, value: 'expired' })
   })
 
-  it('redirects and clears the session after Railway rejects the stored token', async () => {
+  it.each([
+    ['GraphQL Not Authorized', new RailwayGraphQLError(['Not Authorized'])],
+    ['HTTP 401', new RailwayHttpError(401)],
+  ])('redirects with a rejection marker after Railway returns %s', async (_name, error) => {
     const cookie = await createSessionCookie()
     const { response, result } = await runServerRequest(
-      () =>
-        readWithRailwaySession(testSessionSecret, () =>
-          Promise.reject(new RailwayGraphQLError(['Not Authorized'])),
-        ),
+      () => readWithRailwaySession(testSessionSecret, () => Promise.reject(error)),
       { cookie },
     )
 
@@ -63,7 +65,10 @@ describe('read with Railway session', () => {
       throw new Error('Expected the Railway read to fail.')
     }
     expectConnectRedirect(result.error)
-    expect(response.headers.get('set-cookie')).toBe(clearedSessionCookie)
+    const state = await runServerRequest(() => readSessionState(testSessionSecret, true), {
+      cookie: readFirstCookie(response),
+    })
+    expect(state.result).toEqual({ ok: true, value: 'token-rejected' })
   })
 
   it.each([

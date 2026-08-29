@@ -1,15 +1,20 @@
 import type { ReactNode } from 'react'
 import { SignOutAction } from '@/session/components/sign-out-action'
 import { TokenForm } from '@/session/components/token-form'
-import type { SessionState } from '@/session/schema'
+import type { SessionNotice, SessionState } from '@/session/schema'
 
-type TurntablePageProps = Readonly<{
-  children?: ReactNode
-  sessionState: SessionState
-}>
+type TurntablePageProps = Readonly<{ children?: ReactNode; sessionState: SessionState }> &
+  (
+    | Readonly<{
+        sessionNotice: SessionNotice
+        onSessionNoticeDismiss: () => Promise<void>
+        onSessionNoticeSubmit: () => Promise<void>
+      }>
+    | Readonly<{ sessionNotice?: undefined }>
+  )
 
-export function TurntablePage({ children, sessionState }: TurntablePageProps) {
-  const authenticated = sessionState === 'authenticated'
+export function TurntablePage(props: TurntablePageProps) {
+  const authenticated = props.sessionState === 'authenticated'
   return (
     <div className="relative grid min-h-dvh grid-rows-[auto_1fr_auto] overflow-x-hidden bg-canvas text-text">
       <p aria-label="Session status" className="sr-only" role="status">
@@ -39,7 +44,7 @@ export function TurntablePage({ children, sessionState }: TurntablePageProps) {
                 <h2 id="connected-title" className="sr-only">
                   Connected to Railway
                 </h2>
-                {children}
+                {props.children}
               </section>
             </div>
           ) : (
@@ -68,7 +73,15 @@ export function TurntablePage({ children, sessionState }: TurntablePageProps) {
               </header>
 
               <div className="flex items-start p-6 sm:p-8 lg:min-h-[30rem] lg:items-center lg:p-12">
-                <TokenForm expired={sessionState === 'expired'} />
+                {props.sessionNotice ? (
+                  <TokenForm
+                    notice={props.sessionNotice}
+                    onNoticeDismiss={props.onSessionNoticeDismiss}
+                    onNoticeSubmit={props.onSessionNoticeSubmit}
+                  />
+                ) : (
+                  <TokenForm />
+                )}
               </div>
             </div>
           )}

@@ -13,11 +13,15 @@ export const railwayTokenSchema = z.string().check(
 
 export const sessionInputSchema = z.object({ token: railwayTokenSchema })
 
+export const sessionNoticeSchema = z.enum(['expired', 'token-rejected'])
+
 export const connectSearchSchema = z.object({
+  notice: sessionNoticeSchema.optional().catch(undefined),
   redirect: z
     .string()
     .regex(/^\/projects(?:[/?]|$)/u)
     .catch('/projects'),
 })
 
-export type SessionState = 'authenticated' | 'expired' | 'signed-out'
+export type SessionNotice = z.infer<typeof sessionNoticeSchema>
+export type SessionState = 'authenticated' | 'signed-out' | SessionNotice
