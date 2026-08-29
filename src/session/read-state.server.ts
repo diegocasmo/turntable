@@ -1,4 +1,4 @@
-import { InvalidSessionError, readSession } from '@/session/cookie.server'
+import { InvalidSessionError, readStoredSessionState } from '@/session/cookie.server'
 import type { SessionState } from '@/session/schema'
 
 export async function readSessionState(
@@ -10,8 +10,7 @@ export async function readSessionState(
   }
 
   try {
-    await readSession(sessionSecret)
-    return 'authenticated'
+    return await readStoredSessionState(sessionSecret)
   } catch (error) {
     if (error instanceof InvalidSessionError) {
       return 'expired'

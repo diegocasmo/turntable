@@ -85,18 +85,25 @@ describe('progressive project and environment routes', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('shows the missing project notice from the URL until the user searches', async () => {
+  it('keeps the missing project warning through search until dismissal', async () => {
     const page = renderRoutes('/projects?notice=unavailable')
 
     expect(await screen.findByRole('heading', { name: 'Choose a project' })).toBeVisible()
     const selection = screen.getByRole('region', { name: 'Choose a project' })
-    expect(within(selection).getByText('The selected project is not available.')).toBeVisible()
-    fireEvent.change(screen.getByRole('searchbox', { name: 'Search projects' }), {
+    expect(
+      within(selection).getByRole('status', { name: 'Project unavailable' }),
+    ).toHaveTextContent('Project unavailableChoose another project to continue.')
+    const search = screen.getByRole('searchbox', { name: 'Search projects' })
+    fireEvent.change(search, {
       target: { value: 'worker' },
     })
 
+    await waitFor(() =>
+      expect(page.router.state.location.href).toBe('/projects?notice=unavailable&q=worker'),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss project unavailable warning' }))
     await waitFor(() => expect(page.router.state.location.href).toBe('/projects?q=worker'))
-    expect(within(selection).queryByText('The selected project is not available.')).toBeNull()
+    expect(search).toHaveFocus()
   })
 
   it('rejects an unknown notice value', async () => {
@@ -105,7 +112,7 @@ describe('progressive project and environment routes', () => {
     expect(await screen.findByRole('heading', { name: 'Choose a project' })).toBeVisible()
     expect(page.router.state.location.href).toBe('/projects')
     const selection = screen.getByRole('region', { name: 'Choose a project' })
-    expect(within(selection).queryByText('The selected project is not available.')).toBeNull()
+    expect(within(selection).queryByText('Project unavailable')).toBeNull()
   })
 
   it('replaces q while typing and clears it for normal card navigation', async () => {

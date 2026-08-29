@@ -10,6 +10,7 @@ import {
 import { createEnvironmentsQueryOptions } from '@/selection/queries'
 import { loadEnvironmentsRoute } from '@/selection/route-loaders'
 import { entitySearchSchema } from '@/selection/schema'
+import { useClearSelectionNotice } from '@/selection/use-clear-selection-notice'
 
 const environmentRouteStateProgress: SelectionProgress = { step: 'environment' }
 
@@ -46,17 +47,37 @@ function EnvironmentRoute() {
   const environments = useSuspenseQuery(createEnvironmentsQueryOptions(projectId)).data
   const navigate = Route.useNavigate()
   const { notice, q = '' } = Route.useSearch()
+  const clearSelectionNotice = useClearSelectionNotice(notice, q)
   return (
     <SelectionListPage
       emptyMessage="No environments are available."
       entities={environments}
       label="Environment"
-      notice={notice ? 'The selected environment is not available.' : undefined}
+      notice={
+        notice
+          ? {
+              message: 'Choose another environment to continue.',
+              title: 'Environment unavailable',
+              onDismiss: () =>
+                navigate({
+                  replace: true,
+                  search: q === '' ? {} : { q },
+                  viewTransition: true,
+                }),
+            }
+          : undefined
+      }
       query={q}
       selectionProgress={{ projectName: project.name, step: 'environment' }}
       title="Choose an environment"
       onQueryChange={(query) =>
-        void navigate({ replace: true, search: query === '' ? {} : { q: query } })
+        void navigate({
+          replace: true,
+          search: {
+            ...(notice ? { notice } : {}),
+            ...(query === '' ? {} : { q: query }),
+          },
+        })
       }
       renderCard={(environment) => (
         <EntityCard
@@ -65,9 +86,11 @@ function EnvironmentRoute() {
             <Link
               aria-label={`Select ${environment.name}`}
               className={primaryActionClassName}
+              viewTransition
               params={{ environmentId: environment.id, projectId }}
               search={{}}
               to="/projects/$projectId/environments/$environmentId/services"
+              onClick={clearSelectionNotice}
             >
               {content}
             </Link>

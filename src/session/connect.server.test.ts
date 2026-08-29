@@ -39,10 +39,11 @@ describe('connect Railway session', () => {
     })
   })
 
-  it('returns clear guidance for a rejected token', async () => {
-    const fetchRequest = vi.fn(async () =>
-      Response.json({ errors: [{ message: 'Not Authorized' }] }),
-    )
+  it.each([
+    ['GraphQL Not Authorized', () => Response.json({ errors: [{ message: 'Not Authorized' }] })],
+    ['HTTP 401', () => new Response(null, { status: 401 })],
+  ])('returns clear guidance for %s', async (_name, response) => {
+    const fetchRequest = vi.fn(async () => response())
     const { result } = await runServerRequest(() =>
       connectRailwaySession(testRailwayToken, sessionConfig, fetchRequest),
     )

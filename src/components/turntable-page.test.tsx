@@ -59,10 +59,18 @@ function renderComponent(options: RenderOptions = {}) {
 
   function Component() {
     const currentSession = pageRoute.useLoaderData() ?? sessionState
-    return (
-      <TurntablePage sessionState={currentSession}>
-        {options.children ?? <h1 id="selection-page-title">Choose a project</h1>}
+    const content = options.children ?? <h1 id="selection-page-title">Choose a project</h1>
+    return currentSession === 'expired' ? (
+      <TurntablePage
+        sessionNotice="expired"
+        sessionState={currentSession}
+        onSessionNoticeDismiss={async () => undefined}
+        onSessionNoticeSubmit={async () => undefined}
+      >
+        {content}
       </TurntablePage>
+    ) : (
+      <TurntablePage sessionState={currentSession}>{content}</TurntablePage>
     )
   }
 
@@ -97,7 +105,9 @@ describe('token and session shell', () => {
     expect(within(main).getByRole('heading', { level: 1, name: 'Turntable' })).toBeVisible()
     expect(within(main).getByLabelText('Railway API token')).toBeRequired()
     expect(within(main).getByRole('button', { name: 'Connect to Railway' })).toBeEnabled()
-    expect(within(main).getByRole('alert')).toHaveTextContent(/session expired/i)
+    expect(within(main).getByRole('alert')).toHaveTextContent(
+      'Session expiredEnter your Railway API token to reconnect.',
+    )
     const tokenLink = within(main).getByRole('link', {
       name: "Railway's token page (opens in a new tab)",
     })
