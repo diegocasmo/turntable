@@ -1,19 +1,15 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { spinDownRailwayDeployment } from '@/deployment/spin-down-deployment.server'
 import { spinUpRailwayDeployment } from '@/deployment/spin-up-deployment.server'
 import { RailwayGraphQLError } from '@/railway/errors'
-import { testRailwayApiUrl, testRailwayToken } from '@/test/railway'
+import { createRailwayFetch, testRailwayApiUrl, testRailwayToken } from '@/test/railway'
 
 const deploymentId = 'deployment-to-remove'
 const target = { environmentId: 'environment-1', projectId: 'project-1', serviceId: 'service-1' }
 
-function createFetch(response: Response) {
-  return vi.fn(async (_request: Request) => response)
-}
-
 describe('spin down Railway deployment', () => {
   it('removes the given deployment', async () => {
-    const fetchRequest = createFetch(Response.json({ data: { deploymentRemove: true } }))
+    const fetchRequest = createRailwayFetch({ data: { deploymentRemove: true } })
 
     await expect(
       spinDownRailwayDeployment(testRailwayToken, testRailwayApiUrl, deploymentId, fetchRequest),
@@ -24,7 +20,7 @@ describe('spin down Railway deployment', () => {
   })
 
   it('rejects a false result', async () => {
-    const fetchRequest = createFetch(Response.json({ data: { deploymentRemove: false } }))
+    const fetchRequest = createRailwayFetch({ data: { deploymentRemove: false } })
 
     await expect(
       spinDownRailwayDeployment(testRailwayToken, testRailwayApiUrl, deploymentId, fetchRequest),
@@ -32,9 +28,9 @@ describe('spin down Railway deployment', () => {
   })
 
   it('does not retry a GraphQL error', async () => {
-    const fetchRequest = createFetch(
-      Response.json({ errors: [{ message: 'Deployment cannot be removed' }] }),
-    )
+    const fetchRequest = createRailwayFetch({
+      errors: [{ message: 'Deployment cannot be removed' }],
+    })
 
     await expect(
       spinDownRailwayDeployment(testRailwayToken, testRailwayApiUrl, deploymentId, fetchRequest),
@@ -45,9 +41,7 @@ describe('spin down Railway deployment', () => {
 
 describe('spin up Railway deployment', () => {
   it('returns and validates the new deployment ID', async () => {
-    const fetchRequest = createFetch(
-      Response.json({ data: { serviceInstanceDeployV2: 'new-deployment' } }),
-    )
+    const fetchRequest = createRailwayFetch({ data: { serviceInstanceDeployV2: 'new-deployment' } })
 
     await expect(
       spinUpRailwayDeployment(testRailwayToken, testRailwayApiUrl, target, fetchRequest),
@@ -60,7 +54,7 @@ describe('spin up Railway deployment', () => {
         testRailwayToken,
         testRailwayApiUrl,
         target,
-        createFetch(Response.json({ data: { serviceInstanceDeployV2: '' } })),
+        createRailwayFetch({ data: { serviceInstanceDeployV2: '' } }),
       ),
     ).rejects.toThrow()
   })
