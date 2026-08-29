@@ -24,11 +24,7 @@ function createTokenVerificationError(error: unknown) {
     return new SessionConnectionError(rejectedRailwayTokenMessage)
   }
 
-  if (error instanceof RailwayGraphQLError) {
-    return new SessionConnectionError(error.message)
-  }
-
-  if (error instanceof RailwayRateLimitError) {
+  if (error instanceof RailwayGraphQLError || error instanceof RailwayRateLimitError) {
     return new SessionConnectionError(error.message)
   }
 
