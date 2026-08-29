@@ -10,6 +10,7 @@ import {
   SessionNoticeError,
   writeSessionNotice,
 } from '@/session/cookie.server'
+import type { SessionNotice } from '@/session/schema'
 
 function createRailwayReadError(error: unknown) {
   if (error instanceof RailwayGraphQLError || error instanceof RailwayRateLimitError) {
@@ -19,8 +20,12 @@ function createRailwayReadError(error: unknown) {
   return new Error('Turntable could not load Railway data. Try again.')
 }
 
-function createConnectRedirect() {
-  return redirect({ reloadDocument: true, search: true, to: '/' })
+function createConnectRedirect(notice: SessionNotice) {
+  return redirect({
+    reloadDocument: true,
+    search: { notice, redirect: '/projects' },
+    to: '/connect',
+  })
 }
 
 export async function readWithRailwaySession<Value>(
@@ -33,17 +38,17 @@ export async function readWithRailwaySession<Value>(
   } catch (error) {
     if (error instanceof InvalidSessionError) {
       await writeSessionNotice('expired', sessionSecret)
-      throw createConnectRedirect()
+      throw createConnectRedirect('expired')
     }
 
     if (error instanceof SessionNoticeError) {
       await writeSessionNotice(error.notice, sessionSecret)
-      throw createConnectRedirect()
+      throw createConnectRedirect(error.notice)
     }
 
     if (checkRailwayUnauthorized(error)) {
       await writeSessionNotice('token-rejected', sessionSecret)
-      throw createConnectRedirect()
+      throw createConnectRedirect('token-rejected')
     }
 
     throw createRailwayReadError(error)
