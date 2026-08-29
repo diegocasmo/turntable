@@ -1,20 +1,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
-import { useServerFn } from '@tanstack/react-start'
 import { useRef } from 'react'
 import { connectToRailway } from '@/session/connect-to-railway'
 
 export function useConnectSession() {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const connect = useServerFn(connectToRailway)
   const token = useRef('')
 
   const mutation = useMutation({
     gcTime: 0,
     mutationFn: async () => {
       try {
-        return await connect({ data: { token: token.current } })
+        return await connectToRailway({ data: { token: token.current } })
       } finally {
         token.current = ''
       }
