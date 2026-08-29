@@ -37,3 +37,10 @@ export class RailwayResponseError extends Error {
     super('Railway returned an invalid response.')
   }
 }
+
+export function checkRailwayUnauthorized(error: unknown) {
+  return (
+    (error instanceof RailwayGraphQLError && error.isUnauthorized) ||
+    (error instanceof RailwayHttpError && error.status === 401)
+  )
+}

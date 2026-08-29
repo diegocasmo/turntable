@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { TurntablePage } from '@/components/turntable-page'
+import { queryKeys } from '@/query-keys'
 import { connectSearchSchema } from '@/session/schema'
 
 export const Route = createFileRoute('/connect')({
@@ -8,11 +9,43 @@ export const Route = createFileRoute('/connect')({
     if (context.sessionState === 'authenticated') {
       throw redirect({ href: search.redirect, replace: true })
     }
+
+    if (
+      (context.sessionState === 'expired' || context.sessionState === 'token-rejected') &&
+      search.notice !== context.sessionState
+    ) {
+      throw redirect({
+        replace: true,
+        search: { ...search, notice: context.sessionState },
+        to: '/connect',
+      })
+    }
   },
   component: ConnectRoute,
 })
 
 function ConnectRoute() {
-  const { sessionState } = Route.useRouteContext()
-  return <TurntablePage sessionState={sessionState} />
+  const { queryClient, sessionState } = Route.useRouteContext()
+  const { notice, redirect: destination } = Route.useSearch()
+  const navigate = Route.useNavigate()
+
+  async function clearSessionNotice() {
+    queryClient.setQueryData(queryKeys.session.read, 'signed-out')
+    await navigate({
+      replace: true,
+      search: { redirect: destination },
+      viewTransition: true,
+    })
+  }
+
+  return notice ? (
+    <TurntablePage
+      sessionNotice={notice}
+      sessionState={sessionState}
+      onSessionNoticeDismiss={clearSessionNotice}
+      onSessionNoticeSubmit={clearSessionNotice}
+    />
+  ) : (
+    <TurntablePage sessionState={sessionState} />
+  )
 }

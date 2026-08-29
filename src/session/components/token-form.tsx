@@ -2,24 +2,39 @@ import { ArrowSquareOutIcon } from '@phosphor-icons/react/ArrowSquareOut'
 import { WarningIcon } from '@phosphor-icons/react/Warning'
 import { useForm } from '@tanstack/react-form'
 import { useHydrated } from '@tanstack/react-router'
-import type { SubmitEvent } from 'react'
+import { type SubmitEvent, useId, useRef } from 'react'
 import { AsyncButton } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { WarningNotice } from '@/components/ui/warning-notice'
 import { railwayTokensUrl } from '@/railway/urls'
 import { rejectedRailwayTokenMessage } from '@/session/connection-errors'
 import { useConnectSession } from '@/session/hooks/use-connect-session'
-import { sessionInputSchema } from '@/session/schema'
+import { type SessionNotice, sessionInputSchema } from '@/session/schema'
 
-type TokenFormProps = Readonly<{
-  expired: boolean
-}>
+type TokenFormProps =
+  | Readonly<{
+      notice: SessionNotice
+      onNoticeDismiss: () => Promise<void>
+      onNoticeSubmit: () => Promise<void>
+    }>
+  | Readonly<{ notice?: undefined }>
+
+const noticeContent: Record<SessionNotice, Readonly<{ message: string; title: string }>> = {
+  expired: {
+    message: 'Enter your Railway API token to reconnect.',
+    title: 'Session expired',
+  },
+  'token-rejected': {
+    message: 'Railway did not accept the previous token. Enter a valid token to reconnect.',
+    title: 'Railway connection ended',
+  },
+}
 
 function renderFeedback(
   tokenErrorMessage: string | undefined,
   error: Error | null,
   errorId: string,
-  expired: boolean,
   pending: boolean,
 ) {
   const hasAlert = Boolean(tokenErrorMessage) || error !== null
@@ -36,16 +51,6 @@ function renderFeedback(
       </p>
     )
   }
-  if (expired) {
-    return (
-      <p
-        role="alert"
-        className="border-l-2 border-warning pl-3 text-sm leading-6 text-warning-text"
-      >
-        Your session expired. Enter your Railway API token again.
-      </p>
-    )
-  }
   if (pending) {
     return (
       <p role="status" className="text-sm leading-6 text-text-soft">
@@ -56,19 +61,30 @@ function renderFeedback(
   return null
 }
 
-export function TokenForm({ expired }: TokenFormProps) {
+export function TokenForm(props: TokenFormProps) {
   const hydrated = useHydrated()
   const session = useConnectSession()
   const pending = session.isPending
+  const inputRef = useRef<HTMLInputElement>(null)
+  const noticeDescriptionId = useId()
+  const inputNoticeDescriptionId = props.notice ? noticeDescriptionId : undefined
   const form = useForm({
     defaultValues: { token: '' },
     onSubmit: ({ value }) => session.connect(value.token),
     validators: { onSubmit: sessionInputSchema },
   })
 
-  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+  async function handleNoticeDismiss() {
+    if (!props.notice) return
+
+    await props.onNoticeDismiss()
+    inputRef.current?.focus({ preventScroll: true })
+  }
+
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
-    void form.handleSubmit()
+    if (props.notice) await props.onNoticeSubmit()
+    await form.handleSubmit()
   }
 
   return (
@@ -91,6 +107,18 @@ export function TokenForm({ expired }: TokenFormProps) {
         .
       </p>
 
+      {props.notice ? (
+        <div className="mt-6">
+          <WarningNotice
+            descriptionId={noticeDescriptionId}
+            message={noticeContent[props.notice].message}
+            title={noticeContent[props.notice].title}
+            urgency="assertive"
+            onDismiss={() => void handleNoticeDismiss()}
+          />
+        </div>
+      ) : null}
+
       <form.Field name="token">
         {(field) => {
           const validationError = field.state.meta.errors[0]
@@ -109,10 +137,11 @@ export function TokenForm({ expired }: TokenFormProps) {
                   Railway API token
                 </Label>
                 <Input
+                  ref={inputRef}
                   id="railway-token"
                   type="password"
                   required
-                  aria-describedby={tokenErrorMessage ? errorId : undefined}
+                  aria-describedby={tokenErrorMessage ? errorId : inputNoticeDescriptionId}
                   aria-invalid={tokenErrorMessage ? true : undefined}
                   autoComplete="off"
                   disabled={!hydrated || pending}
@@ -137,7 +166,7 @@ export function TokenForm({ expired }: TokenFormProps) {
                 {pending ? 'Connecting...' : 'Connect to Railway'}
               </AsyncButton>
               <div className="mt-4 min-h-12">
-                {renderFeedback(tokenErrorMessage, session.error, errorId, expired, pending)}
+                {renderFeedback(tokenErrorMessage, session.error, errorId, pending)}
               </div>
             </>
           )

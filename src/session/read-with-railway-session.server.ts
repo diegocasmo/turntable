@@ -1,6 +1,15 @@
 import { redirect } from '@tanstack/react-router'
-import { RailwayGraphQLError, RailwayRateLimitError } from '@/railway/errors'
-import { clearSessionCookie, InvalidSessionError, readSession } from '@/session/cookie.server'
+import {
+  checkRailwayUnauthorized,
+  RailwayGraphQLError,
+  RailwayRateLimitError,
+} from '@/railway/errors'
+import {
+  InvalidSessionError,
+  readSession,
+  SessionNoticeError,
+  writeSessionNotice,
+} from '@/session/cookie.server'
 
 function createRailwayReadError(error: unknown) {
   if (error instanceof RailwayGraphQLError || error instanceof RailwayRateLimitError) {
@@ -23,11 +32,17 @@ export async function readWithRailwaySession<Value>(
     return await readValue(token)
   } catch (error) {
     if (error instanceof InvalidSessionError) {
+      await writeSessionNotice('expired', sessionSecret)
       throw createConnectRedirect()
     }
 
-    if (error instanceof RailwayGraphQLError && error.isUnauthorized) {
-      await clearSessionCookie(sessionSecret)
+    if (error instanceof SessionNoticeError) {
+      await writeSessionNotice(error.notice, sessionSecret)
+      throw createConnectRedirect()
+    }
+
+    if (checkRailwayUnauthorized(error)) {
+      await writeSessionNotice('token-rejected', sessionSecret)
       throw createConnectRedirect()
     }
 

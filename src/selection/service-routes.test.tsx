@@ -1,3 +1,4 @@
+import type { QueryClient } from '@tanstack/react-query'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -26,7 +27,7 @@ const {
   readProjectsMock: vi.fn(),
   readServicesMock: vi.fn(),
   session: {
-    current: 'authenticated' as 'authenticated' | 'expired' | 'signed-out',
+    current: 'authenticated' as 'authenticated' | 'expired' | 'signed-out' | 'token-rejected',
   },
   spinDownMock: vi.fn(),
   spinUpMock: vi.fn(),
@@ -36,8 +37,10 @@ vi.mock('@/routes/__root', async () => {
   const router =
     await vi.importActual<typeof import('@tanstack/react-router')>('@tanstack/react-router')
   return {
-    Route: router.createRootRoute({
-      beforeLoad: () => ({ sessionState: session.current }),
+    Route: router.createRootRouteWithContext<{ queryClient: QueryClient }>()({
+      beforeLoad: ({ context }) => ({
+        sessionState: context.queryClient.getQueryData(['session']) ?? session.current,
+      }),
       component: router.Outlet,
       notFoundComponent: () => <h1>Page not found</h1>,
     }),
@@ -128,16 +131,46 @@ describe('service collection route', () => {
       `/projects/${testRailwayProjectId}/environments?notice=unavailable`,
     )
     const selection = screen.getByRole('region', { name: 'Choose an environment' })
-    expect(within(selection).getByText('The selected environment is not available.')).toBeVisible()
+    expect(
+      within(selection).getByRole('status', { name: 'Environment unavailable' }),
+    ).toHaveTextContent('Environment unavailableChoose another environment to continue.')
     fireEvent.click(screen.getByRole('link', { name: 'Select Production' }))
 
     await waitFor(() => expect(page.router.state.location.href).toBe(servicesPath))
     expect(await screen.findByRole('heading', { name: 'Services' })).toBeVisible()
     expect(
       within(screen.getByRole('region', { name: 'Services' })).queryByText(
-        'The selected environment is not available.',
+        'Environment unavailable',
       ),
     ).toBeNull()
+    page.router.history.back()
+    await waitFor(() =>
+      expect(page.router.state.location.href).toBe(
+        `/projects/${testRailwayProjectId}/environments`,
+      ),
+    )
+    expect(screen.queryByText('Environment unavailable')).toBeNull()
+  })
+
+  it.each([
+    ['expired', 'Session expired', 'Enter your Railway API token to reconnect.'],
+    [
+      'token-rejected',
+      'Railway connection ended',
+      'Railway did not accept the previous token. Enter a valid token to reconnect.',
+    ],
+  ] as const)('shows and dismisses the %s session warning', async (state, title, message) => {
+    session.current = state
+    const page = renderRoutes(servicesPath)
+    const alert = await screen.findByRole('alert')
+    const token = screen.getByLabelText('Railway API token')
+
+    expect(alert).toHaveTextContent(`${title}${message}`)
+    expect(token).toHaveAccessibleDescription(message)
+    fireEvent.click(screen.getByRole('button', { name: /Dismiss .* warning/i }))
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
+    expect(page.router.state.location.href).not.toContain('notice=')
+    expect(token).toHaveFocus()
   })
 
   it('restores fuzzy search and renders non-navigating service cards', async () => {

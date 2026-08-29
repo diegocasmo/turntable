@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useId } from 'react'
 import { Button } from '@/components/ui/button'
+import { WarningNotice } from '@/components/ui/warning-notice'
 import {
   SelectionBreadcrumbs,
   type SelectionProgress,
@@ -9,6 +10,11 @@ type EntitySelectionPageProps = Readonly<{
   children: ReactNode
   feedback?: string
   feedbackKind?: 'alert' | 'status'
+  notice?: Readonly<{
+    message: string
+    onDismiss: () => void
+    title: string
+  }>
   selectionProgress: SelectionProgress
   title: string
 }>
@@ -23,9 +29,12 @@ export function EntitySelectionPage({
   children,
   feedback,
   feedbackKind = 'status',
+  notice,
   selectionProgress,
   title,
 }: EntitySelectionPageProps) {
+  const noticeDescriptionId = useId()
+
   return (
     <section aria-labelledby="selection-page-title" className="grid min-w-0 gap-6">
       <SelectionBreadcrumbs progress={selectionProgress} />
@@ -35,6 +44,7 @@ export function EntitySelectionPage({
         </p>
         <h1
           ref={focusHeading}
+          aria-describedby={notice ? noticeDescriptionId : undefined}
           id="selection-page-title"
           tabIndex={-1}
           className="mt-2 break-words text-4xl leading-none tracking-[-0.04em] outline-none sm:text-5xl"
@@ -42,13 +52,27 @@ export function EntitySelectionPage({
           {title}
         </h1>
       </div>
-      <p
-        aria-live="polite"
-        role={feedbackKind}
-        className={`min-h-6 text-sm ${feedbackKind === 'alert' ? 'text-danger-text' : 'text-text-soft'}`}
-      >
-        {feedback}
-      </p>
+      {notice ? (
+        <WarningNotice
+          descriptionId={noticeDescriptionId}
+          message={notice.message}
+          title={notice.title}
+          urgency="polite"
+          onDismiss={notice.onDismiss}
+        />
+      ) : (
+        feedback && (
+          <p
+            aria-live="polite"
+            role={feedbackKind}
+            className={
+              feedbackKind === 'alert' ? 'text-sm text-danger-text' : 'text-sm text-text-soft'
+            }
+          >
+            {feedback}
+          </p>
+        )
+      )}
       <div className="grid min-w-0 gap-6">{children}</div>
     </section>
   )

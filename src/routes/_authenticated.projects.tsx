@@ -10,6 +10,7 @@ import {
 import { createProjectsQueryOptions } from '@/selection/queries'
 import { loadProjectsRoute } from '@/selection/route-loaders'
 import { entitySearchSchema } from '@/selection/schema'
+import { useClearSelectionNotice } from '@/selection/use-clear-selection-notice'
 
 const projectSelectionProgress: SelectionProgress = { step: 'project' }
 
@@ -41,6 +42,7 @@ function ProjectRoute() {
   const projects = useSuspenseQuery(createProjectsQueryOptions()).data
   const navigate = Route.useNavigate()
   const { notice, q = '' } = Route.useSearch()
+  const clearSelectionNotice = useClearSelectionNotice(notice, q)
 
   return (
     <SelectionListPage
@@ -50,12 +52,31 @@ function ProjectRoute() {
         ...(project.workspace ? { description: project.workspace.name } : {}),
       }))}
       label="Project"
-      notice={notice ? 'The selected project is not available.' : undefined}
+      notice={
+        notice
+          ? {
+              message: 'Choose another project to continue.',
+              title: 'Project unavailable',
+              onDismiss: () =>
+                navigate({
+                  replace: true,
+                  search: q === '' ? {} : { q },
+                  viewTransition: true,
+                }),
+            }
+          : undefined
+      }
       query={q}
       selectionProgress={projectSelectionProgress}
       title="Choose a project"
       onQueryChange={(query) =>
-        void navigate({ replace: true, search: query === '' ? {} : { q: query } })
+        void navigate({
+          replace: true,
+          search: {
+            ...(notice ? { notice } : {}),
+            ...(query === '' ? {} : { q: query }),
+          },
+        })
       }
       renderCard={(project) => (
         <EntityCard
@@ -64,9 +85,11 @@ function ProjectRoute() {
             <Link
               aria-label={`Select ${project.name}${project.description ? ` in ${project.description}` : ''}`}
               className={primaryActionClassName}
+              viewTransition
               params={{ projectId: project.id }}
               search={{}}
               to="/projects/$projectId/environments"
+              onClick={clearSelectionNotice}
             >
               {content}
             </Link>
