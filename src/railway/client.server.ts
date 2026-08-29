@@ -30,11 +30,6 @@ function decodeResponseBody(text: string): unknown {
   }
 }
 
-async function readResponseBody(response: Response) {
-  const text = await response.text()
-  return z.json().parse(decodeResponseBody(text))
-}
-
 export function createRailwayClient({
   apiUrl,
   fetch: fetchRequest = globalThis.fetch,
@@ -52,7 +47,7 @@ export function createRailwayClient({
         signal: input.signal ?? null,
       })
       const response = await fetchRequest(request)
-      const body = await readResponseBody(response)
+      const body = z.json().parse(decodeResponseBody(await response.text()))
 
       if (response.status === 429) {
         throw new RailwayRateLimitError()
