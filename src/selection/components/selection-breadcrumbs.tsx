@@ -24,8 +24,8 @@ type SelectionBreadcrumbsProps = Readonly<{
 
 const breadcrumbTooltipDelayMilliseconds = 100
 const itemClassName =
-  'inline-flex min-h-8 min-w-0 items-center rounded-control font-label text-xs font-semibold uppercase tracking-[0.1em] outline-none focus-visible:outline-[3px] focus-visible:outline-offset-1 focus-visible:outline-focus'
-const linkClassName = `${itemClassName} flex-1 text-accent underline decoration-1 underline-offset-4 hover:text-accent-hover focus-visible:bg-accent focus-visible:text-accent-contrast`
+  'min-h-8 min-w-0 rounded-control font-label text-xs font-semibold uppercase tracking-[0.1em] outline-none focus-visible:outline-[3px] focus-visible:outline-offset-1 focus-visible:outline-focus'
+const linkClassName = `${itemClassName} block shrink truncate leading-8 text-accent underline decoration-1 underline-offset-4 hover:text-accent-hover focus-visible:bg-accent focus-visible:text-accent-contrast`
 
 function readStepLabel(step: 'Environment' | 'Project', name?: string) {
   return name ? `${step}: ${name}` : step
@@ -51,11 +51,11 @@ function createSelectionBreadcrumbSteps(
         activeOptions={{ exact: true }}
         activeProps={{}}
         aria-label={projectLabel}
-        className={`${linkClassName} pr-1`}
+        className={`${linkClassName} max-w-64 pr-1`}
         search={{}}
         to="/projects"
       >
-        <span className="min-w-0 truncate">{projectLabel}</span>
+        {projectLabel}
       </Link>
     ),
   }
@@ -79,12 +79,12 @@ function createSelectionBreadcrumbSteps(
           activeOptions={{ exact: true }}
           activeProps={{}}
           aria-label={environmentLabel}
-          className={`${linkClassName} px-1`}
+          className={`${linkClassName} max-w-80 px-1`}
           params={{ projectId: progress.projectId }}
           search={{}}
           to="/projects/$projectId/environments"
         >
-          <span className="min-w-0 truncate">{environmentLabel}</span>
+          {environmentLabel}
         </Link>
       ),
     },
@@ -103,7 +103,7 @@ function DisabledBreadcrumb({
       <Tooltip.Trigger
         aria-describedby={descriptionId}
         aria-disabled="true"
-        className={`${itemClassName} cursor-help border-0 bg-transparent px-1 text-text-muted focus-visible:bg-panel-raised focus-visible:text-text`}
+        className={`${itemClassName} inline-flex cursor-help items-center border-0 bg-transparent px-1 text-text-muted focus-visible:bg-panel-raised focus-visible:text-text`}
       >
         {label}
       </Tooltip.Trigger>
@@ -151,7 +151,7 @@ function renderStep(step: SelectionBreadcrumbStep, isFirst: boolean) {
     return (
       <span
         aria-current="page"
-        className={`${itemClassName} ${isFirst ? 'pr-1' : 'px-1'} text-text`}
+        className={`${itemClassName} ${isFirst ? 'pr-1' : 'px-1'} inline-flex items-center text-text`}
       >
         {step.label}
       </span>
@@ -166,12 +166,12 @@ export function SelectionBreadcrumbs({ progress }: SelectionBreadcrumbsProps) {
 
   return (
     <Tooltip.Provider delay={breadcrumbTooltipDelayMilliseconds}>
-      <nav aria-label="Selection progress">
-        <ol className="flex min-w-0 items-center gap-2">
+      <nav aria-label="Selection progress" className="min-w-0 max-w-full">
+        <ol className="flex w-full min-w-0 max-w-full items-center gap-2">
           {steps.map((step, index) => (
             <li
               key={`${step.label}-${step.kind}`}
-              className={`${step.kind === 'link' ? 'shrink' : 'shrink-0'} flex min-w-0 items-center gap-2`}
+              className={`${step.kind === 'link' ? 'shrink' : 'shrink-0'} flex min-w-0 max-w-full items-center gap-2`}
             >
               {index === 0 ? null : (
                 <CaretRightIcon

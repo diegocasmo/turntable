@@ -81,7 +81,9 @@ export function EntityCardGrid<Entity extends SelectionEntity>({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {entities.map((entity) => (
-        <div key={entity.id}>{renderCard(entity)}</div>
+        <div key={entity.id} className="min-w-0">
+          {renderCard(entity)}
+        </div>
       ))}
     </div>
   )
