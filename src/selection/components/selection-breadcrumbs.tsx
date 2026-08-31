@@ -171,7 +171,7 @@ export function SelectionBreadcrumbs({ progress }: SelectionBreadcrumbsProps) {
           {steps.map((step, index) => (
             <li
               key={`${step.label}-${step.kind}`}
-              className={`${step.kind === 'link' ? 'flex-1' : 'shrink-0'} flex min-w-0 items-center gap-2`}
+              className={`${step.kind === 'link' ? 'shrink' : 'shrink-0'} flex min-w-0 items-center gap-2`}
             >
               {index === 0 ? null : (
                 <CaretRightIcon

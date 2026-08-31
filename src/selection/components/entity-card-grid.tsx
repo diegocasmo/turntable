@@ -28,7 +28,9 @@ export function EntityCard<Entity extends SelectionEntity>({
 }: EntityCardProps<Entity>) {
   const content = (
     <>
-      <span className="block break-words font-semibold text-text">{entity.name}</span>
+      <span className="block truncate font-semibold text-text" title={entity.name}>
+        {entity.name}
+      </span>
       {entity.description ? (
         <span className="mt-2 block break-words font-label text-xs text-text-soft">
           {entity.description}

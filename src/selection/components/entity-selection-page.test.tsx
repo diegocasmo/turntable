@@ -18,7 +18,7 @@ describe('EntitySelectionPage', () => {
     const breadcrumb = screen.getByRole('navigation', { name: 'Selection progress' })
 
     expect(within(breadcrumb).queryByText('Home')).not.toBeInTheDocument()
-    expect(within(breadcrumb).getByText('Project')).toHaveClass('pr-1')
+    expect(within(breadcrumb).getByText('Project')).toBeVisible()
     expect(within(breadcrumb).queryByRole('link', { name: 'Project' })).not.toBeInTheDocument()
     expect(within(breadcrumb).getByRole('button', { name: 'Environment' })).toBeVisible()
   })

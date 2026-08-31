@@ -112,7 +112,7 @@ describe('service collection route', () => {
     services.resolve([])
   })
 
-  it('aligns and truncates long breadcrumb links without changing their accessible names', async () => {
+  it('keeps long breadcrumb links accessible and exposes the full focused label', async () => {
     const projectName = 'Turntable project with a very long name'
     const environmentName = 'Production environment with a very long name'
     readProjectMock.mockResolvedValueOnce(createRailwayProject({ name: projectName }))
@@ -128,13 +128,24 @@ describe('service collection route', () => {
     const projectLink = within(breadcrumb).getByRole('link', { name: projectLabel })
     const environmentLink = within(breadcrumb).getByRole('link', { name: environmentLabel })
 
-    expect(projectLink).toHaveClass('pr-1')
-    expect(projectLink).not.toHaveClass('pl-1')
-    expect(within(projectLink).getByText(projectLabel)).toHaveClass('truncate')
-    expect(within(environmentLink).getByText(environmentLabel)).toHaveClass('truncate')
+    expect(projectLink).toHaveAttribute('href', '/projects')
+    expect(environmentLink).toHaveAttribute(
+      'href',
+      `/projects/${testRailwayProjectId}/environments`,
+    )
 
     fireEvent.focus(projectLink)
     expect(await screen.findByRole('tooltip')).toHaveTextContent(projectLabel)
+  })
+
+  it('keeps a long service name in the card accessible name and title', async () => {
+    const serviceName = 'Service with a very long name that must stay on one line'
+    readServicesMock.mockResolvedValueOnce([createService('service-long', serviceName)])
+    renderRoutes(servicesPath)
+    const card = await screen.findByRole('article', { name: serviceName })
+
+    expect(card).toHaveAccessibleName(serviceName)
+    expect(within(card).getByText(serviceName)).toHaveAttribute('title', serviceName)
   })
 
   it('keeps parent links visible when services fail to load', async () => {
