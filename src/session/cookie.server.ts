@@ -50,9 +50,14 @@ const sessionDataSchema = z.union([
 
 type SessionData = z.infer<typeof sessionDataSchema>
 
-function replaceSessionData(data: Record<string, unknown>, replacement: SessionData) {
-  for (const key of Object.keys(data)) delete data[key]
-  return replacement
+async function writeSessionData(replacement: SessionData, sessionSecret: string) {
+  const config = createSessionConfig(sessionSecret)
+
+  await clearSession(config)
+  await updateSession<Record<string, unknown>>(config, (data) => {
+    for (const key of Object.keys(data)) delete data[key]
+    return replacement
+  })
 }
 
 export async function writeSession(token: string, sessionSecret: string) {
@@ -60,21 +65,11 @@ export async function writeSession(token: string, sessionSecret: string) {
     throw new RangeError(invalidRailwayTokenMessage)
   }
 
-  const config = createSessionConfig(sessionSecret)
-
-  await clearSession(config)
-  await updateSession<Record<string, unknown>>(config, (data) =>
-    replaceSessionData(data, { railwayToken: token }),
-  )
+  await writeSessionData({ railwayToken: token }, sessionSecret)
 }
 
-export async function writeSessionNotice(notice: SessionNotice, sessionSecret: string) {
-  const config = createSessionConfig(sessionSecret)
-
-  await clearSession(config)
-  await updateSession<Record<string, unknown>>(config, (data) =>
-    replaceSessionData(data, { notice }),
-  )
+export function writeSessionNotice(notice: SessionNotice, sessionSecret: string) {
+  return writeSessionData({ notice }, sessionSecret)
 }
 
 async function readSessionData(sessionSecret: string) {
