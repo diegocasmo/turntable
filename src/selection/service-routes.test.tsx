@@ -112,6 +112,42 @@ describe('service collection route', () => {
     services.resolve([])
   })
 
+  it('keeps long breadcrumb links accessible and exposes the full focused label', async () => {
+    const projectName = 'Turntable project with a very long name'
+    const environmentName = 'Production environment with a very long name'
+    readProjectMock.mockResolvedValueOnce(createRailwayProject({ name: projectName }))
+    readEnvironmentMock.mockResolvedValueOnce({
+      ...createRailwayEnvironment({ name: environmentName }),
+      projectId: testRailwayProjectId,
+    })
+    renderRoutes(servicesPath)
+    expect(await screen.findByRole('heading', { name: 'Services' })).toBeVisible()
+    const breadcrumb = screen.getByRole('navigation', { name: 'Selection progress' })
+    const projectLabel = `Project: ${projectName}`
+    const environmentLabel = `Environment: ${environmentName}`
+    const projectLink = within(breadcrumb).getByRole('link', { name: projectLabel })
+    const environmentLink = within(breadcrumb).getByRole('link', { name: environmentLabel })
+
+    expect(projectLink).toHaveAttribute('href', '/projects')
+    expect(environmentLink).toHaveAttribute(
+      'href',
+      `/projects/${testRailwayProjectId}/environments`,
+    )
+
+    fireEvent.focus(projectLink)
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(projectLabel)
+  })
+
+  it('keeps a long service name in the card accessible name and title', async () => {
+    const serviceName = 'Service with a very long name that must stay on one line'
+    readServicesMock.mockResolvedValueOnce([createService('service-long', serviceName)])
+    renderRoutes(servicesPath)
+    const card = await screen.findByRole('article', { name: serviceName })
+
+    expect(card).toHaveAccessibleName(serviceName)
+    expect(within(card).getByText(serviceName)).toHaveAttribute('title', serviceName)
+  })
+
   it('keeps parent links visible when services fail to load', async () => {
     readServicesMock.mockRejectedValueOnce(new Error('Railway could not load services.'))
     renderRoutes(servicesPath)

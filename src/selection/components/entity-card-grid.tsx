@@ -28,7 +28,9 @@ export function EntityCard<Entity extends SelectionEntity>({
 }: EntityCardProps<Entity>) {
   const content = (
     <>
-      <span className="block break-words font-semibold text-text">{entity.name}</span>
+      <span className="block truncate font-semibold text-text" title={entity.name}>
+        {entity.name}
+      </span>
       {entity.description ? (
         <span className="mt-2 block break-words font-label text-xs text-text-soft">
           {entity.description}
@@ -79,7 +81,9 @@ export function EntityCardGrid<Entity extends SelectionEntity>({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {entities.map((entity) => (
-        <div key={entity.id}>{renderCard(entity)}</div>
+        <div key={entity.id} className="min-w-0">
+          {renderCard(entity)}
+        </div>
       ))}
     </div>
   )

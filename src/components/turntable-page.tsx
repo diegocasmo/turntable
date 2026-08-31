@@ -40,7 +40,7 @@ export function TurntablePage(props: TurntablePageProps) {
         >
           {authenticated ? (
             <div className="flex flex-1 p-5 sm:p-8 lg:p-10">
-              <section aria-labelledby="connected-title" className="w-full">
+              <section aria-labelledby="connected-title" className="min-w-0 w-full">
                 <h2 id="connected-title" className="sr-only">
                   Connected to Railway
                 </h2>
