@@ -1,4 +1,5 @@
 import { Tooltip } from '@base-ui/react/tooltip'
+import { CaretRightIcon } from '@phosphor-icons/react/CaretRight'
 import { Link } from '@tanstack/react-router'
 import { type ReactNode, useId } from 'react'
 
@@ -24,6 +25,7 @@ type SelectionBreadcrumbsProps = Readonly<{
 const breadcrumbTooltipDelayMilliseconds = 100
 const itemClassName =
   'inline-flex min-h-8 items-center break-words rounded-control px-1 font-label text-xs font-semibold uppercase tracking-[0.1em] outline-none focus-visible:outline-[3px] focus-visible:outline-offset-1 focus-visible:outline-focus'
+const linkClassName = 'underline decoration-1 underline-offset-4'
 
 function readStepLabel(step: 'Environment' | 'Project', name?: string) {
   return name ? `${step}: ${name}` : step
@@ -45,7 +47,13 @@ function createSelectionBreadcrumbSteps(
     kind: 'link',
     label: projectLabel,
     link: (
-      <Link activeOptions={{ exact: true }} activeProps={{}} search={{}} to="/projects">
+      <Link
+        activeOptions={{ exact: true }}
+        activeProps={{}}
+        className={linkClassName}
+        search={{}}
+        to="/projects"
+      >
         {projectLabel}
       </Link>
     ),
@@ -69,6 +77,7 @@ function createSelectionBreadcrumbSteps(
         <Link
           activeOptions={{ exact: true }}
           activeProps={{}}
+          className={linkClassName}
           params={{ projectId: progress.projectId }}
           search={{}}
           to="/projects/$projectId/environments"
@@ -115,7 +124,7 @@ function renderStep(step: SelectionBreadcrumbStep) {
   if (step.kind === 'link') {
     return (
       <span
-        className={`${itemClassName} p-0 text-text-soft hover:text-accent [&_a]:inline-flex [&_a]:min-h-8 [&_a]:items-center [&_a]:px-1 [&_a]:outline-none [&_a]:focus-visible:bg-accent [&_a]:focus-visible:text-accent-contrast [&_a]:focus-visible:outline-[3px] [&_a]:focus-visible:outline-offset-1 [&_a]:focus-visible:outline-focus`}
+        className={`${itemClassName} p-0 text-accent hover:text-accent-hover [&_a]:inline-flex [&_a]:min-h-8 [&_a]:items-center [&_a]:px-1 [&_a]:outline-none [&_a]:focus-visible:bg-accent [&_a]:focus-visible:text-accent-contrast [&_a]:focus-visible:outline-[3px] [&_a]:focus-visible:outline-offset-1 [&_a]:focus-visible:outline-focus`}
       >
         {step.link}
       </span>
@@ -143,9 +152,11 @@ export function SelectionBreadcrumbs({ progress }: SelectionBreadcrumbsProps) {
           {steps.map((step, index) => (
             <li key={`${step.label}-${step.kind}`} className="flex min-w-0 items-center gap-2">
               {index === 0 ? null : (
-                <span aria-hidden="true" className="text-text-muted">
-                  /
-                </span>
+                <CaretRightIcon
+                  aria-hidden="true"
+                  className="size-3 shrink-0 text-text-muted"
+                  weight="bold"
+                />
               )}
               {renderStep(step)}
             </li>
