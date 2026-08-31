@@ -98,15 +98,16 @@ describe('service collection route', () => {
 
     expect(await screen.findByRole('heading', { name: 'Loading services' })).toBeVisible()
     const breadcrumbs = screen.getByRole('navigation', { name: 'Selection progress' })
-    expect(within(breadcrumbs).getByRole('link', { name: 'Project' })).toHaveAttribute(
-      'href',
-      '/projects',
-    )
-    expect(within(breadcrumbs).getByRole('link', { name: 'Environment' })).toHaveAttribute(
+    const projectLink = within(breadcrumbs).getByRole('link', { name: 'Project' })
+    const environmentLink = within(breadcrumbs).getByRole('link', { name: 'Environment' })
+    expect(projectLink).toHaveAttribute('href', '/projects')
+    expect(projectLink).toHaveClass('underline')
+    expect(environmentLink).toHaveAttribute(
       'href',
       `/projects/${testRailwayProjectId}/environments`,
     )
-    expect(within(breadcrumbs).getByText('Services')).toBeVisible()
+    expect(environmentLink).toHaveClass('underline')
+    expect(within(breadcrumbs).getByText('Services')).toHaveAttribute('aria-current', 'page')
 
     services.resolve([])
   })
