@@ -1,12 +1,12 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { readRailwayEnvironment } from '@/selection/read-environment.server'
-import { readEnvironmentInputSchema } from '@/selection/schema'
+import { environmentInputSchema } from '@/selection/schema'
 import { requireRailwaySessionMiddleware } from '@/session/middleware'
 
 export const readEnvironment = createServerFn({ method: 'GET' })
   .middleware([requireRailwaySessionMiddleware])
-  .validator(readEnvironmentInputSchema)
+  .validator(environmentInputSchema)
   .handler(({ context, data }) =>
     readRailwayEnvironment(
       context.railwayToken,
