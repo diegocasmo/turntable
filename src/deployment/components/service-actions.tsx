@@ -3,8 +3,8 @@ import { useState } from 'react'
 import { SpinDownAction } from '@/deployment/components/spin-down-action'
 import { SpinUpAction } from '@/deployment/components/spin-up-action'
 import type { DeploymentTarget } from '@/deployment/schema'
-import { queryKeys } from '@/query-keys'
 import type { DeploymentStatus } from '@/railway/deployment-status'
+import { createServicesQueryOptions } from '@/selection/queries'
 
 export type AcceptedServiceOperation = Readonly<{
   action: 'spin-down' | 'spin-up'
@@ -37,7 +37,7 @@ export function ServiceActions({
     setAnnouncement(`${label} request accepted for ${serviceName}.`)
     onOperationAccepted({ action, deploymentId: acceptedDeploymentId, serviceId: target.serviceId })
     void queryClient.invalidateQueries({
-      queryKey: queryKeys.services.list(target.projectId, target.environmentId),
+      queryKey: createServicesQueryOptions(target.projectId, target.environmentId).queryKey,
     })
   }
 

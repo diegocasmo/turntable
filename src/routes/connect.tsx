@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { TurntablePage } from '@/components/turntable-page'
-import { queryKeys } from '@/query-keys'
+import { sessionQueryOptions } from '@/session/queries'
 import { connectSearchSchema } from '@/session/schema'
 
 export const Route = createFileRoute('/connect')({
@@ -30,7 +30,7 @@ function ConnectRoute() {
   const navigate = Route.useNavigate()
 
   async function clearSessionNotice() {
-    queryClient.setQueryData(queryKeys.session.read, 'signed-out')
+    queryClient.setQueryData(sessionQueryOptions.queryKey, 'signed-out')
     await navigate({
       replace: true,
       search: { redirect: destination },

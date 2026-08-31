@@ -1,5 +1,4 @@
 import { queryOptions } from '@tanstack/react-query'
-import { queryKeys } from '@/query-keys'
 import { isDeploymentStatusTransitional } from '@/railway/deployment-status'
 import { readEnvironment } from '@/selection/read-environment'
 import { readEnvironments } from '@/selection/read-environments'
@@ -10,22 +9,22 @@ import { readServices } from '@/selection/read-services'
 export const createProjectsQueryOptions = () =>
   queryOptions({
     queryFn: ({ signal }) => readProjects({ signal }),
-    queryKey: queryKeys.projects.list,
+    queryKey: ['projects'] as const,
   })
 export const createProjectQueryOptions = (projectId: string) =>
   queryOptions({
     queryFn: ({ signal }) => readProject({ data: { projectId }, signal }),
-    queryKey: queryKeys.projects.detail(projectId),
+    queryKey: ['projects', 'detail', projectId] as const,
   })
 export const createEnvironmentsQueryOptions = (projectId: string) =>
   queryOptions({
     queryFn: ({ signal }) => readEnvironments({ data: { projectId }, signal }),
-    queryKey: queryKeys.environments.list(projectId),
+    queryKey: ['projects', projectId, 'environments'] as const,
   })
 export const createEnvironmentQueryOptions = (projectId: string, environmentId: string) =>
   queryOptions({
     queryFn: ({ signal }) => readEnvironment({ data: { environmentId, projectId }, signal }),
-    queryKey: queryKeys.environments.detail(projectId, environmentId),
+    queryKey: ['projects', projectId, 'environments', 'detail', environmentId] as const,
   })
 export const createServicesQueryOptions = (
   projectId: string,
@@ -34,7 +33,7 @@ export const createServicesQueryOptions = (
 ) =>
   queryOptions({
     queryFn: ({ signal }) => readServices({ data: { environmentId, projectId }, signal }),
-    queryKey: queryKeys.services.list(projectId, environmentId),
+    queryKey: ['projects', projectId, 'environments', environmentId, 'services'] as const,
     refetchInterval: (query) => {
       const hasTransitionalService = query.state.data?.some(
         (service) =>
