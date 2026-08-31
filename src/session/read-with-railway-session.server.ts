@@ -12,14 +12,6 @@ import {
 } from '@/session/cookie.server'
 import type { SessionNotice } from '@/session/schema'
 
-function createRailwayReadError(error: unknown) {
-  if (error instanceof RailwayGraphQLError || error instanceof RailwayRateLimitError) {
-    return new Error(error.message)
-  }
-
-  return new Error('Turntable could not load Railway data. Try again.')
-}
-
 function createConnectRedirect(notice: SessionNotice) {
   return redirect({
     reloadDocument: true,
@@ -51,6 +43,10 @@ export async function readWithRailwaySession<Value>(
       throw createConnectRedirect('token-rejected')
     }
 
-    throw createRailwayReadError(error)
+    const message =
+      error instanceof RailwayGraphQLError || error instanceof RailwayRateLimitError
+        ? error.message
+        : 'Turntable could not load Railway data. Try again.'
+    throw new Error(message)
   }
 }
