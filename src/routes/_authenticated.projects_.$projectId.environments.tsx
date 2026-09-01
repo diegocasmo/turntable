@@ -87,9 +87,9 @@ function EnvironmentRoute() {
               aria-label={`Select ${environment.name}`}
               className={primaryActionClassName}
               viewTransition
-              params={{ environmentId: environment.id, projectId }}
+              params={{ environmentId: environment.id }}
               search={{}}
-              to="/projects/$projectId/environments/$environmentId/services"
+              to="/environments/$environmentId/services"
               onClick={clearSelectionNotice}
             >
               {content}

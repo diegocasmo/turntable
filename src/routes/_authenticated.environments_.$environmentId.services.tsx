@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, type ErrorComponentProps } from '@tanstack/react-router'
 import { useState } from 'react'
 import {
@@ -12,7 +12,11 @@ import {
   SelectionRouteError,
   SelectionRoutePending,
 } from '@/selection/components/selection-route-state'
-import { createServicesQueryOptions } from '@/selection/queries'
+import {
+  createEnvironmentQueryOptions,
+  createProjectQueryOptions,
+  createServicesQueryOptions,
+} from '@/selection/queries'
 import { loadServicesRoute } from '@/selection/route-loaders'
 import { entitySearchSchema } from '@/selection/schema'
 
@@ -35,33 +39,46 @@ function checkServiceOperationIsVisible(
     : deploymentId === operation.deploymentId || deploymentId !== operation.previousDeploymentId
 }
 
+function useServiceSelectionProgress() {
+  const { environmentId } = Route.useParams()
+  const environment = useQuery({
+    ...createEnvironmentQueryOptions(environmentId),
+    enabled: false,
+  }).data
+  const project = useQuery({
+    ...createProjectQueryOptions(environment?.projectId ?? ''),
+    enabled: false,
+  }).data
+
+  return {
+    ...(environment ? { environmentName: environment.name, projectId: environment.projectId } : {}),
+    ...(project ? { projectName: project.name } : {}),
+    step: 'services' as const,
+  }
+}
+
 function ServiceRoutePending() {
-  const { projectId } = Route.useParams()
   return (
     <SelectionRoutePending
-      selectionProgress={{ projectId, step: 'services' }}
+      selectionProgress={useServiceSelectionProgress()}
       title="Loading services"
     />
   )
 }
 
 function ServiceRouteError(props: ErrorComponentProps) {
-  const { projectId } = Route.useParams()
   return (
     <SelectionRouteError
       {...props}
-      selectionProgress={{ projectId, step: 'services' }}
+      selectionProgress={useServiceSelectionProgress()}
       title="Could not load services"
     />
   )
 }
 
-export const Route = createFileRoute(
-  '/_authenticated/projects_/$projectId/environments_/$environmentId/services',
-)({
+export const Route = createFileRoute('/_authenticated/environments_/$environmentId/services')({
   validateSearch: entitySearchSchema,
-  loader: ({ context, params }) =>
-    loadServicesRoute(context, params.projectId, params.environmentId),
+  loader: ({ context, params }) => loadServicesRoute(context, params.environmentId),
   pendingComponent: ServiceRoutePending,
   errorComponent: ServiceRouteError,
   component: ServiceRoute,
@@ -69,7 +86,8 @@ export const Route = createFileRoute(
 
 function ServiceRoute() {
   const { environment, project } = Route.useLoaderData()
-  const { environmentId, projectId } = Route.useParams()
+  const { environmentId } = Route.useParams()
+  const projectId = project.id
   const [pendingOperations, setPendingOperations] = useState<PendingServiceOperation[]>([])
   const servicesQuery = useSuspenseQuery(
     createServicesQueryOptions(projectId, environmentId, pendingOperations.length > 0),

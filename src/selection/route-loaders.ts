@@ -20,12 +20,11 @@ function throwMissingProject(): never {
   })
 }
 
-function throwMissingEnvironment(projectId: string): never {
+function throwMissingEnvironment(): never {
   throw redirect({
-    params: { projectId },
     replace: true,
     search: { notice: 'unavailable' },
-    to: '/projects/$projectId/environments',
+    to: '/projects',
   })
 }
 
@@ -41,18 +40,17 @@ async function readProjectForRoute(queryClient: QueryClient, projectId: string) 
   return queryClient.fetchQuery(detailOptions)
 }
 
-async function readEnvironmentForRoute(
-  queryClient: QueryClient,
-  projectId: string,
-  environmentId: string,
-) {
-  const environments = queryClient.getQueryData(createEnvironmentsQueryOptions(projectId).queryKey)
-  const environment = environments?.find(({ id }) => id === environmentId)
-  if (environment) return environment
-
-  const detailOptions = createEnvironmentQueryOptions(projectId, environmentId)
+async function readEnvironmentForRoute(queryClient: QueryClient, environmentId: string) {
+  const detailOptions = createEnvironmentQueryOptions(environmentId)
   const detail = queryClient.getQueryData(detailOptions.queryKey)
-  if (environments === undefined && detail) return detail
+  if (detail) {
+    const environments = queryClient.getQueryData(
+      createEnvironmentsQueryOptions(detail.projectId).queryKey,
+    )
+    const environment = environments?.find(({ id }) => id === environmentId)
+    if (environment) return environment
+    if (environments === undefined) return detail
+  }
 
   return queryClient.fetchQuery(detailOptions)
 }
@@ -66,23 +64,29 @@ export async function loadEnvironmentsRoute(context: LoaderContext, projectId: s
   if (!project) {
     throwMissingProject()
   }
-  await context.queryClient.ensureQueryData(createEnvironmentsQueryOptions(projectId))
+  const environments = await context.queryClient.ensureQueryData(
+    createEnvironmentsQueryOptions(projectId),
+  )
+  for (const environment of environments) {
+    context.queryClient.setQueryData(
+      createEnvironmentQueryOptions(environment.id).queryKey,
+      environment,
+    )
+  }
   return { project }
 }
 
-export async function loadServicesRoute(
-  context: LoaderContext,
-  projectId: string,
-  environmentId: string,
-) {
-  const project = await readProjectForRoute(context.queryClient, projectId)
+export async function loadServicesRoute(context: LoaderContext, environmentId: string) {
+  const environment = await readEnvironmentForRoute(context.queryClient, environmentId)
+  if (!environment) {
+    throwMissingEnvironment()
+  }
+  const project = await readProjectForRoute(context.queryClient, environment.projectId)
   if (!project) {
     throwMissingProject()
   }
-  const environment = await readEnvironmentForRoute(context.queryClient, projectId, environmentId)
-  if (!environment) {
-    throwMissingEnvironment(projectId)
-  }
-  await context.queryClient.ensureQueryData(createServicesQueryOptions(projectId, environmentId))
+  await context.queryClient.ensureQueryData(
+    createServicesQueryOptions(environment.projectId, environmentId),
+  )
   return { environment, project }
 }

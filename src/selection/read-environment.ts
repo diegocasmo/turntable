@@ -11,7 +11,6 @@ export const readEnvironment = createServerFn({ method: 'GET' })
     readRailwayEnvironment(
       context.railwayToken,
       context.config.railwayApiUrl,
-      data.projectId,
       data.environmentId,
       globalThis.fetch,
       getRequest().signal,

@@ -31,7 +31,12 @@ export function createRailwayProject(overrides: Partial<RailwayProject> = {}): R
 export function createRailwayEnvironment(
   overrides: Partial<RailwayEnvironment> = {},
 ): RailwayEnvironment {
-  return { id: testRailwayEnvironmentId, name: 'Production', ...overrides }
+  return {
+    id: testRailwayEnvironmentId,
+    name: 'Production',
+    projectId: testRailwayProjectId,
+    ...overrides,
+  }
 }
 
 export function createRailwayService(overrides: Partial<RailwayService> = {}): RailwayService {

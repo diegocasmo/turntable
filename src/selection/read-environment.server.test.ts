@@ -11,10 +11,11 @@ import {
 } from '@/test/railway'
 
 describe('readRailwayEnvironment', () => {
-  it('reads one environment within its project route', async () => {
+  it('reads one environment and its project ID', async () => {
     const environment = {
       id: testRailwayEnvironmentId,
       name: 'Production',
+      projectId: testRailwayProjectId,
     }
     const fetchRequest = createRailwayFetch(createRailwayResponse({ environment }))
 
@@ -22,7 +23,6 @@ describe('readRailwayEnvironment', () => {
       readRailwayEnvironment(
         testRailwayToken,
         testRailwayApiUrl,
-        testRailwayProjectId,
         testRailwayEnvironmentId,
         fetchRequest,
       ),
@@ -30,7 +30,6 @@ describe('readRailwayEnvironment', () => {
     await expect(fetchRequest.mock.calls[0]?.[0].json()).resolves.toMatchObject({
       variables: {
         environmentId: testRailwayEnvironmentId,
-        projectId: testRailwayProjectId,
       },
     })
   })
@@ -42,7 +41,6 @@ describe('readRailwayEnvironment', () => {
       readRailwayEnvironment(
         testRailwayToken,
         testRailwayApiUrl,
-        testRailwayProjectId,
         testRailwayEnvironmentId,
         notFoundFetch,
       ),
@@ -56,7 +54,6 @@ describe('readRailwayEnvironment', () => {
       readRailwayEnvironment(
         testRailwayToken,
         testRailwayApiUrl,
-        testRailwayProjectId,
         testRailwayEnvironmentId,
         fetchRequest,
       ),

@@ -5,7 +5,6 @@ import { RailwayGraphQLError } from '@/railway/errors'
 export async function readRailwayEnvironment(
   token: string,
   apiUrl: string,
-  projectId: string,
   environmentId: string,
   fetchRequest: (request: Request) => Promise<Response> = globalThis.fetch,
   signal?: AbortSignal,
@@ -17,7 +16,7 @@ export async function readRailwayEnvironment(
       document: environmentDetailQuery,
       signal,
       token,
-      variables: { environmentId, projectId },
+      variables: { environmentId },
     })
     return result.environment
   } catch (error) {
