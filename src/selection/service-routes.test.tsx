@@ -65,7 +65,6 @@ function createService(id: string, name: string, status: 'SUCCESS' | null = 'SUC
 }
 
 const servicesPath = `/environments/${testRailwayEnvironmentId}/services`
-const legacyServicesPath = `/projects/${testRailwayProjectId}/environments/${testRailwayEnvironmentId}/services`
 
 beforeEach(() => {
   session.current = 'authenticated'
@@ -266,13 +265,6 @@ describe('service collection route', () => {
 
     expect(await screen.findByRole('heading', { name: 'Services' })).toBeVisible()
     expect(page.router.state.location.href).toBe(listUrl)
-  })
-
-  it('does not expose the old Services route', async () => {
-    renderRoutes(legacyServicesPath)
-
-    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeVisible()
-    expect(readServicesMock).not.toHaveBeenCalled()
   })
 
   it('replaces the root route with project selection', async () => {
