@@ -8,7 +8,7 @@ export type SelectionProgress =
   | Readonly<{ projectName?: string; step: 'environment' }>
   | Readonly<{
       environmentName?: string
-      projectId: string
+      projectId?: string
       projectName?: string
       step: 'services'
     }>
@@ -69,27 +69,30 @@ function createSelectionBreadcrumbSteps(
   }
 
   const environmentLabel = readStepLabel('Environment', progress.environmentName)
-  return [
-    projectStep,
-    {
-      kind: 'link',
-      label: environmentLabel,
-      link: (
-        <Link
-          activeOptions={{ exact: true }}
-          activeProps={{}}
-          aria-label={environmentLabel}
-          className={`${linkClassName} max-w-80 px-1`}
-          params={{ projectId: progress.projectId }}
-          search={{}}
-          to="/projects/$projectId/environments"
-        >
-          {environmentLabel}
-        </Link>
-      ),
-    },
-    { kind: 'current', label: 'Services' },
-  ]
+  const environmentStep: SelectionBreadcrumbStep = progress.projectId
+    ? {
+        kind: 'link',
+        label: environmentLabel,
+        link: (
+          <Link
+            activeOptions={{ exact: true }}
+            activeProps={{}}
+            aria-label={environmentLabel}
+            className={`${linkClassName} max-w-80 px-1`}
+            params={{ projectId: progress.projectId }}
+            search={{}}
+            to="/projects/$projectId/environments"
+          >
+            {environmentLabel}
+          </Link>
+        ),
+      }
+    : {
+        description: 'Load the environment first',
+        kind: 'disabled',
+        label: environmentLabel,
+      }
+  return [projectStep, environmentStep, { kind: 'current', label: 'Services' }]
 }
 
 function DisabledBreadcrumb({

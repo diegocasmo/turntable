@@ -19,7 +19,7 @@ export const connectSearchSchema = z.object({
   notice: sessionNoticeSchema.optional().catch(undefined),
   redirect: z
     .string()
-    .regex(/^\/projects(?:[/?]|$)/u)
+    .regex(/^\/(?:projects(?:\/[^?#]*)?|environments\/[^/?#]+\/services)(?:\?[^#]*)?$/u)
     .catch('/projects'),
 })
 

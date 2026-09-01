@@ -14,8 +14,8 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated.projects'
+import { Route as AuthenticatedEnvironmentsEnvironmentIdServicesRouteImport } from './routes/_authenticated.environments_.$environmentId.services'
 import { Route as AuthenticatedProjectsProjectIdEnvironmentsRouteImport } from './routes/_authenticated.projects_.$projectId.environments'
-import { Route as AuthenticatedProjectsProjectIdEnvironmentsEnvironmentIdServicesRouteImport } from './routes/_authenticated.projects_.$projectId.environments_.$environmentId.services'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -41,36 +41,34 @@ const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedEnvironmentsEnvironmentIdServicesRoute =
+  AuthenticatedEnvironmentsEnvironmentIdServicesRouteImport.update({
+    id: '/environments_/$environmentId/services',
+    path: '/environments/$environmentId/services',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedProjectsProjectIdEnvironmentsRoute =
   AuthenticatedProjectsProjectIdEnvironmentsRouteImport.update({
     id: '/projects_/$projectId/environments',
     path: '/projects/$projectId/environments',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedProjectsProjectIdEnvironmentsEnvironmentIdServicesRoute =
-  AuthenticatedProjectsProjectIdEnvironmentsEnvironmentIdServicesRouteImport.update(
-    {
-      id: '/projects_/$projectId/environments_/$environmentId/services',
-      path: '/projects/$projectId/environments/$environmentId/services',
-      getParentRoute: () => AuthenticatedRoute,
-    } as any,
-  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/connect': typeof ConnectRoute
   '/healthz': typeof HealthzRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/environments/$environmentId/services': typeof AuthenticatedEnvironmentsEnvironmentIdServicesRoute
   '/projects/$projectId/environments': typeof AuthenticatedProjectsProjectIdEnvironmentsRoute
-  '/projects/$projectId/environments/$environmentId/services': typeof AuthenticatedProjectsProjectIdEnvironmentsEnvironmentIdServicesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/connect': typeof ConnectRoute
   '/healthz': typeof HealthzRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/environments/$environmentId/services': typeof AuthenticatedEnvironmentsEnvironmentIdServicesRoute
   '/projects/$projectId/environments': typeof AuthenticatedProjectsProjectIdEnvironmentsRoute
-  '/projects/$projectId/environments/$environmentId/services': typeof AuthenticatedProjectsProjectIdEnvironmentsEnvironmentIdServicesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,8 +77,8 @@ export interface FileRoutesById {
   '/connect': typeof ConnectRoute
   '/healthz': typeof HealthzRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/environments_/$environmentId/services': typeof AuthenticatedEnvironmentsEnvironmentIdServicesRoute
   '/_authenticated/projects_/$projectId/environments': typeof AuthenticatedProjectsProjectIdEnvironmentsRoute
-  '/_authenticated/projects_/$projectId/environments_/$environmentId/services': typeof AuthenticatedProjectsProjectIdEnvironmentsEnvironmentIdServicesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -89,16 +87,16 @@ export interface FileRouteTypes {
     | '/connect'
     | '/healthz'
     | '/projects'
+    | '/environments/$environmentId/services'
     | '/projects/$projectId/environments'
-    | '/projects/$projectId/environments/$environmentId/services'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/connect'
     | '/healthz'
     | '/projects'
+    | '/environments/$environmentId/services'
     | '/projects/$projectId/environments'
-    | '/projects/$projectId/environments/$environmentId/services'
   id:
     | '__root__'
     | '/'
@@ -106,8 +104,8 @@ export interface FileRouteTypes {
     | '/connect'
     | '/healthz'
     | '/_authenticated/projects'
+    | '/_authenticated/environments_/$environmentId/services'
     | '/_authenticated/projects_/$projectId/environments'
-    | '/_authenticated/projects_/$projectId/environments_/$environmentId/services'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -154,6 +152,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/environments_/$environmentId/services': {
+      id: '/_authenticated/environments_/$environmentId/services'
+      path: '/environments/$environmentId/services'
+      fullPath: '/environments/$environmentId/services'
+      preLoaderRoute: typeof AuthenticatedEnvironmentsEnvironmentIdServicesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/projects_/$projectId/environments': {
       id: '/_authenticated/projects_/$projectId/environments'
       path: '/projects/$projectId/environments'
@@ -161,28 +166,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectsProjectIdEnvironmentsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/projects_/$projectId/environments_/$environmentId/services': {
-      id: '/_authenticated/projects_/$projectId/environments_/$environmentId/services'
-      path: '/projects/$projectId/environments/$environmentId/services'
-      fullPath: '/projects/$projectId/environments/$environmentId/services'
-      preLoaderRoute: typeof AuthenticatedProjectsProjectIdEnvironmentsEnvironmentIdServicesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedEnvironmentsEnvironmentIdServicesRoute: typeof AuthenticatedEnvironmentsEnvironmentIdServicesRoute
   AuthenticatedProjectsProjectIdEnvironmentsRoute: typeof AuthenticatedProjectsProjectIdEnvironmentsRoute
-  AuthenticatedProjectsProjectIdEnvironmentsEnvironmentIdServicesRoute: typeof AuthenticatedProjectsProjectIdEnvironmentsEnvironmentIdServicesRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedEnvironmentsEnvironmentIdServicesRoute:
+    AuthenticatedEnvironmentsEnvironmentIdServicesRoute,
   AuthenticatedProjectsProjectIdEnvironmentsRoute:
     AuthenticatedProjectsProjectIdEnvironmentsRoute,
-  AuthenticatedProjectsProjectIdEnvironmentsEnvironmentIdServicesRoute:
-    AuthenticatedProjectsProjectIdEnvironmentsEnvironmentIdServicesRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

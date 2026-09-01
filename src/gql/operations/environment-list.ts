@@ -8,6 +8,7 @@ export const environmentsQuery = graphql(`
           node {
             id
             name
+            projectId
           }
         }
         pageInfo {

@@ -21,10 +21,10 @@ export const createEnvironmentsQueryOptions = (projectId: string) =>
     queryFn: ({ signal }) => readEnvironments({ data: { projectId }, signal }),
     queryKey: ['projects', projectId, 'environments'] as const,
   })
-export const createEnvironmentQueryOptions = (projectId: string, environmentId: string) =>
+export const createEnvironmentQueryOptions = (environmentId: string) =>
   queryOptions({
-    queryFn: ({ signal }) => readEnvironment({ data: { environmentId, projectId }, signal }),
-    queryKey: ['projects', projectId, 'environments', 'detail', environmentId] as const,
+    queryFn: ({ signal }) => readEnvironment({ data: { environmentId }, signal }),
+    queryKey: ['environments', 'detail', environmentId] as const,
   })
 export const createServicesQueryOptions = (
   projectId: string,

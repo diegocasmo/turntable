@@ -6,7 +6,8 @@ export const entitySearchSchema = z.object({
   q: z.string().optional().catch(undefined),
 })
 export const projectInputSchema = z.object({ projectId: railwayIdSchema })
-export const environmentInputSchema = z.object({
+export const environmentInputSchema = z.object({ environmentId: railwayIdSchema })
+export const projectEnvironmentInputSchema = z.object({
   environmentId: railwayIdSchema,
   projectId: railwayIdSchema,
 })

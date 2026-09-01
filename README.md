@@ -44,7 +44,7 @@ After a user connects, the selection flow uses these routes:
 ```text
 /projects
 /projects/:projectId/environments
-/projects/:projectId/environments/:environmentId/services
+/environments/:environmentId/services
 ```
 
 Each route stores its card search in the `q` search parameter.

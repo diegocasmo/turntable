@@ -55,10 +55,7 @@ async function catchRedirect(operation: () => Promise<unknown>) {
 beforeEach(() => {
   readProjectMock.mockReset().mockResolvedValue(createRailwayProject())
   readProjectsMock.mockReset().mockResolvedValue([createRailwayProject()])
-  readEnvironmentMock.mockReset().mockResolvedValue({
-    ...createRailwayEnvironment(),
-    projectId: testRailwayProjectId,
-  })
+  readEnvironmentMock.mockReset().mockResolvedValue(createRailwayEnvironment())
   readEnvironmentsMock.mockReset().mockResolvedValue([createRailwayEnvironment()])
   readServicesMock.mockReset().mockResolvedValue([createRailwayService()])
 })
@@ -73,7 +70,7 @@ describe('selection route loaders', () => {
   })
 
   it('uses targeted parent reads for a cold Services deep link', async () => {
-    await loadServicesRoute(createContext(), testRailwayProjectId, testRailwayEnvironmentId)
+    await loadServicesRoute(createContext(), testRailwayEnvironmentId)
 
     expect(readProjectMock).toHaveBeenCalledOnce()
     expect(readEnvironmentMock).toHaveBeenCalledOnce()
@@ -103,8 +100,9 @@ describe('selection route loaders', () => {
       createEnvironmentsQueryOptions(testRailwayProjectId).queryKey,
       [createRailwayEnvironment()],
     )
+    await loadEnvironmentsRoute(context, testRailwayProjectId)
 
-    const result = await loadServicesRoute(context, testRailwayProjectId, testRailwayEnvironmentId)
+    const result = await loadServicesRoute(context, testRailwayEnvironmentId)
 
     expect(result.project.name).toBe('Turntable')
     expect(readProjectMock).not.toHaveBeenCalled()
@@ -123,15 +121,36 @@ describe('selection route loaders', () => {
 
   it('revalidates a cached missing environment', async () => {
     const context = createContext()
-    const key = createEnvironmentQueryOptions(
-      testRailwayProjectId,
-      testRailwayEnvironmentId,
-    ).queryKey
+    const key = createEnvironmentQueryOptions(testRailwayEnvironmentId).queryKey
     context.queryClient.setQueryData(key, null)
 
-    await loadServicesRoute(context, testRailwayProjectId, testRailwayEnvironmentId)
+    await loadServicesRoute(context, testRailwayEnvironmentId)
 
     expect(readEnvironmentMock).toHaveBeenCalledOnce()
+  })
+
+  it('revalidates a cached environment that a newer project list omits', async () => {
+    const context = createContext()
+    context.queryClient.setQueryData(
+      createEnvironmentQueryOptions(testRailwayEnvironmentId).queryKey,
+      createRailwayEnvironment(),
+    )
+    context.queryClient.setQueryData(
+      createEnvironmentsQueryOptions(testRailwayProjectId).queryKey,
+      [],
+    )
+    readEnvironmentMock.mockResolvedValue(null)
+
+    const missing = await catchRedirect(() => loadServicesRoute(context, testRailwayEnvironmentId))
+
+    expect(readEnvironmentMock).toHaveBeenCalledOnce()
+    expect(missing.options).toMatchObject({
+      replace: true,
+      search: { notice: 'unavailable' },
+      to: '/projects',
+    })
+    expect(readProjectMock).not.toHaveBeenCalled()
+    expect(readServicesMock).not.toHaveBeenCalled()
   })
 
   it('replaces a missing project only after its detail read succeeds', async () => {
@@ -156,19 +175,19 @@ describe('selection route loaders', () => {
     await expect(loadEnvironmentsRoute(createContext(), testRailwayProjectId)).rejects.toBe(failure)
   })
 
-  it('falls back to the valid project when the environment is missing', async () => {
+  it('falls back to Projects when the environment is missing', async () => {
     readEnvironmentMock.mockResolvedValue(null)
 
     const missing = await catchRedirect(() =>
-      loadServicesRoute(createContext(), testRailwayProjectId, 'missing-environment'),
+      loadServicesRoute(createContext(), 'missing-environment'),
     )
 
     expect(missing.options).toMatchObject({
-      params: { projectId: testRailwayProjectId },
       replace: true,
       search: { notice: 'unavailable' },
-      to: '/projects/$projectId/environments',
+      to: '/projects',
     })
+    expect(readProjectMock).not.toHaveBeenCalled()
     expect(readServicesMock).not.toHaveBeenCalled()
   })
 })

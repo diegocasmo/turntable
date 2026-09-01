@@ -2,12 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { connectSearchSchema } from '@/session/schema'
 
 describe('connect search', () => {
-  it('keeps a protected Turntable destination', () => {
+  it.each([
+    '/projects/project-1/environments?q=local',
+    '/environments/environment-1/services?q=worker',
+  ])('keeps the protected Turntable destination %s', (redirect) => {
     expect(
       connectSearchSchema.parse({
-        redirect: '/projects/project-1/environments?q=local',
+        redirect,
       }),
-    ).toEqual({ redirect: '/projects/project-1/environments?q=local' })
+    ).toEqual({ redirect })
   })
 
   it.each([

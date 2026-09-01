@@ -64,7 +64,8 @@ function createService(id: string, name: string, status: 'SUCCESS' | null = 'SUC
   }
 }
 
-const servicesPath = `/projects/${testRailwayProjectId}/environments/${testRailwayEnvironmentId}/services`
+const servicesPath = `/environments/${testRailwayEnvironmentId}/services`
+const legacyServicesPath = `/projects/${testRailwayProjectId}/environments/${testRailwayEnvironmentId}/services`
 
 beforeEach(() => {
   session.current = 'authenticated'
@@ -74,10 +75,7 @@ beforeEach(() => {
   })
   readProjectMock.mockReset().mockResolvedValue(createRailwayProject())
   readProjectsMock.mockReset().mockResolvedValue([createRailwayProject()])
-  readEnvironmentMock.mockReset().mockResolvedValue({
-    ...createRailwayEnvironment(),
-    projectId: testRailwayProjectId,
-  })
+  readEnvironmentMock.mockReset().mockResolvedValue(createRailwayEnvironment())
   readEnvironmentsMock.mockReset().mockResolvedValue([createRailwayEnvironment()])
   readServicesMock
     .mockReset()
@@ -98,8 +96,10 @@ describe('service collection route', () => {
 
     expect(await screen.findByRole('heading', { name: 'Loading services' })).toBeVisible()
     const breadcrumbs = screen.getByRole('navigation', { name: 'Selection progress' })
-    const projectLink = within(breadcrumbs).getByRole('link', { name: 'Project' })
-    const environmentLink = within(breadcrumbs).getByRole('link', { name: 'Environment' })
+    const projectLink = within(breadcrumbs).getByRole('link', { name: 'Project: Turntable' })
+    const environmentLink = within(breadcrumbs).getByRole('link', {
+      name: 'Environment: Production',
+    })
     expect(projectLink).toHaveAttribute('href', '/projects')
     expect(projectLink).toHaveClass('underline')
     expect(environmentLink).toHaveAttribute(
@@ -116,10 +116,7 @@ describe('service collection route', () => {
     const projectName = 'Turntable project with a very long name'
     const environmentName = 'Production environment with a very long name'
     readProjectMock.mockResolvedValueOnce(createRailwayProject({ name: projectName }))
-    readEnvironmentMock.mockResolvedValueOnce({
-      ...createRailwayEnvironment({ name: environmentName }),
-      projectId: testRailwayProjectId,
-    })
+    readEnvironmentMock.mockResolvedValueOnce(createRailwayEnvironment({ name: environmentName }))
     renderRoutes(servicesPath)
     expect(await screen.findByRole('heading', { name: 'Services' })).toBeVisible()
     const breadcrumb = screen.getByRole('navigation', { name: 'Selection progress' })
@@ -154,8 +151,8 @@ describe('service collection route', () => {
 
     expect(await screen.findByRole('heading', { name: 'Could not load services' })).toBeVisible()
     const breadcrumbs = screen.getByRole('navigation', { name: 'Selection progress' })
-    expect(within(breadcrumbs).getByRole('link', { name: 'Project' })).toBeVisible()
-    expect(within(breadcrumbs).getByRole('link', { name: 'Environment' })).toBeVisible()
+    expect(within(breadcrumbs).getByRole('link', { name: 'Project: Turntable' })).toBeVisible()
+    expect(within(breadcrumbs).getByRole('link', { name: 'Environment: Production' })).toBeVisible()
     expect(within(breadcrumbs).getByText('Services')).toBeVisible()
   })
 
@@ -163,22 +160,20 @@ describe('service collection route', () => {
     readEnvironmentMock.mockResolvedValueOnce(null)
     const page = renderRoutes(servicesPath)
 
-    expect(await screen.findByRole('heading', { name: 'Choose an environment' })).toBeVisible()
-    expect(page.router.state.location.href).toBe(
-      `/projects/${testRailwayProjectId}/environments?notice=unavailable`,
-    )
-    const selection = screen.getByRole('region', { name: 'Choose an environment' })
+    expect(await screen.findByRole('heading', { name: 'Choose a project' })).toBeVisible()
+    expect(page.router.state.location.href).toBe('/projects?notice=unavailable')
+    const selection = screen.getByRole('region', { name: 'Choose a project' })
     expect(
-      within(selection).getByRole('status', { name: 'Environment unavailable' }),
-    ).toHaveTextContent('Environment unavailableChoose another environment to continue.')
+      within(selection).getByRole('status', { name: 'Project unavailable' }),
+    ).toHaveTextContent('Project unavailableChoose another project to continue.')
+    fireEvent.click(screen.getByRole('link', { name: /Select Turntable/i }))
+    expect(await screen.findByRole('heading', { name: 'Choose an environment' })).toBeVisible()
     fireEvent.click(screen.getByRole('link', { name: 'Select Production' }))
 
     await waitFor(() => expect(page.router.state.location.href).toBe(servicesPath))
     expect(await screen.findByRole('heading', { name: 'Services' })).toBeVisible()
     expect(
-      within(screen.getByRole('region', { name: 'Services' })).queryByText(
-        'Environment unavailable',
-      ),
+      within(screen.getByRole('region', { name: 'Services' })).queryByText(/unavailable/i),
     ).toBeNull()
     page.router.history.back()
     await waitFor(() =>
@@ -271,6 +266,13 @@ describe('service collection route', () => {
 
     expect(await screen.findByRole('heading', { name: 'Services' })).toBeVisible()
     expect(page.router.state.location.href).toBe(listUrl)
+  })
+
+  it('does not expose the old Services route', async () => {
+    renderRoutes(legacyServicesPath)
+
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeVisible()
+    expect(readServicesMock).not.toHaveBeenCalled()
   })
 
   it('replaces the root route with project selection', async () => {

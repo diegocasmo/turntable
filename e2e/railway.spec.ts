@@ -35,7 +35,7 @@ test('a user can control the configured Railway service from the collection', as
       .getByRole('searchbox', { name: 'Search environments' })
       .fill(config.expectedEnvironmentName)
     await page.getByRole('link', { name: `Select ${config.expectedEnvironmentName}` }).click()
-    await expect(page).toHaveURL(`/projects/${projectId}/environments/${environmentId}/services`)
+    await expect(page).toHaveURL(`/environments/${environmentId}/services`)
 
     await page.getByRole('searchbox', { name: 'Search services' }).fill(railwayTargetNames.service)
     const serviceCard = page.getByRole('article', { name: railwayTargetNames.service })
